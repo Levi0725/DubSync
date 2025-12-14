@@ -1,0 +1,2 @@
+# Argos Translator Plugin függőségek
+argostranslate>=1.9.0
