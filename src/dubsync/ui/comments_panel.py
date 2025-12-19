@@ -37,14 +37,18 @@ class CommentWidget(QFrame):
     
     def _setup_ui(self):
         """UI felépítése."""
+        from dubsync.ui.theme import ThemeManager
+        theme = ThemeManager()
+        colors = theme.colors
+        
         self.setFrameStyle(QFrame.Shape.StyledPanel)
-        self.setStyleSheet("""
-            CommentWidget {
-                background-color: #f9f9f9;
-                border: 1px solid #ddd;
+        self.setStyleSheet(f"""
+            CommentWidget {{
+                background-color: {colors.surface};
+                border: 1px solid {colors.border};
                 border-radius: 4px;
                 margin: 2px;
-            }
+            }}
         """)
         
         layout = QVBoxLayout(self)
@@ -60,7 +64,7 @@ class CommentWidget(QFrame):
         
         if self.comment.is_resolved:
             resolved_label = QLabel("✓ Lezárva")
-            resolved_label.setStyleSheet("color: #4CAF50;")
+            resolved_label.setStyleSheet(f"color: {colors.success};")
             header_layout.addWidget(resolved_label)
         
         layout.addLayout(header_layout)
@@ -68,7 +72,7 @@ class CommentWidget(QFrame):
         # Content
         self.content_label = QLabel(self.comment.content)
         self.content_label.setWordWrap(True)
-        self.content_label.setStyleSheet("color: #333;")
+        self.content_label.setStyleSheet(f"color: {colors.foreground};")
         layout.addWidget(self.content_label)
         
         # Actions
@@ -77,18 +81,19 @@ class CommentWidget(QFrame):
             actions_layout.addStretch()
             
             self.resolve_btn = QPushButton("Lezár")
-            self.resolve_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #4CAF50;
+            self.resolve_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {colors.success};
                     color: white;
                     border: none;
                     padding: 4px 8px;
                     border-radius: 3px;
                     font-size: 11px;
-                }
-                QPushButton:hover {
-                    background-color: #45a049;
-                }
+                }}
+                QPushButton:hover {{
+                    background-color: {colors.success};
+                    opacity: 0.9;
+                }}
             """)
             self.resolve_btn.clicked.connect(
                 lambda: self.resolved.emit(self.comment.id)
@@ -164,22 +169,27 @@ class CommentsPanelWidget(QWidget):
         self.comment_edit.setMaximumHeight(80)
         new_comment_layout.addWidget(self.comment_edit)
         
-        # Add button
+        # Add button - themed
+        from dubsync.ui.theme import ThemeManager
+        theme = ThemeManager()
+        colors = theme.colors
+        
         self.add_btn = QPushButton("Hozzáadás")
-        self.add_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
+        self.add_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {colors.primary};
                 color: white;
                 border: none;
                 padding: 6px 12px;
                 border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-            QPushButton:disabled {
-                background-color: #ccc;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {colors.primary_hover};
+            }}
+            QPushButton:disabled {{
+                background-color: {colors.surface};
+                color: {colors.foreground_muted};
+            }}
         """)
         new_comment_layout.addWidget(self.add_btn)
         
@@ -238,8 +248,12 @@ class CommentsPanelWidget(QWidget):
             )
         
         if not self._comments:
+            from dubsync.ui.theme import ThemeManager
+            theme = ThemeManager()
+            colors = theme.colors
+            
             no_comments = QLabel("Nincs megjegyzés")
-            no_comments.setStyleSheet("color: #999; padding: 20px;")
+            no_comments.setStyleSheet(f"color: {colors.foreground_muted}; padding: 20px;")
             no_comments.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.comments_layout.insertWidget(0, no_comments)
     

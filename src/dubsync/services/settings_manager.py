@@ -23,6 +23,7 @@ class AppSettings:
     
     # UI beállítások
     theme: str = "dark"
+    custom_theme_colors: Dict[str, str] = field(default_factory=dict)  # Egyedi téma színek
     font_size: int = 10
     show_line_numbers: bool = True
     compact_mode: bool = False
@@ -233,6 +234,16 @@ class SettingsManager:
     @font_size.setter
     def font_size(self, value: int) -> None:
         self._settings.font_size = value
+    
+    @property
+    def custom_theme_colors(self) -> Dict[str, str]:
+        """Egyedi téma színek lekérése."""
+        return self._settings.custom_theme_colors
+    
+    @custom_theme_colors.setter
+    def custom_theme_colors(self, value: Dict[str, str]) -> None:
+        """Egyedi téma színek beállítása."""
+        self._settings.custom_theme_colors = value
     
     # Qt Settings mentés/betöltés ablak geometriához
     

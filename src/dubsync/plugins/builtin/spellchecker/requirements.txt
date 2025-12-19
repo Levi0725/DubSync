@@ -1,0 +1,3 @@
+# hunspell vagy spylls szükséges a helyesírás-ellenőrzéshez
+# A spylls egy pure Python hunspell implementáció
+spylls>=0.1.5

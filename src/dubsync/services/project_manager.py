@@ -268,9 +268,12 @@ class ProjectManager:
             CueBatch.reindex(self.db, self.project.id)
             self.mark_dirty()
     
-    def add_new_cue(self) -> Cue:
+    def add_new_cue(self, time_in_ms: int = None) -> Cue:
         """
         Új cue hozzáadása a lista végére.
+        
+        Args:
+            time_in_ms: Opcionális kezdési idő (pl. videó pozícióból)
         
         Returns:
             Új Cue objektum
@@ -281,8 +284,28 @@ class ProjectManager:
         cues = self.get_cues()
         next_index = len(cues) + 1
         
-        # Calculate time based on last cue
-        if cues:
+        # Calculate time based on parameter or last cue
+        if time_in_ms is not None:
+            # Check if time overlaps with existing cue
+            overlapping = False
+            for cue in cues:
+                if cue.time_in_ms <= time_in_ms < cue.time_out_ms:
+                    overlapping = True
+                    break
+            
+            if overlapping:
+                # Fall back to default behavior (after last cue)
+                if cues:
+                    last_cue = cues[-1]
+                    time_in = last_cue.time_out_ms + 100
+                    time_out = time_in + 2000
+                else:
+                    time_in = 0
+                    time_out = 2000
+            else:
+                time_in = time_in_ms
+                time_out = time_in + 2000  # 2 sec default
+        elif cues:
             last_cue = cues[-1]
             time_in = last_cue.time_out_ms + 100
             time_out = time_in + 2000  # 2 sec default

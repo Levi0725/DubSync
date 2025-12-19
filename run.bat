@@ -2,6 +2,12 @@
 REM DubSync - Indító script (Windows Batch)
 REM Ez a script aktiválja a virtuális környezetet és elindítja a programot
 
+REM Mentjük a megnyitandó fájl elérési útját (ha van)
+set "OPEN_FILE=%~1"
+
+REM Váltás a script saját könyvtárába (ahol a DubSync van telepítve)
+cd /d "%~dp0"
+
 echo.
 echo ========================================
 echo   DubSync - Szinkronforditoi Editor
@@ -66,7 +72,14 @@ echo.
 echo [*] DubSync inditasa...
 echo.
 cd src
-python -m dubsync
+
+REM Ha kapott fájl paramétert, adjuk át az alkalmazásnak
+if "%OPEN_FILE%"=="" (
+    python -m dubsync
+) else (
+    echo [*] Projekt megnyitasa: %OPEN_FILE%
+    python -m dubsync "%OPEN_FILE%"
+)
 
 REM Ha kilépett a program
 echo.

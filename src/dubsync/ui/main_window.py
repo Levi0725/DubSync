@@ -6,6 +6,7 @@ Fő alkalmazás ablak a szinkronfordító editorhoz.
 
 from pathlib import Path
 from typing import Optional
+from dataclasses import asdict
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
@@ -14,7 +15,7 @@ from PySide6.QtWidgets import (
     QFormLayout, QComboBox, QColorDialog, QPushButton, QDialogButtonBox
 )
 from PySide6.QtCore import Qt, Signal, Slot, QSettings
-from PySide6.QtGui import QAction, QKeySequence, QIcon, QCloseEvent
+from PySide6.QtGui import QAction, QKeySequence, QIcon, QCloseEvent, QUndoStack, QUndoCommand
 
 from dubsync.utils.constants import APP_NAME, APP_VERSION, PROJECT_EXTENSION
 from dubsync.services.project_manager import (
@@ -29,6 +30,61 @@ from dubsync.ui.comments_panel import CommentsPanelWidget
 from dubsync.ui.dialogs import ProjectSettingsDialog, AboutDialog
 from dubsync.ui.theme import ThemeManager, ThemeType, ThemeColors, THEMES
 from dubsync.plugins.base import PluginManager, UIPlugin
+from dubsync.models.cue import Cue
+
+
+class DeleteCueCommand(QUndoCommand):
+    """Undo command cue törléshez."""
+    
+    def __init__(self, main_window, cue_data: dict, parent=None):
+        super().__init__("Sor törlése", parent)
+        self._main_window = main_window
+        self._cue_data = cue_data
+        self._cue_id = cue_data.get('id')
+    
+    def redo(self):
+        """Törlés végrehajtása."""
+        if self._cue_id:
+            self._main_window.project_manager.delete_cue(self._cue_id)
+            self._main_window._refresh_cue_list()
+            self._main_window._update_title()
+            self._main_window._update_statistics()
+    
+    def undo(self):
+        """Törlés visszavonása - cue visszaállítása."""
+        from dubsync.models.cue import Cue, CueBatch
+        from dubsync.utils.constants import CueStatus
+        
+        pm = self._main_window.project_manager
+        if not pm.is_open:
+            return
+        
+        # Recreate the cue
+        cue = Cue(
+            project_id=self._cue_data.get('project_id'),
+            cue_index=self._cue_data.get('cue_index', 1),
+            time_in_ms=self._cue_data.get('time_in_ms', 0),
+            time_out_ms=self._cue_data.get('time_out_ms', 2000),
+            source_text=self._cue_data.get('source_text', ''),
+            translated_text=self._cue_data.get('translated_text', ''),
+            character_name=self._cue_data.get('character_name', ''),
+            notes=self._cue_data.get('notes', ''),
+            sfx_notes=self._cue_data.get('sfx_notes', ''),
+            status=CueStatus(self._cue_data.get('status', 'new')),
+            lip_sync_ratio=self._cue_data.get('lip_sync_ratio'),
+        )
+        
+        cue.save(pm.db)
+        self._cue_id = cue.id  # Update for next redo
+        self._cue_data['id'] = cue.id
+        
+        # Reindex cues to ensure correct order
+        CueBatch.reindex(pm.db, pm.project.id)
+        
+        self._main_window._refresh_cue_list()
+        self._main_window._update_title()
+        self._main_window._update_statistics()
+        self._main_window.cue_list.select_cue(cue.id)
 
 
 class ThemeSettingsDialog(QDialog):
@@ -84,10 +140,23 @@ class ThemeSettingsDialog(QDialog):
         self.theme_combo.currentIndexChanged.connect(self._on_theme_changed)
         
         theme_mgr = ThemeManager()
+        settings_mgr = SettingsManager()
+        
         for i in range(self.theme_combo.count()):
             if self.theme_combo.itemData(i) == theme_mgr.current_theme:
                 self.theme_combo.setCurrentIndex(i)
                 break
+        
+        # Ha egyedi téma, töltsük be a mentett színeket
+        if theme_mgr.current_theme == ThemeType.CUSTOM:
+            custom_colors_dict = settings_mgr.custom_theme_colors
+            if custom_colors_dict:
+                for key, btn in self.color_buttons.items():
+                    if key in custom_colors_dict:
+                        color = custom_colors_dict[key]
+                        btn.setStyleSheet(f"background-color: {color}; color: white;")
+                        btn.setProperty("color_value", color)
+                self.custom_group.setVisible(True)
     
     def _on_theme_changed(self, index):
         theme_type = self.theme_combo.itemData(index)
@@ -164,6 +233,9 @@ class MainWindow(QMainWindow):
         self.plugin_manager = plugin_manager or PluginManager()
         self._delete_mode = False
         self._plugin_docks = []
+        
+        # Undo stack for delete operations
+        self._undo_stack = QUndoStack(self)
         
         self._setup_ui()
         self._setup_menus()
@@ -291,14 +363,12 @@ class MainWindow(QMainWindow):
         # === Edit menu ===
         edit_menu = menubar.addMenu("S&zerkesztés")
         
-        self.action_undo = QAction("&Visszavonás", self)
+        self.action_undo = self._undo_stack.createUndoAction(self, "&Visszavonás")
         self.action_undo.setShortcut(QKeySequence.StandardKey.Undo)
-        self.action_undo.setEnabled(False)
         edit_menu.addAction(self.action_undo)
         
-        self.action_redo = QAction("&Mégis", self)
+        self.action_redo = self._undo_stack.createRedoAction(self, "&Mégis")
         self.action_redo.setShortcut(QKeySequence.StandardKey.Redo)
-        self.action_redo.setEnabled(False)
         edit_menu.addAction(self.action_redo)
         
         edit_menu.addSeparator()
@@ -345,6 +415,18 @@ class MainWindow(QMainWindow):
         
         # === Navigate menu ===
         nav_menu = menubar.addMenu("&Navigáció")
+        
+        self.action_prev_cue = QAction("&Előző sor", self)
+        self.action_prev_cue.setShortcut(QKeySequence("Ctrl+Up"))
+        self.action_prev_cue.triggered.connect(self._on_goto_prev_cue)
+        nav_menu.addAction(self.action_prev_cue)
+        
+        self.action_next_cue = QAction("&Következő sor", self)
+        self.action_next_cue.setShortcut(QKeySequence("Ctrl+Down"))
+        self.action_next_cue.triggered.connect(self._on_goto_next_cue)
+        nav_menu.addAction(self.action_next_cue)
+        
+        nav_menu.addSeparator()
         
         self.action_next_empty = QAction("Következő &fordítatlan", self)
         self.action_next_empty.setShortcut(QKeySequence("Ctrl+E"))
@@ -458,7 +540,42 @@ class MainWindow(QMainWindow):
         
         theme_name = self.settings.value("theme", "dark")
         try:
-            self.theme_manager.set_theme(ThemeType(theme_name))
+            theme_type = ThemeType(theme_name)
+            if theme_type == ThemeType.CUSTOM:
+                # Egyedi téma színek betöltése
+                custom_colors_dict = self.settings_manager.custom_theme_colors
+                if custom_colors_dict:
+                    from dubsync.ui.theme import ThemeColors, THEMES
+                    base = THEMES[ThemeType.DARK]
+                    custom_colors = ThemeColors(
+                        background=custom_colors_dict.get("background", base.background),
+                        background_alt=base.background_alt,
+                        foreground=custom_colors_dict.get("foreground", base.foreground),
+                        foreground_muted=base.foreground_muted,
+                        surface=custom_colors_dict.get("surface", base.surface),
+                        surface_hover=base.surface_hover,
+                        surface_selected=base.surface_selected,
+                        border=base.border,
+                        primary=custom_colors_dict.get("primary", base.primary),
+                        primary_hover=base.primary_hover,
+                        secondary=base.secondary,
+                        success=base.success,
+                        warning=base.warning,
+                        error=base.error,
+                        info=base.info,
+                        lipsync_good=base.lipsync_good,
+                        lipsync_warning=base.lipsync_warning,
+                        lipsync_error=base.lipsync_error,
+                        input_background=base.input_background,
+                        input_border=base.input_border,
+                        scrollbar=base.scrollbar,
+                        scrollbar_hover=base.scrollbar_hover,
+                    )
+                    self.theme_manager.set_custom_colors(custom_colors)
+                else:
+                    self.theme_manager.set_theme(ThemeType.DARK)
+            else:
+                self.theme_manager.set_theme(theme_type)
         except ValueError:
             self.theme_manager.set_theme(ThemeType.DARK)
     
@@ -682,18 +799,59 @@ class MainWindow(QMainWindow):
         )
         
         if file_path:
-            try:
-                self.project_manager.open_project(Path(file_path))
-                self._refresh_cue_list()
+            self._do_open_project(file_path)
+    
+    def _do_open_project(self, file_path: str):
+        """
+        Projekt megnyitása.
+        
+        Args:
+            file_path: Projekt fájl elérési útja
+        """
+        try:
+            self.project_manager.open_project(Path(file_path))
+            self._refresh_cue_list()
+            
+            # Videó betöltése biztonsággal
+            if self.project_manager.project.has_video():
+                video_path = Path(self.project_manager.project.video_path)
+                if video_path.exists():
+                    self.video_player.load_video(video_path)
+                else:
+                    # Videó nem található - lecsatoljuk és figyelmeztetünk
+                    self.project_manager.update_project(video_path="")
+                    self.video_player._show_no_video()
+                    QMessageBox.warning(
+                        self, "Videó nem található",
+                        f"A projekthez csatolt videó nem található:\n\n{video_path}\n\n"
+                        "A videó lecsatolva. A Fájl → Import → Videó menüből újra csatolhatod."
+                    )
+            
+            self._update_title()
+            self._update_ui_state()
+            self.statusBar().showMessage("Projekt megnyitva", 3000)
+            
+            # Plugin esemény
+            for plugin in self.plugin_manager.get_ui_plugins():
+                plugin.on_project_opened(self.project_manager.project)
                 
-                if self.project_manager.project.has_video():
-                    self.video_player.load_video(Path(self.project_manager.project.video_path))
-                
-                self._update_title()
-                self._update_ui_state()
-                self.statusBar().showMessage("Projekt megnyitva", 3000)
-            except Exception as e:
-                QMessageBox.critical(self, "Hiba", f"Nem sikerült megnyitni: {e}")
+        except Exception as e:
+            QMessageBox.critical(self, "Hiba", f"Nem sikerült megnyitni: {e}")
+    
+    def open_project_file(self, file_path: str):
+        """
+        Projekt megnyitása fájl elérési úttal (pl. parancssorból).
+        
+        Args:
+            file_path: Projekt fájl elérési útja
+        """
+        if not self._check_save_changes():
+            return
+        
+        if Path(file_path).exists():
+            self._do_open_project(file_path)
+        else:
+            QMessageBox.critical(self, "Hiba", f"A fájl nem található:\n{file_path}")
     
     @Slot()
     def _on_save_project(self) -> bool:
@@ -754,6 +912,9 @@ class MainWindow(QMainWindow):
                 count, errors = self.project_manager.import_srt(Path(file_path))
                 self._refresh_cue_list()
                 self._update_statistics()
+                
+                # Lock source text after import
+                self.cue_editor.set_source_locked(True)
                 
                 msg = f"{count} felirat importálva"
                 if errors:
@@ -886,6 +1047,14 @@ class MainWindow(QMainWindow):
                 custom_colors = dialog.get_custom_colors()
                 if custom_colors:
                     self.theme_manager.set_custom_colors(custom_colors)
+                    # Egyedi színek mentése
+                    self.settings_manager.custom_theme_colors = {
+                        "primary": custom_colors.primary,
+                        "background": custom_colors.background,
+                        "surface": custom_colors.surface,
+                        "foreground": custom_colors.foreground,
+                    }
+                    self.settings_manager.save_settings()
             else:
                 self.theme_manager.set_theme(theme_type)
             
@@ -919,11 +1088,20 @@ class MainWindow(QMainWindow):
         if not self.project_manager.is_open:
             return
         
-        cue = self.project_manager.add_new_cue()
+        # Try to get current video position for new cue timing
+        video_position_ms = None
+        if self.video_player.player.hasVideo():
+            video_position_ms = self.video_player.player.position()
+        
+        cue = self.project_manager.add_new_cue(time_in_ms=video_position_ms)
         self._refresh_cue_list()
         self.cue_list.select_cue(cue.id)
         self._update_title()
         self._update_statistics()
+        
+        # Unlock source text for new cue
+        self.cue_editor.set_source_locked(False)
+        
         self.statusBar().showMessage("Új sor hozzáadva", 2000)
     
     @Slot()
@@ -999,11 +1177,29 @@ class MainWindow(QMainWindow):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            self.project_manager.delete_cue(cue_id)
-            self._refresh_cue_list()
-            self._update_title()
-            self._update_statistics()
-            self.statusBar().showMessage("Sor törölve", 2000)
+            # Save cue data for undo
+            cue = self.project_manager.get_cue(cue_id)
+            if cue:
+                cue_data = {
+                    'id': cue.id,
+                    'project_id': cue.project_id,
+                    'cue_index': cue.cue_index,
+                    'time_in_ms': cue.time_in_ms,
+                    'time_out_ms': cue.time_out_ms,
+                    'source_text': cue.source_text,
+                    'translated_text': cue.translated_text,
+                    'character_name': cue.character_name,
+                    'notes': cue.notes,
+                    'sfx_notes': cue.sfx_notes,
+                    'status': cue.status.value,
+                    'lip_sync_ratio': cue.lip_sync_ratio,
+                }
+                
+                # Create and push undo command
+                cmd = DeleteCueCommand(self, cue_data)
+                self._undo_stack.push(cmd)
+                
+                self.statusBar().showMessage("Sor törölve (Ctrl+Z: visszavonás)", 3000)
     
     @Slot()
     def _on_edit_timing(self):
@@ -1110,6 +1306,10 @@ class MainWindow(QMainWindow):
             self.comments_panel.set_cue(cue, self.project_manager.db)
             self.video_player.seek_to(cue.time_in_ms)
             
+            # Set subtitle for fullscreen video
+            subtitle_text = cue.translated_text if cue.translated_text else cue.source_text
+            self.video_player.set_subtitle(subtitle_text)
+            
             # Plugin értesítés
             self._notify_plugins_cue_selected(cue)
     
@@ -1168,3 +1368,30 @@ class MainWindow(QMainWindow):
         
         # Ha nincs több, maradunk az utolsón
         self.statusBar().showMessage("Utolsó sor", 2000)
+    
+    @Slot()
+    def _on_goto_next_cue(self):
+        """Navigáció a következő sorra (Ctrl+Down)."""
+        self._goto_next_cue()
+    
+    @Slot()
+    def _on_goto_prev_cue(self):
+        """Navigáció az előző sorra (Ctrl+Up)."""
+        if not self.project_manager.is_open:
+            return
+        
+        current_index = self.cue_list.get_current_index()
+        cues = self.project_manager.get_cues()
+        
+        # Keressük az előző cue-t (visszafelé)
+        prev_cue = None
+        for cue in cues:
+            if cue.cue_index < current_index:
+                prev_cue = cue
+            else:
+                break
+        
+        if prev_cue:
+            self.cue_list.select_cue(prev_cue.id)
+        else:
+            self.statusBar().showMessage("Első sor", 2000)

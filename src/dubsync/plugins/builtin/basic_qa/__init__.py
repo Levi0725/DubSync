@@ -169,7 +169,7 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
             id="builtin.qa.basic",
             name="Alapvető QA",
             version="1.1.0",
-            author="Levi0725",
+            author="Levente Kulacsy",
             description="Alapvető minőségellenőrzési szabályok",
             plugin_type=PluginType.QA,
             icon="🔍",

@@ -165,8 +165,10 @@ class CueEditorWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         
-        # Header with time info
-        header_layout = QHBoxLayout()
+        # Header with time info - always visible
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
         
         self.index_label = QLabel("#-")
         self.index_label.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -191,13 +193,28 @@ class CueEditorWidget(QWidget):
         header_layout.addWidget(QLabel("Státusz:"))
         header_layout.addWidget(self.status_combo)
         
-        layout.addLayout(header_layout)
+        # Collapse button
+        self.collapse_btn = QPushButton()
+        self.collapse_btn.setText("▼")
+        self.collapse_btn.setToolTip("Szerkesztő összecsukása/kinyitása")
+        self.collapse_btn.setFixedSize(28, 28)
+        self.collapse_btn.setCheckable(True)
+        self.collapse_btn.setStyleSheet("QPushButton { font-size: 12px; }")
+        self.collapse_btn.clicked.connect(self._toggle_collapse)
+        header_layout.addWidget(self.collapse_btn)
+        
+        layout.addWidget(header_widget)
         
         # Separator
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
         layout.addWidget(line)
+        
+        # Collapsible content container
+        self.content_widget = QWidget()
+        content_main_layout = QVBoxLayout(self.content_widget)
+        content_main_layout.setContentsMargins(0, 0, 0, 0)
         
         # Main content area
         content_layout = QHBoxLayout()
@@ -211,16 +228,27 @@ class CueEditorWidget(QWidget):
         self.character_edit = QLineEdit()
         self.character_edit.setPlaceholderText("Karakter neve...")
         char_layout.addWidget(self.character_edit)
+        
+        # Source lock button
+        self.source_lock_btn = QPushButton()
+        self.source_lock_btn.setText("🔒")
+        self.source_lock_btn.setToolTip("Forrásszöveg zárolása/feloldása")
+        self.source_lock_btn.setFixedSize(28, 28)
+        self.source_lock_btn.setCheckable(True)
+        self.source_lock_btn.setChecked(True)  # Default: locked
+        self.source_lock_btn.setStyleSheet("QPushButton { font-size: 14px; }")
+        self.source_lock_btn.clicked.connect(self._on_source_lock_toggled)
+        char_layout.addWidget(self.source_lock_btn)
+        
         left_layout.addLayout(char_layout)
         
-        # Source text (read-only)
+        # Source text (lockable)
         left_layout.addWidget(QLabel("Forrás szöveg:"))
         self.source_text = QTextEdit()
         self.source_text.setReadOnly(True)
         self.source_text.setMaximumHeight(80)
-        self.source_text.setStyleSheet(
-            "background-color: #f5f5f5; color: #666;"
-        )
+        self._source_locked = True
+        self._update_source_text_style()
         left_layout.addWidget(self.source_text)
         
         # Translated text
@@ -282,7 +310,7 @@ class CueEditorWidget(QWidget):
         
         content_layout.addLayout(right_layout, 1)
         
-        layout.addLayout(content_layout)
+        content_main_layout.addLayout(content_layout)
         
         # Bottom buttons
         button_layout = QHBoxLayout()
@@ -320,7 +348,13 @@ class CueEditorWidget(QWidget):
         )
         button_layout.addWidget(self.revision_btn)
         
-        layout.addLayout(button_layout)
+        content_main_layout.addLayout(button_layout)
+        
+        # Add content widget to main layout
+        layout.addWidget(self.content_widget)
+        
+        # Collapsed state
+        self._collapsed = False
     
     def _connect_signals(self):
         """Signal kapcsolatok."""
@@ -328,12 +362,68 @@ class CueEditorWidget(QWidget):
         self.character_edit.textChanged.connect(self._mark_dirty)
         self.notes_edit.textChanged.connect(self._mark_dirty)
         self.sfx_edit.textChanged.connect(self._mark_dirty)
+        self.source_text.textChanged.connect(self._mark_dirty)
         self.status_combo.currentIndexChanged.connect(self._on_status_changed)
         
         self.save_btn.clicked.connect(self._on_save)
         self.reset_btn.clicked.connect(self._on_reset)
         self.approve_btn.clicked.connect(self._on_approve)
         self.revision_btn.clicked.connect(self._on_revision)
+    
+    @Slot()
+    def _toggle_collapse(self):
+        """Szerkesztő tartalom összecsukása/kinyitása."""
+        self._collapsed = self.collapse_btn.isChecked()
+        self.content_widget.setVisible(not self._collapsed)
+        self.collapse_btn.setText("▶" if self._collapsed else "▼")
+        
+        # Set maximum height when collapsed to make widget smaller
+        if self._collapsed:
+            self.setMaximumHeight(60)  # Just header height
+        else:
+            self.setMaximumHeight(16777215)  # Reset to default max
+    
+    @Slot()
+    def _on_source_lock_toggled(self):
+        """Forrásszöveg zárolás váltása."""
+        self._source_locked = self.source_lock_btn.isChecked()
+        self.source_text.setReadOnly(self._source_locked)
+        self._update_source_text_style()
+    
+    def _update_source_text_style(self):
+        """Forrásszöveg stílus frissítése a zárolás állapota alapján."""
+        from dubsync.ui.theme import ThemeManager
+        theme = ThemeManager()
+        colors = theme.colors
+        
+        if self._source_locked:
+            self.source_lock_btn.setText("🔒")
+            # Locked: slightly muted appearance
+            self.source_text.setStyleSheet(
+                f"background-color: {colors.surface}; color: {colors.foreground_muted};"
+            )
+        else:
+            self.source_lock_btn.setText("🔓")
+            # Unlocked: normal editable appearance
+            self.source_text.setStyleSheet(
+                f"background-color: {colors.input_background}; color: {colors.foreground};"
+            )
+    
+    def set_source_locked(self, locked: bool):
+        """
+        Forrásszöveg zárolásának beállítása.
+        
+        Args:
+            locked: True ha zárolva legyen
+        """
+        self._source_locked = locked
+        self.source_lock_btn.setChecked(locked)
+        self.source_text.setReadOnly(locked)
+        self._update_source_text_style()
+    
+    def apply_theme(self):
+        """Téma alkalmazása - hívd meg témaváltáskor."""
+        self._update_source_text_style()
     
     def _update_ui_state(self):
         """UI állapot frissítése."""
@@ -394,6 +484,7 @@ class CueEditorWidget(QWidget):
             return None
         
         self._cue.character_name = self.character_edit.text()
+        self._cue.source_text = self.source_text.toPlainText()  # Allow editing if unlocked
         self._cue.translated_text = self.translated_text.toPlainText()
         self._cue.notes = self.notes_edit.toPlainText()
         self._cue.sfx_notes = self.sfx_edit.toPlainText()

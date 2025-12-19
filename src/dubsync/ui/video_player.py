@@ -9,14 +9,108 @@ from typing import Optional
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider,
-    QLabel, QStyle, QSizePolicy, QFrame
+    QLabel, QStyle, QSizePolicy, QFrame, QStackedLayout
 )
 from PySide6.QtCore import Qt, Signal, Slot, QUrl, QTimer
-from PySide6.QtGui import QKeySequence
+from PySide6.QtGui import QKeySequence, QFont
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
 from dubsync.utils.time_utils import ms_to_timecode
+
+
+class SubtitleOverlay(QLabel):
+    """Felirat overlay widget a videó felett."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAlignment(Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignHCenter)
+        self.setStyleSheet("""
+            QLabel {
+                color: white;
+                background-color: rgba(0, 0, 0, 160);
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-size: 18px;
+                font-weight: bold;
+                margin: 20px;
+            }
+        """)
+        self.setWordWrap(True)
+        self.hide()
+
+
+class FullscreenVideoWidget(QWidget):
+    """Teljes képernyős videó ablak feliratokkal."""
+    
+    closed = Signal()
+    
+    def __init__(self, player: QMediaPlayer, parent=None):
+        super().__init__(parent, Qt.WindowType.Window)
+        self.setWindowTitle("DubSync - Videó")
+        self.setStyleSheet("background-color: black;")
+        
+        self._player = player
+        self._original_video_output = None
+        
+        # Layout
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Container for video and overlay
+        self.video_container = QWidget()
+        self.video_container.setStyleSheet("background-color: black;")
+        container_layout = QStackedLayout(self.video_container)
+        container_layout.setStackingMode(QStackedLayout.StackingMode.StackAll)
+        
+        # Video widget
+        self.video_widget = QVideoWidget()
+        container_layout.addWidget(self.video_widget)
+        
+        # Subtitle overlay
+        self.subtitle_label = SubtitleOverlay()
+        container_layout.addWidget(self.subtitle_label)
+        
+        layout.addWidget(self.video_container)
+        
+        # Hint label
+        hint_label = QLabel("ESC - Kilépés | Szóköz - Lejátszás/Megállítás")
+        hint_label.setStyleSheet("color: #666; padding: 5px;")
+        hint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(hint_label)
+    
+    def show_fullscreen(self):
+        """Teljes képernyő megjelenítése."""
+        self._original_video_output = self._player.videoOutput()
+        self._player.setVideoOutput(self.video_widget)
+        self.showFullScreen()
+    
+    def close_fullscreen(self):
+        """Teljes képernyő bezárása."""
+        if self._original_video_output:
+            self._player.setVideoOutput(self._original_video_output)
+        self.close()
+        self.closed.emit()
+    
+    def set_subtitle(self, text: str):
+        """Felirat beállítása."""
+        if text:
+            self.subtitle_label.setText(text)
+            self.subtitle_label.show()
+        else:
+            self.subtitle_label.hide()
+    
+    def keyPressEvent(self, event):
+        """Billentyű kezelés."""
+        if event.key() == Qt.Key.Key_Escape:
+            self.close_fullscreen()
+        elif event.key() == Qt.Key.Key_Space:
+            if self._player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+                self._player.pause()
+            else:
+                self._player.play()
+        else:
+            super().keyPressEvent(event)
 
 
 class VideoPlayerWidget(QWidget):
@@ -185,6 +279,13 @@ class VideoPlayerWidget(QWidget):
         self.loop_btn.setToolTip("Cue ismétlése")
         buttons_layout.addWidget(self.loop_btn)
         
+        # Fullscreen button
+        self.fullscreen_btn = QPushButton("⛶")
+        self.fullscreen_btn.setMinimumSize(44, 32)
+        self.fullscreen_btn.setStyleSheet(self._get_button_style())
+        self.fullscreen_btn.setToolTip("Teljes képernyő (F)")
+        buttons_layout.addWidget(self.fullscreen_btn)
+        
         controls_layout.addLayout(buttons_layout)
         
         layout.addWidget(controls_frame)
@@ -270,6 +371,13 @@ class VideoPlayerWidget(QWidget):
         self.progress_slider.sliderPressed.connect(self._on_slider_pressed)
         self.progress_slider.sliderReleased.connect(self._on_slider_released)
         self.progress_slider.sliderMoved.connect(self._on_slider_moved)
+        
+        # Fullscreen
+        self.fullscreen_btn.clicked.connect(self._toggle_fullscreen)
+        
+        # Fullscreen widget (lazy init)
+        self._fullscreen_widget: Optional[FullscreenVideoWidget] = None
+        self._current_subtitle_text = ""
     
     def load_video(self, video_path: Path):
         """
@@ -438,5 +546,36 @@ class VideoPlayerWidget(QWidget):
             self._step_frame(1)
         elif key == Qt.Key.Key_Home:
             self.seek_to(0)
+        elif key == Qt.Key.Key_F:
+            self._toggle_fullscreen()
         else:
             super().keyPressEvent(event)
+    
+    def _toggle_fullscreen(self):
+        """Teljes képernyő váltása."""
+        if self._fullscreen_widget is None:
+            self._fullscreen_widget = FullscreenVideoWidget(self.player, self)
+            self._fullscreen_widget.closed.connect(self._on_fullscreen_closed)
+        
+        if self._fullscreen_widget.isVisible():
+            self._fullscreen_widget.close_fullscreen()
+        else:
+            self._fullscreen_widget.show_fullscreen()
+            # Set current subtitle
+            if self._current_subtitle_text:
+                self._fullscreen_widget.set_subtitle(self._current_subtitle_text)
+    
+    def _on_fullscreen_closed(self):
+        """Teljes képernyő bezárva."""
+        pass  # Video output already restored by close_fullscreen
+    
+    def set_subtitle(self, text: str):
+        """
+        Felirat beállítása (fullscreen módhoz).
+        
+        Args:
+            text: Felirat szöveg
+        """
+        self._current_subtitle_text = text
+        if self._fullscreen_widget and self._fullscreen_widget.isVisible():
+            self._fullscreen_widget.set_subtitle(text)
