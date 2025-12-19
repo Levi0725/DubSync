@@ -1,36 +1,39 @@
-# Plugin Fejlesztési Útmutató
+# Plugin Development Guide
 
-Ez a dokumentum bemutatja, hogyan készíthetsz saját plugin-eket a DubSync alkalmazáshoz.
+> 🇭🇺 [Magyar verzió / Hungarian version](PLUGIN_DEVELOPMENT_HU.md)
 
-## Áttekintés
+This document explains how to create custom plugins for the DubSync application.
 
-A DubSync plugin rendszere hat fő plugin típust támogat:
+## Overview
 
-1. **Export Plugin-ek**: Új export formátumok hozzáadása
-2. **QA Plugin-ek**: Minőségellenőrzési szabályok
-3. **UI Plugin-ek**: Új ablakok, panelek, menük hozzáadása
-4. **Service Plugin-ek**: Háttérszolgáltatások (API-k, fordítók)
-5. **Translation Plugin-ek**: Fordító szolgáltatások
-6. **Import Plugin-ek**: Egyedi formátumok importálása
+The DubSync plugin system supports seven main plugin types:
 
-## Fontos tudnivalók
+1. **Export Plugins**: Add new export formats
+2. **QA Plugins**: Quality assurance rules
+3. **UI Plugins**: Add new windows, panels, menus
+4. **Service Plugins**: Background services (APIs, translators)
+5. **Translation Plugins**: Translation services
+6. **Import Plugins**: Import custom formats
+7. **Language Plugins**: Add new interface languages
 
-- **A pluginok alapból le vannak tiltva** - A felhasználónak kézzel kell engedélyezni
-- **Újraindítás szükséges** - A plugin változások csak újraindítás után lépnek érvénybe
-- **README.md kötelező** - Minden pluginnak legyen részletes leírása
+## Important Notes
 
-## Alap követelmények
+- **Plugins are disabled by default** - Users must manually enable them
+- **Restart required** - Plugin changes only take effect after restart
+- **README.md required** - Every plugin must have detailed documentation
 
-### Plugin fájl struktúra
+## Basic Requirements
+
+### Plugin File Structure
 
 ```
 my_plugin/
-├── __init__.py       # Plugin osztály és export
-├── README.md         # Részletes dokumentáció (kötelező)
-└── requirements.txt  # Függőségek (opcionális)
+├── __init__.py       # Plugin class and export
+├── README.md         # Detailed documentation (required)
+└── requirements.txt  # Dependencies (optional)
 ```
 
-### Minimális plugin
+### Minimal Plugin
 
 ```python
 # my_plugin/__init__.py
@@ -44,22 +47,22 @@ class MyPlugin(PluginInterface):
             id="my_plugin",
             name="My Plugin",
             version="1.0.0",
-            author="A neved",
-            description="Plugin rövid leírása",
+            author="Your Name",
+            description="Short plugin description",
             plugin_type=PluginType.TOOL,
             icon="🔧",
             readme_path="README.md"
         )
 
-# Plugin export (kötelező!)
+# Plugin export (required!)
 Plugin = MyPlugin
 ```
 
 ---
 
-## PluginInfo dataclass
+## PluginInfo Dataclass
 
-Minden pluginnak kötelező megadni az `info` property-t:
+Every plugin must provide the `info` property:
 
 ```python
 from dataclasses import dataclass, field
@@ -67,32 +70,32 @@ from typing import List
 
 @dataclass
 class PluginDependency:
-    """Plugin függőség leírása."""
-    package: str          # pip csomag neve
-    version: str = ""     # Verzió specifikáció
+    """Plugin dependency description."""
+    package: str          # pip package name
+    version: str = ""     # Version specification
     optional: bool = False
 
 @dataclass
 class PluginInfo:
-    id: str                                    # Egyedi azonosító
-    name: str                                  # Megjelenített név
-    version: str                               # Verzió (SemVer)
-    author: str                                # Szerző neve
-    description: str                           # Rövid leírás
-    plugin_type: PluginType                    # Plugin típus
+    id: str                                    # Unique identifier
+    name: str                                  # Display name
+    version: str                               # Version (SemVer)
+    author: str                                # Author name
+    description: str                           # Short description
+    plugin_type: PluginType                    # Plugin type
     dependencies: List[PluginDependency] = field(default_factory=list)
-    homepage: str = ""                         # Projekt URL
-    readme_path: str = ""                      # README.md relatív út
-    icon: str = ""                             # Emoji vagy ikon
+    homepage: str = ""                         # Project URL
+    readme_path: str = ""                      # README.md relative path
+    icon: str = ""                             # Emoji or icon
 ```
 
 ---
 
-## Plugin típusok
+## Plugin Types
 
 ### 1. Export Plugin
 
-Új export formátumok hozzáadása.
+Add new export formats.
 
 ```python
 from dubsync.plugins.base import ExportPlugin, PluginInfo, PluginType
@@ -126,7 +129,7 @@ Plugin = JSONExportPlugin
 
 ### 2. QA Plugin
 
-Minőségellenőrzési szabályok.
+Quality assurance rules.
 
 ```python
 from dubsync.plugins.base import QAPlugin, PluginInfo, PluginType
@@ -159,9 +162,9 @@ class LengthCheckPlugin(QAPlugin):
 Plugin = LengthCheckPlugin
 ```
 
-### 3. UI Plugin ⭐ ÚJ
+### 3. UI Plugin
 
-Saját ablakok, panelek, menük hozzáadása.
+Add custom windows, panels, menus.
 
 ```python
 from PySide6.QtWidgets import QDockWidget, QWidget, QVBoxLayout, QLabel
@@ -182,7 +185,7 @@ class MyDockPlugin(UIPlugin):
         )
     
     def create_dock_widget(self) -> QDockWidget:
-        """Létrehoz egy új dokkolható panelt."""
+        """Create a new dockable panel."""
         dock = QDockWidget("My Panel")
         widget = QWidget()
         layout = QVBoxLayout(widget)
@@ -191,7 +194,7 @@ class MyDockPlugin(UIPlugin):
         return dock
     
     def create_menu_items(self) -> list[QAction]:
-        """Menü elemek hozzáadása."""
+        """Add menu items."""
         action = QAction("My Action", self._main_window)
         action.triggered.connect(self._on_action)
         return [action]
@@ -200,34 +203,34 @@ class MyDockPlugin(UIPlugin):
         print("Menu action triggered!")
     
     def on_cue_selected(self, cue) -> None:
-        """Meghívódik amikor cue-t választanak ki."""
+        """Called when a cue is selected."""
         print(f"Selected cue: {cue.cue_index}")
     
     def on_project_opened(self, project) -> None:
-        """Meghívódik projekt megnyitásakor."""
+        """Called when project is opened."""
         print(f"Project opened: {project.title}")
     
     def on_project_closed(self) -> None:
-        """Meghívódik projekt bezárásakor."""
+        """Called when project is closed."""
         print("Project closed")
 
 Plugin = MyDockPlugin
 ```
 
-#### UIPlugin interfész
+#### UIPlugin Interface
 
-| Metódus | Leírás |
-|---------|--------|
-| `create_dock_widget()` | Dokkolható panel létrehozása |
-| `create_menu_items()` | QAction lista menühöz |
-| `create_toolbar_items()` | QAction lista eszköztárhoz |
-| `on_cue_selected(cue)` | Cue kiválasztás esemény |
-| `on_project_opened(project)` | Projekt megnyitás esemény |
-| `on_project_closed()` | Projekt bezárás esemény |
+| Method | Description |
+|--------|-------------|
+| `create_dock_widget()` | Create dockable panel |
+| `create_menu_items()` | QAction list for menu |
+| `create_toolbar_items()` | QAction list for toolbar |
+| `on_cue_selected(cue)` | Cue selection event |
+| `on_project_opened(project)` | Project open event |
+| `on_project_closed()` | Project close event |
 
-### 4. Service Plugin ⭐ ÚJ
+### 4. Service Plugin
 
-Háttérszolgáltatások (API-k, processzorok).
+Background services (APIs, processors).
 
 ```python
 from dubsync.plugins.base import ServicePlugin, PluginInfo, PluginType
@@ -246,24 +249,24 @@ class SpellCheckService(ServicePlugin):
         )
     
     def start(self) -> None:
-        """Szolgáltatás indítása."""
+        """Start service."""
         print("Spell check service started")
     
     def stop(self) -> None:
-        """Szolgáltatás leállítása."""
+        """Stop service."""
         print("Spell check service stopped")
     
     def check_spelling(self, text: str) -> list[str]:
-        """Egyedi metódus a spell check-hez."""
-        # Implementáció...
+        """Custom method for spell checking."""
+        # Implementation...
         return []
 
 Plugin = SpellCheckService
 ```
 
-### 5. Translation Plugin ⭐ ÚJ
+### 5. Translation Plugin
 
-Fordító szolgáltatások implementálása.
+Implement translation services.
 
 ```python
 from dubsync.plugins.base import TranslationPlugin, PluginInfo, PluginType, PluginDependency
@@ -285,14 +288,14 @@ class DeepLTranslatorPlugin(TranslationPlugin):
         )
     
     def translate(self, text: str, source_lang: str, target_lang: str) -> str:
-        """Szöveg lefordítása."""
+        """Translate text."""
         import deepl
         translator = deepl.Translator("YOUR_API_KEY")
         result = translator.translate_text(text, target_lang=target_lang)
         return result.text
     
     def get_supported_languages(self) -> list[tuple]:
-        """Támogatott nyelvek listája."""
+        """List of supported languages."""
         return [
             ("en", "English"),
             ("hu", "Hungarian"),
@@ -305,166 +308,136 @@ Plugin = DeepLTranslatorPlugin
 
 ---
 
-## Teljes példa: Argos Translator Plugin
+## Internationalization (i18n)
 
-Ez a plugin bemutatja az UIPlugin és TranslationPlugin kombinálását:
+DubSync provides a built-in internationalization system that plugins can use to support multiple languages. **Plugins must have their own `locales/` directory** - they cannot modify the core application's locale files.
+
+### Plugin Locale File Structure
+
+```
+my_plugin/
+├── __init__.py       # Plugin class
+├── README.md         # Documentation
+├── requirements.txt  # Dependencies (optional)
+└── locales/          # Plugin translations (required for i18n)
+    ├── en.json       # English translations (required - fallback)
+    └── hu.json       # Hungarian translations
+```
+
+### Creating Locale Files
+
+Create JSON files in your plugin's `locales/` directory:
+
+**locales/en.json** (English - required as fallback):
+```json
+{
+  "name": "My Plugin",
+  "description": "Plugin description",
+  "panel_title": "🔧 My Plugin Panel",
+  "welcome_message": "Welcome to My Plugin!",
+  "action_button": "Do Something",
+  "action_tooltip": "Click to perform action",
+  "status_ready": "✅ Ready",
+  "status_error": "❌ Error: {error}",
+  "menu_item": "🔧 My Plugin"
+}
+```
+
+**locales/hu.json** (Hungarian):
+```json
+{
+  "name": "Saját Plugin",
+  "description": "Plugin leírása",
+  "panel_title": "🔧 Saját Plugin Panel",
+  "welcome_message": "Üdvözöl a Saját Plugin!",
+  "action_button": "Művelet",
+  "action_tooltip": "Kattints a művelet végrehajtásához",
+  "status_ready": "✅ Kész",
+  "status_error": "❌ Hiba: {error}",
+  "menu_item": "🔧 Saját Plugin"
+}
+```
+
+### Using the Translation Function
 
 ```python
-# translator/__init__.py
+from dubsync.i18n import t
 
-from typing import Optional, List
-from PySide6.QtCore import Qt, Signal, QThread
-from PySide6.QtWidgets import (
-    QDockWidget, QWidget, QVBoxLayout, QHBoxLayout,
-    QTextEdit, QPushButton, QComboBox, QLabel
-)
-from PySide6.QtGui import QAction
-
-from dubsync.plugins.base import (
-    UIPlugin, TranslationPlugin, PluginInfo, 
-    PluginType, PluginDependency
-)
-
-
-class TranslatorWorker(QThread):
-    """Háttérszál a fordításhoz."""
-    finished = Signal(str)
-    error = Signal(str)
-    
-    def __init__(self, plugin, text, src, tgt):
-        super().__init__()
-        self.plugin = plugin
-        self.text = text
-        self.src = src
-        self.tgt = tgt
-    
-    def run(self):
-        try:
-            result = self.plugin.translate(self.text, self.src, self.tgt)
-            self.finished.emit(result)
-        except Exception as e:
-            self.error.emit(str(e))
-
-
-class TranslatorWidget(QWidget):
-    """Fordító panel UI."""
-    insert_translation = Signal(str)
-    
-    def __init__(self, plugin):
-        super().__init__()
-        self.plugin = plugin
-        self._setup_ui()
-    
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        
-        # Nyelv választók
-        lang_layout = QHBoxLayout()
-        self.src_combo = QComboBox()
-        self.tgt_combo = QComboBox()
-        
-        for code, name in self.plugin.get_supported_languages():
-            self.src_combo.addItem(name, code)
-            self.tgt_combo.addItem(name, code)
-        
-        lang_layout.addWidget(QLabel("Forrás:"))
-        lang_layout.addWidget(self.src_combo)
-        lang_layout.addWidget(QLabel("Cél:"))
-        lang_layout.addWidget(self.tgt_combo)
-        layout.addLayout(lang_layout)
-        
-        # Szöveg mezők
-        self.source_text = QTextEdit()
-        self.source_text.setPlaceholderText("Forrás szöveg...")
-        layout.addWidget(self.source_text)
-        
-        self.target_text = QTextEdit()
-        self.target_text.setPlaceholderText("Lefordított szöveg...")
-        self.target_text.setReadOnly(True)
-        layout.addWidget(self.target_text)
-        
-        # Gombok
-        btn_layout = QHBoxLayout()
-        self.translate_btn = QPushButton("Fordítás")
-        self.translate_btn.clicked.connect(self._translate)
-        self.insert_btn = QPushButton("Beszúrás")
-        self.insert_btn.clicked.connect(self._insert)
-        btn_layout.addWidget(self.translate_btn)
-        btn_layout.addWidget(self.insert_btn)
-        layout.addLayout(btn_layout)
-    
-    def _translate(self):
-        text = self.source_text.toPlainText()
-        if not text:
-            return
-        
-        src = self.src_combo.currentData()
-        tgt = self.tgt_combo.currentData()
-        
-        self.worker = TranslatorWorker(self.plugin, text, src, tgt)
-        self.worker.finished.connect(self._on_translated)
-        self.worker.start()
-    
-    def _on_translated(self, result):
-        self.target_text.setPlainText(result)
-    
-    def _insert(self):
-        text = self.target_text.toPlainText()
-        if text:
-            self.insert_translation.emit(text)
-
-
-class ArgosTranslatorPlugin(UIPlugin, TranslationPlugin):
-    """Argos Translate plugin UI-val és fordítással."""
-    
-    def __init__(self):
-        super().__init__()
-        self._widget: Optional[TranslatorWidget] = None
-        self._installed_languages = set()
-    
+class MyPlugin(UIPlugin):
     @property
     def info(self) -> PluginInfo:
         return PluginInfo(
-            id="argos_translator",
-            name="Argos Fordító",
-            version="1.0.0",
-            author="Levente Kulacsy - Argos Translate Team",
-            description="Offline fordítás Argos Translate-tel",
-            plugin_type=PluginType.UI,
-            dependencies=[
-                PluginDependency("argostranslate", ">=1.9.0")
-            ],
-            homepage="https://github.com/argosopentech/argos-translate",
-            readme_path="README.md",
-            icon="🌐"
+            id="my_plugin",  # This ID is used in translation keys
+            # ...
         )
     
     def create_dock_widget(self) -> QDockWidget:
-        dock = QDockWidget("🌐 Fordító")
-        self._widget = TranslatorWidget(self)
-        dock.setWidget(self._widget)
+        # Use t() with "plugins.{plugin_id}.{key}" pattern
+        dock = QDockWidget(t("plugins.my_plugin.panel_title"))
+        
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # All UI strings should use t()
+        label = QLabel(t("plugins.my_plugin.welcome_message"))
+        button = QPushButton(t("plugins.my_plugin.action_button"))
+        button.setToolTip(t("plugins.my_plugin.action_tooltip"))
+        
+        layout.addWidget(label)
+        layout.addWidget(button)
+        dock.setWidget(widget)
         return dock
-    
-    def translate(self, text: str, source_lang: str, target_lang: str) -> str:
-        import argostranslate.translate
-        return argostranslate.translate.translate(text, source_lang, target_lang)
-    
-    def get_supported_languages(self) -> List[tuple]:
-        return [("en", "English"), ("hu", "Hungarian")]
-    
-    def on_cue_selected(self, cue) -> None:
-        if self._widget and cue.source_text:
-            self._widget.source_text.setPlainText(cue.source_text)
-
-
-Plugin = ArgosTranslatorPlugin
 ```
+
+### Automatic Locale Loading
+
+Plugin locales are **automatically loaded** when the plugin initializes. The base `PluginInterface.initialize()` method handles this. If you override `initialize()`, make sure to call `super().initialize()`:
+
+```python
+def initialize(self) -> bool:
+    """Plugin initialization."""
+    super().initialize()  # This loads locale files from locales/
+    # Your custom initialization...
+    return True
+```
+
+### Translation Key Naming Convention
+
+| Key Pattern | Usage |
+|-------------|-------|
+| `plugins.{id}.name` | Plugin display name |
+| `plugins.{id}.description` | Plugin description |
+| `plugins.{id}.panel` | Dock panel title |
+| `plugins.{id}.menu_*` | Menu item labels |
+| `plugins.{id}.status_*` | Status messages |
+| `plugins.{id}.*_btn` | Button labels |
+| `plugins.{id}.*_tooltip` | Tooltip texts |
+| `plugins.{id}.*_placeholder` | Input placeholders |
+
+### Parameterized Translations
+
+Use Python's `.format()` for dynamic values:
+
+```python
+# In locale file:
+# "items_found": "Found {count} items"
+# "error_message": "Error: {error}"
+
+label.setText(t("plugins.my_plugin.items_found").format(count=5))
+status.setText(t("plugins.my_plugin.error_message").format(error=str(e)))
+```
+
+### Supported Languages
+
+Currently supported languages:
+- **English (en)** - Default/fallback language
+- **Hungarian (hu)**
 
 ---
 
-## Plugin beállítások
+## Plugin Settings
 
-A pluginok saját beállításokat tárolhatnak a SettingsManager-en keresztül:
+Plugins can store their own settings through the SettingsManager:
 
 ```python
 from dubsync.services.settings_manager import SettingsManager
@@ -475,11 +448,11 @@ class MyConfigurablePlugin(UIPlugin):
         self.settings = SettingsManager()
     
     def get_settings(self) -> dict:
-        """Plugin beállítások lekérése."""
+        """Get plugin settings."""
         return self.settings.get_plugin_settings(self.info.id)
     
     def save_settings(self, settings: dict):
-        """Plugin beállítások mentése."""
+        """Save plugin settings."""
         self.settings.set_plugin_settings(self.info.id, settings)
     
     @property
@@ -487,24 +460,24 @@ class MyConfigurablePlugin(UIPlugin):
         return self.get_settings().get("api_key", "")
 ```
 
-### Beállítások megjelenítése
+### Displaying Settings
 
-A pluginok definiálhatnak egyedi beállításokat:
+Plugins can define custom settings:
 
 ```python
 def get_settings_schema(self) -> dict:
-    """JSON Schema a beállítások UI-hoz."""
+    """JSON Schema for settings UI."""
     return {
         "type": "object",
         "properties": {
             "api_key": {
                 "type": "string",
                 "title": "API Key",
-                "description": "DeepL API kulcs"
+                "description": "Your API key"
             },
             "max_chars": {
                 "type": "integer",
-                "title": "Maximum karakterek",
+                "title": "Maximum characters",
                 "default": 5000
             }
         }
@@ -513,11 +486,11 @@ def get_settings_schema(self) -> dict:
 
 ---
 
-## Plugin regisztráció
+## Plugin Registration
 
-### Automatikus betöltés
+### Automatic Loading
 
-Helyezd a plugint a következő helyre:
+Place your plugin in the following location:
 
 **Windows:** `src\dubsync\plugins\`  
 
@@ -525,10 +498,10 @@ Helyezd a plugint a következő helyre:
 plugins/
 └── my_plugin/
     ├── __init__.py    # Plugin = MyPlugin
-    └── README.md      # Kötelező!
+    └── README.md      # Required!
 ```
 
-### Programatikus regisztráció
+### Programmatic Registration
 
 ```python
 from dubsync.plugins.registry import PluginRegistry
@@ -541,51 +514,51 @@ registry.register(plugin)
 
 ---
 
-## Issue severity szintek
+## Issue Severity Levels
 
-| Severity | Jelentés | UI megjelenés |
-|----------|----------|---------------|
-| `error` | Kritikus hiba | 🔴 Piros |
-| `warning` | Figyelmeztetés | 🟡 Sárga |
-| `info` | Információ | 🔵 Kék |
+| Severity | Meaning | UI Display |
+|----------|---------|------------|
+| `error` | Critical error | 🔴 Red |
+| `warning` | Warning | 🟡 Yellow |
+| `info` | Information | 🔵 Blue |
 
 ---
 
-## README.md követelmények
+## README.md Requirements
 
-Minden pluginnak **kötelező** tartalmaznia egy `README.md` fájlt:
+Every plugin **must** contain a `README.md` file:
 
 ```markdown
-# Plugin Neve
+# Plugin Name
 
-Rövid leírás a pluginról.
+Short description of the plugin.
 
-## Telepítés
+## Installation
 
-Szükséges függőségek telepítése:
+Install required dependencies:
 \`\`\`bash
 pip install package_name
 \`\`\`
 
-## Használat
+## Usage
 
-A plugin használatának leírása.
+Description of how to use the plugin.
 
-## Beállítások
+## Settings
 
-| Beállítás | Típus | Leírás |
-|-----------|-------|--------|
-| api_key | string | API kulcs |
+| Setting | Type | Description |
+|---------|------|-------------|
+| api_key | string | API key |
 
 ## Changelog
 
 ### 1.0.0
-- Első kiadás
+- Initial release
 ```
 
 ---
 
-## Tesztelés
+## Testing
 
 ```python
 import pytest
@@ -601,7 +574,7 @@ class TestMyPlugin:
         assert plugin.info.version == "1.0.0"
     
     def test_functionality(self, plugin):
-        # Plugin specifikus tesztek
+        # Plugin-specific tests
         pass
 ```
 
@@ -609,28 +582,32 @@ class TestMyPlugin:
 
 ## Best Practices
 
-1. **Egyedi ID**: Használj egyedi, leíró plugin ID-t
-2. **Verziókezelés**: SemVer formátum (1.0.0)
-3. **Függőségek**: Deklaráld a PluginDependency-ben
-4. **README.md**: Részletes dokumentáció
-5. **Hibakezelés**: Megfelelő exception kezelés
-6. **Aszinkron műveletek**: QThread használata hosszú műveletekhez
-7. **Lokalizáció**: Magyar nyelvű üzenetek
+1. **Unique ID**: Use a unique, descriptive plugin ID
+2. **Versioning**: Use SemVer format (1.0.0)
+3. **Dependencies**: Declare in PluginDependency
+4. **README.md**: Detailed documentation
+5. **Error handling**: Proper exception handling
+6. **Async operations**: Use QThread for long operations
+7. **Internationalization**: Use `t()` function for all UI strings
+8. **Locale keys**: Follow naming convention `plugins.{plugin_id}.{key}`
+9. **Both languages**: Add translations to both `en.json` and `hu.json`
 
 ---
 
-## Beépített plugin példák
+## Built-in Plugin Examples
 
-| Plugin | Típus | Leírás |
-|--------|-------|--------|
-| [csv_export](../src/dubsync/plugins/builtin/csv_export.py) | Export | CSV exportálás |
-| [basic_qa](../src/dubsync/plugins/builtin/basic_qa.py) | QA | Alapvető ellenőrzések |
-| [translator](../src/dubsync/plugins/builtin/translator/) | UI + Service | Argos fordító |
+| Plugin | Type | Description |
+|--------|------|-------------|
+| [csv_export](../src/dubsync/plugins/builtin/csv_export/) | Export | CSV export |
+| [basic_qa](../src/dubsync/plugins/builtin/basic_qa/) | QA | Basic checks |
+| [glossary](../src/dubsync/plugins/builtin/glossary/) | UI | Translation glossary |
+| [translator](../src/dubsync/plugins/builtin/translator/) | UI + Service | Argos translator |
+| [spellchecker](../src/dubsync/plugins/builtin/spellchecker/) | UI | Spell checker |
 
 ---
 
-## Segítség
+## Help
 
-- **Dokumentáció**: [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Documentation**: [ARCHITECTURE.md](ARCHITECTURE.md)
 - **Issues**: GitHub Issues
-- **Példák**: `src/dubsync/plugins/builtin/`
+- **Examples**: `src/dubsync/plugins/builtin/`

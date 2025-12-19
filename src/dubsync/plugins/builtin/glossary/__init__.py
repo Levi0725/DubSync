@@ -20,6 +20,7 @@ from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QAction
 
 from dubsync.plugins.base import UIPlugin, PluginInfo, PluginType
+from dubsync.i18n import t
 
 
 class GlossaryEntry:
@@ -51,7 +52,7 @@ class GlossaryData:
     
     def __init__(self):
         self.entries: List[GlossaryEntry] = []
-        self.name: str = "Új szótár"
+        self.name: str = t("plugins.glossary.new_glossary")
         self.source_lang: str = "en"
         self.target_lang: str = "hu"
     
@@ -96,7 +97,7 @@ class GlossaryData:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'GlossaryData':
         glossary = cls()
-        glossary.name = data.get("name", "Importált szótár")
+        glossary.name = data.get("name", t("plugins.glossary.imported_glossary"))
         glossary.source_lang = data.get("source_lang", "en")
         glossary.target_lang = data.get("target_lang", "hu")
         for entry_data in data.get("entries", []):
@@ -123,7 +124,7 @@ class AddEditEntryDialog(QDialog):
     def __init__(self, entry: Optional[GlossaryEntry] = None, parent=None):
         super().__init__(parent)
         self.entry = entry
-        self.setWindowTitle("Bejegyzés szerkesztése" if entry else "Új bejegyzés")
+        self.setWindowTitle(t("plugins.glossary.edit_dialog_title") if entry else t("plugins.glossary.add_dialog_title"))
         self.setMinimumWidth(400)
         self._setup_ui()
         
@@ -137,25 +138,25 @@ class AddEditEntryDialog(QDialog):
         
         # Forrás szó
         source_layout = QHBoxLayout()
-        source_layout.addWidget(QLabel("Forrás (EN):"))
+        source_layout.addWidget(QLabel(t("plugins.glossary.source")))
         self.source_edit = QLineEdit()
-        self.source_edit.setPlaceholderText("Angol szó vagy kifejezés...")
+        self.source_edit.setPlaceholderText(t("plugins.glossary.source_placeholder"))
         source_layout.addWidget(self.source_edit)
         layout.addLayout(source_layout)
         
         # Cél szó
         target_layout = QHBoxLayout()
-        target_layout.addWidget(QLabel("Fordítás (HU):"))
+        target_layout.addWidget(QLabel(t("plugins.glossary.target")))
         self.target_edit = QLineEdit()
-        self.target_edit.setPlaceholderText("Magyar fordítás...")
+        self.target_edit.setPlaceholderText(t("plugins.glossary.target_placeholder"))
         target_layout.addWidget(self.target_edit)
         layout.addLayout(target_layout)
         
         # Megjegyzés
         notes_layout = QHBoxLayout()
-        notes_layout.addWidget(QLabel("Megjegyzés:"))
+        notes_layout.addWidget(QLabel(t("plugins.glossary.notes")))
         self.notes_edit = QLineEdit()
-        self.notes_edit.setPlaceholderText("Opcionális megjegyzés...")
+        self.notes_edit.setPlaceholderText(t("plugins.glossary.notes_placeholder"))
         notes_layout.addWidget(self.notes_edit)
         layout.addLayout(notes_layout)
         
@@ -186,7 +187,7 @@ class ImportExportDialog(QDialog):
         self.is_import = is_import
         self.selected_entries: List[GlossaryEntry] = []
         
-        self.setWindowTitle("Bejegyzések importálása" if is_import else "Bejegyzések exportálása")
+        self.setWindowTitle(t("plugins.glossary.import_dialog_title") if is_import else t("plugins.glossary.export_dialog_title"))
         self.setMinimumSize(500, 400)
         self._setup_ui()
     
@@ -195,18 +196,18 @@ class ImportExportDialog(QDialog):
         
         # Fejléc
         header = QLabel(
-            "Válaszd ki az importálandó bejegyzéseket:" if self.is_import 
-            else "Válaszd ki az exportálandó bejegyzéseket:"
+            t("plugins.glossary.import_dialog_header") if self.is_import 
+            else t("plugins.glossary.export_dialog_header")
         )
         layout.addWidget(header)
         
         # Gyors kiválasztás gombok
         btn_layout = QHBoxLayout()
-        select_all_btn = QPushButton("Összes kiválasztása")
+        select_all_btn = QPushButton(t("plugins.glossary.select_all"))
         select_all_btn.clicked.connect(self._select_all)
         btn_layout.addWidget(select_all_btn)
         
-        select_none_btn = QPushButton("Kiválasztás törlése")
+        select_none_btn = QPushButton(t("plugins.glossary.select_none"))
         select_none_btn.clicked.connect(self._select_none)
         btn_layout.addWidget(select_none_btn)
         
@@ -215,7 +216,12 @@ class ImportExportDialog(QDialog):
         
         # Bejegyzések listája
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["", "Forrás (EN)", "Fordítás (HU)", "Megjegyzés"])
+        self.tree.setHeaderLabels([
+            "", 
+            t("plugins.glossary.tree_source"), 
+            t("plugins.glossary.tree_target"), 
+            t("plugins.glossary.tree_notes")
+        ])
         self.tree.setColumnWidth(0, 30)
         self.tree.setColumnWidth(1, 150)
         self.tree.setColumnWidth(2, 150)
@@ -263,7 +269,7 @@ class ImportExportDialog(QDialog):
             1 for i in range(self.tree.topLevelItemCount())
             if self.tree.topLevelItem(i).checkState(0) == Qt.CheckState.Checked
         )
-        self.count_label.setText(f"{checked} / {self.tree.topLevelItemCount()} kiválasztva")
+        self.count_label.setText(t("plugins.glossary.selected_count", checked=checked, total=self.tree.topLevelItemCount()))
     
     def _on_accept(self):
         self.selected_entries = []
@@ -294,20 +300,20 @@ class GlossaryWidget(QWidget):
         layout.setSpacing(8)
         
         # Header
-        header = QLabel("📖 Szótár")
+        header = QLabel(t("plugins.glossary.header"))
         header.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(header)
         
         # Kereső
         search_layout = QHBoxLayout()
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("🔍 Keresés...")
+        self.search_edit.setPlaceholderText(t("plugins.glossary.search_placeholder"))
         self.search_edit.textChanged.connect(self._filter_entries)
         search_layout.addWidget(self.search_edit)
         layout.addLayout(search_layout)
         
         # Bejegyzések listája
-        entries_group = QGroupBox("Bejegyzések")
+        entries_group = QGroupBox(t("plugins.glossary.entries_group"))
         entries_layout = QVBoxLayout(entries_group)
         
         self.entries_list = QListWidget()
@@ -321,20 +327,20 @@ class GlossaryWidget(QWidget):
         action_layout = QHBoxLayout()
         
         self.add_btn = QPushButton("➕")
-        self.add_btn.setToolTip("Új bejegyzés")
+        self.add_btn.setToolTip(t("plugins.glossary.add_tooltip"))
         self.add_btn.setMaximumWidth(40)
         self.add_btn.clicked.connect(self._add_entry)
         action_layout.addWidget(self.add_btn)
         
         self.edit_btn = QPushButton("✏️")
-        self.edit_btn.setToolTip("Szerkesztés")
+        self.edit_btn.setToolTip(t("plugins.glossary.edit_tooltip"))
         self.edit_btn.setMaximumWidth(40)
         self.edit_btn.setEnabled(False)
         self.edit_btn.clicked.connect(self._edit_entry)
         action_layout.addWidget(self.edit_btn)
         
         self.delete_btn = QPushButton("🗑️")
-        self.delete_btn.setToolTip("Törlés")
+        self.delete_btn.setToolTip(t("plugins.glossary.delete_tooltip"))
         self.delete_btn.setMaximumWidth(40)
         self.delete_btn.setEnabled(False)
         self.delete_btn.clicked.connect(self._delete_entry)
@@ -343,7 +349,7 @@ class GlossaryWidget(QWidget):
         action_layout.addStretch()
         
         self.insert_btn = QPushButton("📥")
-        self.insert_btn.setToolTip("Fordítás beillesztése")
+        self.insert_btn.setToolTip(t("plugins.glossary.insert_tooltip"))
         self.insert_btn.setMaximumWidth(40)
         self.insert_btn.setEnabled(False)
         self.insert_btn.clicked.connect(self._insert_translation)
@@ -355,18 +361,18 @@ class GlossaryWidget(QWidget):
         # Import/Export gombok
         io_layout = QHBoxLayout()
         
-        self.import_btn = QPushButton("📂 Import")
+        self.import_btn = QPushButton(t("plugins.glossary.import"))
         self.import_btn.clicked.connect(self._import_glossary)
         io_layout.addWidget(self.import_btn)
         
-        self.export_btn = QPushButton("💾 Export")
+        self.export_btn = QPushButton(t("plugins.glossary.export"))
         self.export_btn.clicked.connect(self._export_glossary)
         io_layout.addWidget(self.export_btn)
         
         layout.addLayout(io_layout)
         
         # Státusz
-        self.status_label = QLabel("0 bejegyzés")
+        self.status_label = QLabel(t("plugins.glossary.status_entries", count=0))
         self.status_label.setStyleSheet("color: #888; font-size: 11px;")
         layout.addWidget(self.status_label)
         
@@ -383,7 +389,7 @@ class GlossaryWidget(QWidget):
             item = QListWidgetItem(f"{entry.source} → {entry.target}")
             item.setData(Qt.ItemDataRole.UserRole, entry)
             if entry.notes:
-                item.setToolTip(f"Megjegyzés: {entry.notes}")
+                item.setToolTip(t("plugins.glossary.tooltip_notes", notes=entry.notes))
             self.entries_list.addItem(item)
         
         self._update_status()
@@ -393,9 +399,9 @@ class GlossaryWidget(QWidget):
         total = len(self.glossary.entries)
         shown = self.entries_list.count()
         if shown < total:
-            self.status_label.setText(f"{shown} / {total} bejegyzés")
+            self.status_label.setText(t("plugins.glossary.status_filtered", shown=shown, total=total))
         else:
-            self.status_label.setText(f"{total} bejegyzés")
+            self.status_label.setText(t("plugins.glossary.status_entries", count=total))
     
     def _filter_entries(self):
         """Szűrés keresés alapján."""
@@ -421,15 +427,15 @@ class GlossaryWidget(QWidget):
         
         menu = QMenu(self)
         
-        edit_action = menu.addAction("✏️ Szerkesztés")
+        edit_action = menu.addAction(t("plugins.glossary.context_edit"))
         edit_action.triggered.connect(self._edit_entry)
         
-        insert_action = menu.addAction("📥 Fordítás beillesztése")
+        insert_action = menu.addAction(t("plugins.glossary.context_insert"))
         insert_action.triggered.connect(self._insert_translation)
         
         menu.addSeparator()
         
-        delete_action = menu.addAction("🗑️ Törlés")
+        delete_action = menu.addAction(t("plugins.glossary.context_delete"))
         delete_action.triggered.connect(self._delete_entry)
         
         menu.exec_(self.entries_list.mapToGlobal(pos))
@@ -471,8 +477,8 @@ class GlossaryWidget(QWidget):
         
         entry = item.data(Qt.ItemDataRole.UserRole)
         reply = QMessageBox.question(
-            self, "Törlés megerősítése",
-            f"Biztosan törölni akarod?\n\n{entry.source} → {entry.target}",
+            self, t("plugins.glossary.delete_confirm_title"),
+            t("plugins.glossary.delete_confirm_message", source=entry.source, target=entry.target),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
@@ -490,8 +496,8 @@ class GlossaryWidget(QWidget):
     def _import_glossary(self):
         """Szótár importálása."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Szótár importálása",
-            "", "DubSync Glossary (*.glossync);;JSON fájlok (*.json)"
+            self, t("plugins.glossary.import_title"),
+            "", t("plugins.glossary.import_filter")
         )
         if not file_path:
             return
@@ -500,7 +506,7 @@ class GlossaryWidget(QWidget):
             imported = GlossaryData.load_from_file(Path(file_path))
             
             if not imported.entries:
-                QMessageBox.information(self, "Üres fájl", "A fájl nem tartalmaz bejegyzéseket.")
+                QMessageBox.information(self, t("plugins.glossary.import_empty_title"), t("plugins.glossary.import_empty_message"))
                 return
             
             # Választó dialógus
@@ -526,17 +532,17 @@ class GlossaryWidget(QWidget):
                 self._update_list()
                 self._save_glossary()
                 QMessageBox.information(
-                    self, "Import sikeres",
-                    f"{added} bejegyzés importálva."
+                    self, t("plugins.glossary.import_success_title"),
+                    t("plugins.glossary.import_success_message", count=added)
                 )
         except Exception as e:
-            QMessageBox.critical(self, "Import hiba", f"Hiba az importálás során:\n{e}")
+            QMessageBox.critical(self, t("plugins.glossary.import_error_title"), t("plugins.glossary.import_error_message", error=e))
     
     @Slot()
     def _export_glossary(self):
         """Szótár exportálása."""
         if not self.glossary.entries:
-            QMessageBox.information(self, "Üres szótár", "Nincs mit exportálni.")
+            QMessageBox.information(self, t("plugins.glossary.export_empty_title"), t("plugins.glossary.export_empty_message"))
             return
         
         # Választó dialógus
@@ -548,8 +554,8 @@ class GlossaryWidget(QWidget):
             return
         
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Szótár exportálása",
-            "glossary.glossync", "DubSync Glossary (*.glossync);;JSON fájlok (*.json)"
+            self, t("plugins.glossary.export_title"),
+            "glossary.glossync", t("plugins.glossary.export_filter")
         )
         if not file_path:
             return
@@ -563,11 +569,11 @@ class GlossaryWidget(QWidget):
             export_data.save_to_file(Path(file_path))
             
             QMessageBox.information(
-                self, "Export sikeres",
-                f"{len(dialog.selected_entries)} bejegyzés exportálva."
+                self, t("plugins.glossary.export_success_title"),
+                t("plugins.glossary.export_success_message", count=len(dialog.selected_entries))
             )
         except Exception as e:
-            QMessageBox.critical(self, "Export hiba", f"Hiba az exportálás során:\n{e}")
+            QMessageBox.critical(self, t("plugins.glossary.export_error_title"), t("plugins.glossary.export_error_message", error=e))
     
     def _get_glossary_path(self) -> Path:
         """Szótár mentési útvonal."""
@@ -628,11 +634,11 @@ class GlossaryPlugin(UIPlugin):
     
     def initialize(self) -> bool:
         """Plugin inicializálása."""
-        return True
+        return super().initialize()  # Locale fájlok betöltése
     
     def create_dock_widget(self) -> Optional[QDockWidget]:
         """Szótár dock widget létrehozása."""
-        self._dock = QDockWidget("📖 Szótár", self._main_window)
+        self._dock = QDockWidget(t("plugins.glossary.header"), self._main_window)
         self._dock.setObjectName("glossaryDock")
         self._dock.setAllowedAreas(
             Qt.DockWidgetArea.LeftDockWidgetArea |
@@ -649,7 +655,7 @@ class GlossaryPlugin(UIPlugin):
         """Menü elemek létrehozása."""
         actions = []
         
-        action = QAction("📖 Szótár panel", self._main_window)
+        action = QAction(t("plugins.glossary.panel"), self._main_window)
         action.setCheckable(True)
         action.setChecked(True)
         action.triggered.connect(self._toggle_dock)

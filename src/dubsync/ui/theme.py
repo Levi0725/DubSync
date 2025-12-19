@@ -331,6 +331,8 @@ QLineEdit, QTextEdit, QPlainTextEdit {{
     border: 1px solid {colors.input_border};
     border-radius: 4px;
     padding: 6px;
+    min-height: 20px;
+    color: {colors.foreground};
     selection-background-color: {colors.primary};
 }}
 
@@ -350,6 +352,8 @@ QComboBox {{
     border-radius: 4px;
     padding: 6px 12px;
     min-width: 80px;
+    min-height: 20px;
+    color: {colors.foreground};
 }}
 
 QComboBox:hover {{
@@ -371,6 +375,19 @@ QComboBox QAbstractItemView {{
     background-color: {colors.surface};
     border: 1px solid {colors.border};
     selection-background-color: {colors.surface_selected};
+    color: {colors.foreground};
+    padding: 4px;
+}}
+
+QComboBox QAbstractItemView::item {{
+    padding: 6px 12px;
+    min-height: 24px;
+    color: {colors.foreground};
+}}
+
+QComboBox QAbstractItemView::item:selected {{
+    background-color: {colors.surface_selected};
+    color: {colors.foreground};
 }}
 
 /* === PUSH BUTTON === */
@@ -557,6 +574,8 @@ QSpinBox, QDoubleSpinBox {{
     border: 1px solid {colors.input_border};
     border-radius: 4px;
     padding: 6px;
+    min-height: 20px;
+    color: {colors.foreground};
 }}
 
 QSpinBox:focus, QDoubleSpinBox:focus {{

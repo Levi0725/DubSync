@@ -2,8 +2,8 @@
 """
 DubSync Update Checker
 
-Ellenőrzi és telepíti a függőségeket a fő requirements.txt-ből
-és az összes plugin requirements.txt-jéből.
+Checks and installs dependencies from the main requirements.txt
+and from all plugin requirements.txt files.
 """
 
 import subprocess
@@ -13,26 +13,26 @@ from typing import List, Set, Tuple
 
 
 def get_project_root() -> Path:
-    """Projekt gyökér könyvtár."""
+    """Project root directory."""
     return Path(__file__).parent
 
 
 def find_requirements_files(root: Path) -> List[Path]:
     """
-    Megkeresi az összes requirements.txt fájlt.
+    Find all requirements.txt files.
     
-    Sorrend:
-    1. Fő requirements.txt
-    2. Plugin requirements.txt fájlok (builtin és external)
+    Order:
+    1. Main requirements.txt
+    2. Plugin requirements.txt files (builtin and external)
     """
     requirements_files = []
     
-    # Fő requirements.txt
+    # Main requirements.txt
     main_req = root / "requirements.txt"
     if main_req.exists():
         requirements_files.append(main_req)
     
-    # Plugin könyvtárak
+    # Plugin directories
     plugin_dirs = [
         root / "src" / "dubsync" / "plugins" / "builtin",
         root / "src" / "dubsync" / "plugins" / "external",
@@ -42,7 +42,7 @@ def find_requirements_files(root: Path) -> List[Path]:
         if not plugin_dir.exists():
             continue
         
-        # Közvetlen plugin mappák
+        # Direct plugin folders
         for subdir in plugin_dir.iterdir():
             if subdir.is_dir() and not subdir.name.startswith("_"):
                 req_file = subdir / "requirements.txt"
@@ -54,10 +54,10 @@ def find_requirements_files(root: Path) -> List[Path]:
 
 def parse_requirements(file_path: Path) -> Set[str]:
     """
-    Requirements fájl beolvasása.
+    Read requirements file.
     
     Returns:
-        Csomagok halmaza
+        Set of packages
     """
     packages = set()
     
@@ -66,27 +66,27 @@ def parse_requirements(file_path: Path) -> Set[str]:
             for line in f:
                 line = line.strip()
                 
-                # Üres sorok és kommentek kihagyása
+                # Skip empty lines and comments
                 if not line or line.startswith('#'):
                     continue
                 
-                # -r include kihagyása (rekurzív include)
+                # Skip -r include (recursive include)
                 if line.startswith('-r'):
                     continue
                 
                 packages.add(line)
     except Exception as e:
-        print(f"  [!] Hiba a fájl olvasásakor ({file_path}): {e}")
+        print(f"  [!] Error reading file ({file_path}): {e}")
     
     return packages
 
 
 def get_installed_packages() -> Set[str]:
     """
-    Telepített csomagok listázása.
+    List installed packages.
     
     Returns:
-        Telepített csomag nevek (kisbetűs)
+        Installed package names (lowercase)
     """
     try:
         result = subprocess.run(
@@ -108,7 +108,7 @@ def get_installed_packages() -> Set[str]:
 
 def extract_package_name(requirement: str) -> str:
     """
-    Kinyeri a csomag nevét a requirement stringből.
+    Extract package name from requirement string.
     
     "package>=1.0.0" -> "package"
     """
@@ -121,33 +121,33 @@ def extract_package_name(requirement: str) -> str:
 
 def check_and_install(requirements_files: List[Path], auto_install: bool = True) -> Tuple[int, int]:
     """
-    Ellenőrzi és telepíti a hiányzó függőségeket.
+    Check and install missing dependencies.
     
     Args:
-        requirements_files: Requirements fájlok listája
-        auto_install: Automatikus telepítés
+        requirements_files: List of requirements files
+        auto_install: Automatic installation
         
     Returns:
-        (telepített, hiányzó) csomagok száma
+        (installed, missing) package count
     """
     all_requirements = set()
     
-    print("[*] Requirements fájlok keresése...")
+    print("[*] Searching for requirements files...")
     for req_file in requirements_files:
         rel_path = req_file.relative_to(get_project_root())
         print(f"    - {rel_path}")
         all_requirements.update(parse_requirements(req_file))
     
     if not all_requirements:
-        print("[OK] Nincsenek függőségek definiálva.")
+        print("[OK] No dependencies defined.")
         return 0, 0
     
-    print(f"\n[*] Összesen {len(all_requirements)} függőség található.")
+    print(f"\n[*] Found {len(all_requirements)} dependencies in total.")
     
-    # Telepített csomagok
+    # Installed packages
     installed = get_installed_packages()
     
-    # Hiányzó csomagok keresése
+    # Search for missing packages
     missing = []
     for req in all_requirements:
         pkg_name = extract_package_name(req)
@@ -155,23 +155,23 @@ def check_and_install(requirements_files: List[Path], auto_install: bool = True)
             missing.append(req)
     
     if not missing:
-        print("[OK] Minden függőség telepítve van.")
+        print("[OK] All dependencies are installed.")
         return 0, 0
     
-    print(f"\n[!] {len(missing)} hiányzó függőség:")
+    print(f"\n[!] {len(missing)} missing dependencies:")
     for pkg in missing:
         print(f"    - {pkg}")
     
     if not auto_install:
         return 0, len(missing)
     
-    # Telepítés
-    print("\n[*] Függőségek telepítése...")
+    # Installation
+    print("\n[*] Installing dependencies...")
     
     installed_count = 0
     for req in missing:
         try:
-            print(f"    Telepítés: {req}...", end=" ", flush=True)
+            print(f"    Installing: {req}...", end=" ", flush=True)
             result = subprocess.run(
                 [sys.executable, '-m', 'pip', 'install', req],
                 capture_output=True,
@@ -182,19 +182,19 @@ def check_and_install(requirements_files: List[Path], auto_install: bool = True)
                 print("OK")
                 installed_count += 1
             else:
-                print("HIBA")
+                print("ERROR")
                 print(f"      {result.stderr[:200]}")
         except Exception as e:
-            print(f"HIBA: {e}")
+            print(f"ERROR: {e}")
     
     return installed_count, len(missing) - installed_count
 
 
 def main():
-    """Fő belépési pont."""
+    """Main entry point."""
     print()
     print("=" * 50)
-    print("  DubSync - Függőség Ellenőrző")
+    print("  DubSync - Dependency Checker")
     print("=" * 50)
     print()
     
@@ -202,17 +202,17 @@ def main():
     requirements_files = find_requirements_files(root)
     
     if not requirements_files:
-        print("[!] Nem található requirements.txt fájl.")
+        print("[!] No requirements.txt file found.")
         return 1
     
     installed, failed = check_and_install(requirements_files, auto_install=True)
     
     print()
     if failed > 0:
-        print(f"[!] {failed} csomag telepítése sikertelen.")
+        print(f"[!] {failed} package installation failed.")
         return 1
     else:
-        print("[OK] Minden függőség rendben.")
+        print("[OK] All dependencies are OK.")
         return 0
 
 

@@ -1,0 +1,34 @@
+{
+  "name": "Alapvető QA",
+  "description": "Alapvető minőségellenőrzési vizsgálatok",
+  "header": "🔍 QA Ellenőrzés Eredményei",
+  "no_check": "Futtass egy ellenőrzést",
+  "no_project": "Nincs megnyitott projekt",
+  "no_issues": "✅ Nincs probléma!",
+  "errors": "hiba",
+  "warnings": "figyelmeztetés",
+  "columns": {
+    "index": "#",
+    "issue": "Probléma",
+    "suggestion": "Javaslat"
+  },
+  "run": "🔄 Ellenőrzés",
+  "clear": "🗑️ Törlés",
+  "summary": "{errors} hiba, {warnings} figyelmeztetés",
+  "recheck_btn": "🔄 Újraellenőrzés",
+  "fix_all_btn": "✨ Összes javítása",
+  "issues": {
+    "missing_translation": "Hiányzó fordítás",
+    "missing_translation_suggestion": "Add hozzá a fordítást",
+    "lipsync_too_long": "Lip-sync túl hosszú ({ratio})",
+    "lipsync_suggestion": "Rövidítsd a fordítást",
+    "double_space": "Dupla szóköz a szövegben",
+    "double_space_suggestion": "Távolítsd el a felesleges szóközt",
+    "missing_character": "Hiányzó karakternév",
+    "missing_character_suggestion": "Add hozzá a karakternevet",
+    "extra_whitespace": "Felesleges szóköz a végén",
+    "extra_whitespace_suggestion": "Távolítsd el a szóközt"
+  },
+  "panel": "🔍 QA Panel",
+  "run_qa": "🔍 QA futtatás"
+}

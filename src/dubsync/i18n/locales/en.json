@@ -1,0 +1,315 @@
+{
+  "app": {
+    "name": "DubSync",
+    "version": "Version: {version}",
+    "description": "Professional dubbing translation editor",
+    "tagline": "For translators and editors"
+  },
+  "menu": {
+    "file": {
+      "_title": "&File",
+      "new": "&New project",
+      "open": "&Open...",
+      "save": "&Save",
+      "save_as": "Save &as...",
+      "import": "&Import",
+      "import_srt": "SRT subtitle...",
+      "import_video": "Video...",
+      "export": "&Export",
+      "export_pdf": "PDF script...",
+      "export_srt": "SRT subtitle...",
+      "project_settings": "Project &settings...",
+      "app_settings": "⚙️ &Application settings...",
+      "exit": "&Exit"
+    },
+    "edit": {
+      "_title": "&Edit",
+      "undo": "&Undo",
+      "redo": "&Redo",
+      "add_cue": "&New row",
+      "insert_before": "Insert row &before",
+      "insert_after": "Insert row &after",
+      "delete_mode": "🗑️ &Delete mode",
+      "delete_cue": "&Delete selected row",
+      "edit_timing": "&Edit timing...",
+      "recalc_lipsync": "&Recalculate lip-sync"
+    },
+    "navigate": {
+      "_title": "&Navigation",
+      "prev_cue": "&Previous row",
+      "next_cue": "&Next row",
+      "next_empty": "Next &untranslated",
+      "next_lipsync": "Next &lip-sync issue",
+      "next_comment": "Next &comment"
+    },
+    "view": {
+      "_title": "&View",
+      "panels": "📋 Panels",
+      "comments_panel": "💬 &Comments panel",
+      "fullscreen": "🖥️ &Fullscreen"
+    },
+    "help": {
+      "_title": "&Help",
+      "tutorial": "📖 &Tutorial",
+      "about": "ℹ️ &About"
+    },
+    "plugins": "🔌 &Plugins"
+  },
+  "toolbar": {
+    "main": "Main toolbar"
+  },
+  "status": {
+    "new": "New",
+    "translated": "Translated",
+    "needs_revision": "Needs revision",
+    "approved": "Approved",
+    "all": "All statuses"
+  },
+  "cue_editor": {
+    "index": "#-",
+    "time_format": "{start} → {end}",
+    "duration": "({duration}s)",
+    "status_label": "Status:",
+    "collapse_tooltip": "Collapse/expand editor",
+    "character": "Character:",
+    "character_placeholder": "Character name...",
+    "source_lock_tooltip": "Lock/unlock source text",
+    "source_text": "Source text:",
+    "translation": "Translation:",
+    "translation_placeholder": "Enter translation...",
+    "lipsync_group": "Lip-sync estimate",
+    "no_data": "No data",
+    "notes": "Notes:",
+    "notes_placeholder": "Director notes, comments...",
+    "sfx": "Background / SFX:",
+    "sfx_placeholder": "Background noise, music, effects...",
+    "save": "Save",
+    "reset": "Reset",
+    "prev": "◀ Previous",
+    "next": "Next ▶",
+    "no_cue_selected": "Select a row from the list to edit",
+    "lipsync": {
+      "good": "✓ Good ({ratio}%)",
+      "close": "⚠ Close ({ratio}%)",
+      "too_long": "✗ Too long ({ratio}%)",
+      "details_good": "Duration: {duration}s\nEstimated speech time: {estimated}s\nYou have some room to spare.",
+      "details_close": "Duration: {duration}s\nEstimated speech time: {estimated}s\nAt the limit, be careful!",
+      "details_long": "Duration: {duration}s\nEstimated speech time: {estimated}s\nConsider shortening the text!"
+    }
+  },
+  "cue_list": {
+    "search_placeholder": "Search...",
+    "columns": {
+      "index": "#",
+      "time_in": "Start",
+      "time_out": "End",
+      "character": "Character",
+      "text": "Text",
+      "status": "Status",
+      "lipsync": "LS"
+    },
+    "info": "{filtered} / {total} cues",
+    "context_menu": {
+      "insert": "➕ Insert row here",
+      "delete": "🗑️ Delete row"
+    }
+  },
+  "video_player": {
+    "no_video": "No video loaded",
+    "speed": "Speed:",
+    "loop_tooltip": "Loop cue",
+    "fullscreen_tooltip": "Fullscreen (F)",
+    "prev_frame_tooltip": "Previous frame (←)",
+    "next_frame_tooltip": "Next frame (→)",
+    "fullscreen_hint": "ESC - Exit | Space - Play/Pause"
+  },
+  "comments_panel": {
+    "title": "Comments",
+    "select_cue": "Select a cue",
+    "header": "Comments - #{index}",
+    "no_comments": "No comments",
+    "resolved": "✓ Resolved",
+    "resolve": "Resolve",
+    "new_comment": "New comment",
+    "author": "Name:",
+    "author_placeholder": "Username...",
+    "content_placeholder": "Enter comment...",
+    "add": "Add",
+    "default_author": "User"
+  },
+  "dialogs": {
+    "project_settings": {
+      "title": "Project settings",
+      "project_title": "Project title:",
+      "project_title_placeholder": "Project name...",
+      "series": "Series:",
+      "series_placeholder": "Series title...",
+      "season": "Season",
+      "episode": "Episode",
+      "episode_title": "Episode title:",
+      "episode_title_placeholder": "Episode title...",
+      "translator": "Translator:",
+      "translator_placeholder": "Translator name...",
+      "editor": "Editor:",
+      "editor_placeholder": "Editor name...",
+      "technical": "Technical settings",
+      "framerate": "Frame rate:"
+    },
+    "about": {
+      "title": "{app_name} - About",
+      "version": "Version: {version}",
+      "description": "Professional dubbing translation editor",
+      "for_whom": "For translators and editors",
+      "features_title": "Features:",
+      "features": {
+        "srt": "SRT import/export",
+        "video": "Video playback with lip-sync check",
+        "comments": "Editor comments",
+        "pdf": "PDF script export",
+        "plugins": "Plugin support"
+      },
+      "close": "Close"
+    },
+    "progress": {
+      "progress_format": "{current} / {total}"
+    },
+    "tutorial": {
+      "title": "{app_name} - Tutorial",
+      "welcome": "🎬 Welcome to {app_name}!",
+      "understood": "Got it!"
+    },
+    "timing_editor": {
+      "title": "Edit timing",
+      "start": "Start:",
+      "end": "End:",
+      "duration": "Duration: {duration}",
+      "error_end_before_start": "⚠️ End cannot be before start!"
+    },
+    "theme_settings": {
+      "title": "Theme settings",
+      "theme": "Theme:",
+      "dark": "🌙 Dark",
+      "dark_contrast": "🌑 Dark contrast",
+      "light": "☀️ Light",
+      "custom": "🎨 Custom",
+      "primary": "Primary color:",
+      "background": "Background:",
+      "surface": "Surface:",
+      "foreground": "Text:",
+      "choose": "Choose..."
+    },
+    "confirm_close": {
+      "title": "Unsaved changes",
+      "message": "The project has unsaved changes. Save before closing?",
+      "save": "Save",
+      "discard": "Discard",
+      "cancel": "Cancel"
+    },
+    "confirm_delete": {
+      "title": "Delete row",
+      "message": "Are you sure you want to delete row #{index}?\nThis action cannot be undone.",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+  "settings": {
+    "title": "Application settings",
+    "tabs": {
+      "general": "General",
+      "plugins": "Plugins",
+      "download": "Download plugins"
+    },
+    "general": {
+      "paths": "Default paths",
+      "save_path": "Save location:",
+      "save_path_placeholder": "Documents folder",
+      "user_data": "User data",
+      "default_name": "Default name:",
+      "default_name_placeholder": "Your name...",
+      "autosave": "Auto-save",
+      "autosave_enabled": "Enabled",
+      "autosave_interval": "Save interval:",
+      "autosave_minutes": " minutes",
+      "lipsync": "Lip-sync estimation",
+      "speech_speed": "Speech speed:",
+      "chars_per_sec": " chars/sec",
+      "language": "Language",
+      "app_language": "Application language:",
+      "language_restart_hint": "Application restart required for language change"
+    },
+    "plugins": {
+      "available": "Available plugins:",
+      "info": "Plugin information:",
+      "select_hint": "Select a plugin to view details",
+      "settings": "Settings:",
+      "settings_hint": "Select plugin for settings",
+      "enable": "Enable",
+      "disable": "Disable",
+      "restart_warning": "⚠️ Changes will take effect after restart!",
+      "panel_settings": "Panel display",
+      "show_on_start": "Show on startup",
+      "show_on_start_tooltip": "If enabled, plugin panel appears automatically on application start",
+      "plugin_settings": "Plugin settings"
+    }
+  },
+  "messages": {
+    "project_created": "New project created",
+    "project_opened": "Project opened: {name}",
+    "project_saved": "Project saved",
+    "srt_imported": "Imported {count} subtitles",
+    "video_loaded": "Video loaded: {name}",
+    "export_success": "Export successful: {path}",
+    "export_error": "Export error: {error}",
+    "delete_mode_on": "🗑️ DELETE MODE - Click on a row to delete",
+    "delete_mode_off": "",
+    "no_project": "No open project",
+    "lipsync_recalculated": "{count} cue lip-sync updated",
+    "error_loading": "Error loading: {error}",
+    "error_saving": "Error saving: {error}",
+    "settings_load_error": "Settings load error: {error}",
+    "settings_save_error": "Settings save error: {error}",
+    "settings_saved": "Settings saved. Restart required for plugin changes.",
+    "cue_added": "New row added",
+    "cue_inserted_before": "Row inserted before position {index}",
+    "cue_inserted_after": "Row inserted after position {index}",
+    "cue_deleted": "Row deleted (Ctrl+Z to undo)",
+    "delete_mode_required": "Delete mode must be enabled to delete rows.\nUse Ctrl+D or the menu.",
+    "select_cue_for_timing": "Select a row to edit timing.",
+    "timing_saved": "Timing saved",
+    "no_more_empty_cues": "No more untranslated cues",
+    "no_more_lipsync_issues": "No more lip-sync issues",
+    "searching_next_comment": "Searching for next comment...",
+    "first_cue": "First row",
+    "last_cue": "Last row",
+    "warnings": "Warnings",
+    "error": "Error"
+  },
+  "statistics": {
+    "format": "{total} rows | {translated} translated ({percent}%)",
+    "format_with_lipsync": "{total} rows | {translated} translated ({percent}%) | {lipsync_issues} lip-sync issues"
+  },
+  "filters": {
+    "all_statuses": "All statuses"
+  },
+  "buttons": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "apply": "Apply",
+    "yes": "Yes",
+    "no": "No",
+    "browse": "..."
+  },
+  "plugins": {
+    "types": {
+      "export": "Export",
+      "qa": "QA",
+      "import": "Import",
+      "tool": "Tool",
+      "ui": "UI",
+      "service": "Service",
+      "language": "Language"
+    }
+  }
+}

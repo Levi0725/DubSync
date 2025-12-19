@@ -21,6 +21,7 @@ from dubsync.utils.constants import (
 )
 from dubsync.utils.time_utils import ms_to_timecode, format_duration
 from dubsync.services.lip_sync import LipSyncEstimator, LipSyncResult
+from dubsync.i18n import t
 
 
 class TimingEditorDialog(QDialog):
@@ -29,7 +30,7 @@ class TimingEditorDialog(QDialog):
     def __init__(self, cue: Cue, parent=None):
         super().__init__(parent)
         self.cue = cue
-        self.setWindowTitle("Időzítés szerkesztése")
+        self.setWindowTitle(t("dialogs.timing_editor.title"))
         self.setMinimumWidth(350)
         
         layout = QVBoxLayout(self)
@@ -61,7 +62,7 @@ class TimingEditorDialog(QDialog):
         self.ms_in.setValue(cue.time_in_ms % 1000)
         time_in_layout.addWidget(self.ms_in)
         
-        form_layout.addRow("Kezdés:", time_in_layout)
+        form_layout.addRow(t("dialogs.timing_editor.start"), time_in_layout)
         
         # Time out
         time_out_layout = QHBoxLayout()
@@ -88,7 +89,7 @@ class TimingEditorDialog(QDialog):
         self.ms_out.setValue(cue.time_out_ms % 1000)
         time_out_layout.addWidget(self.ms_out)
         
-        form_layout.addRow("Vége:", time_out_layout)
+        form_layout.addRow(t("dialogs.timing_editor.end"), time_out_layout)
         
         layout.addLayout(form_layout)
         
@@ -118,10 +119,10 @@ class TimingEditorDialog(QDialog):
         
         if duration < 0:
             self.duration_label.setStyleSheet("color: red;")
-            self.duration_label.setText("⚠️ A vége nem lehet a kezdés előtt!")
+            self.duration_label.setText(t("dialogs.timing_editor.error_end_before_start"))
         else:
             self.duration_label.setStyleSheet("")
-            self.duration_label.setText(f"Hossz: {format_duration(duration)}")
+            self.duration_label.setText(t("dialogs.timing_editor.duration", duration=format_duration(duration)))
     
     def get_time_in_ms(self) -> int:
         return (self.hours_in.value() * 3600000 +
@@ -170,7 +171,7 @@ class CueEditorWidget(QWidget):
         header_layout = QHBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 0, 0, 0)
         
-        self.index_label = QLabel("#-")
+        self.index_label = QLabel(t("cue_editor.index"))
         self.index_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         header_layout.addWidget(self.index_label)
         
@@ -186,20 +187,25 @@ class CueEditorWidget(QWidget):
         
         # Status selector
         self.status_combo = QComboBox()
-        self.status_combo.addItem("Új", CueStatus.NEW.value)
-        self.status_combo.addItem("Fordítva", CueStatus.TRANSLATED.value)
-        self.status_combo.addItem("Javítandó", CueStatus.NEEDS_REVISION.value)
-        self.status_combo.addItem("Jóváhagyva", CueStatus.APPROVED.value)
-        header_layout.addWidget(QLabel("Státusz:"))
+        self.status_combo.addItem(t("status.new"), CueStatus.NEW.value)
+        self.status_combo.addItem(t("status.translated"), CueStatus.TRANSLATED.value)
+        self.status_combo.addItem(t("status.needs_revision"), CueStatus.NEEDS_REVISION.value)
+        self.status_combo.addItem(t("status.approved"), CueStatus.APPROVED.value)
+        header_layout.addWidget(QLabel(t("cue_editor.status_label")))
         header_layout.addWidget(self.status_combo)
         
         # Collapse button
         self.collapse_btn = QPushButton()
         self.collapse_btn.setText("▼")
-        self.collapse_btn.setToolTip("Szerkesztő összecsukása/kinyitása")
+        self.collapse_btn.setToolTip(t("cue_editor.collapse_tooltip"))
         self.collapse_btn.setFixedSize(28, 28)
         self.collapse_btn.setCheckable(True)
-        self.collapse_btn.setStyleSheet("QPushButton { font-size: 12px; }")
+        self.collapse_btn.setStyleSheet("""
+            QPushButton { 
+                font-size: 14px; 
+                font-family: 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif;
+            }
+        """)
         self.collapse_btn.clicked.connect(self._toggle_collapse)
         header_layout.addWidget(self.collapse_btn)
         
@@ -224,26 +230,31 @@ class CueEditorWidget(QWidget):
         
         # Character name
         char_layout = QHBoxLayout()
-        char_layout.addWidget(QLabel("Karakter:"))
+        char_layout.addWidget(QLabel(t("cue_editor.character")))
         self.character_edit = QLineEdit()
-        self.character_edit.setPlaceholderText("Karakter neve...")
+        self.character_edit.setPlaceholderText(t("cue_editor.character_placeholder"))
         char_layout.addWidget(self.character_edit)
         
         # Source lock button
         self.source_lock_btn = QPushButton()
         self.source_lock_btn.setText("🔒")
-        self.source_lock_btn.setToolTip("Forrásszöveg zárolása/feloldása")
+        self.source_lock_btn.setToolTip(t("cue_editor.source_lock_tooltip"))
         self.source_lock_btn.setFixedSize(28, 28)
         self.source_lock_btn.setCheckable(True)
         self.source_lock_btn.setChecked(True)  # Default: locked
-        self.source_lock_btn.setStyleSheet("QPushButton { font-size: 14px; }")
+        self.source_lock_btn.setStyleSheet("""
+            QPushButton { 
+                font-size: 16px; 
+                font-family: 'Segoe UI Emoji', 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif;
+            }
+        """)
         self.source_lock_btn.clicked.connect(self._on_source_lock_toggled)
         char_layout.addWidget(self.source_lock_btn)
         
         left_layout.addLayout(char_layout)
         
         # Source text (lockable)
-        left_layout.addWidget(QLabel("Forrás szöveg:"))
+        left_layout.addWidget(QLabel(t("cue_editor.source_text")))
         self.source_text = QTextEdit()
         self.source_text.setReadOnly(True)
         self.source_text.setMaximumHeight(80)
@@ -252,9 +263,9 @@ class CueEditorWidget(QWidget):
         left_layout.addWidget(self.source_text)
         
         # Translated text
-        left_layout.addWidget(QLabel("Fordítás:"))
+        left_layout.addWidget(QLabel(t("cue_editor.translation")))
         self.translated_text = QTextEdit()
-        self.translated_text.setPlaceholderText("Írja be a fordítást...")
+        self.translated_text.setPlaceholderText(t("cue_editor.translation_placeholder"))
         self.translated_text.setMinimumHeight(100)
         left_layout.addWidget(self.translated_text)
         
@@ -264,7 +275,7 @@ class CueEditorWidget(QWidget):
         right_layout = QVBoxLayout()
         
         # Lip-sync indicator
-        lipsync_group = QGroupBox("Lip-sync becslés")
+        lipsync_group = QGroupBox(t("cue_editor.lipsync_group"))
         lipsync_layout = QVBoxLayout(lipsync_group)
         lipsync_layout.setSpacing(4)
         
@@ -278,7 +289,7 @@ class CueEditorWidget(QWidget):
         # Label inside the indicator
         indicator_layout = QVBoxLayout(self.lipsync_indicator)
         indicator_layout.setContentsMargins(4, 0, 4, 0)
-        self.lipsync_label = QLabel("Nincs adat")
+        self.lipsync_label = QLabel(t("cue_editor.no_data"))
         self.lipsync_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lipsync_label.setStyleSheet("background: transparent; color: white; font-weight: bold;")
         indicator_layout.addWidget(self.lipsync_label)
@@ -295,16 +306,16 @@ class CueEditorWidget(QWidget):
         right_layout.addWidget(lipsync_group)
         
         # Notes
-        right_layout.addWidget(QLabel("Megjegyzés:"))
+        right_layout.addWidget(QLabel(t("cue_editor.notes")))
         self.notes_edit = QTextEdit()
-        self.notes_edit.setPlaceholderText("Rendezői utasítások, megjegyzések...")
+        self.notes_edit.setPlaceholderText(t("cue_editor.notes_placeholder"))
         self.notes_edit.setMaximumHeight(60)
         right_layout.addWidget(self.notes_edit)
         
         # SFX notes
-        right_layout.addWidget(QLabel("Háttérhang / SFX:"))
+        right_layout.addWidget(QLabel(t("cue_editor.sfx")))
         self.sfx_edit = QTextEdit()
-        self.sfx_edit.setPlaceholderText("Háttérzajok, zene, effektek...")
+        self.sfx_edit.setPlaceholderText(t("cue_editor.sfx_placeholder"))
         self.sfx_edit.setMaximumHeight(60)
         right_layout.addWidget(self.sfx_edit)
         
@@ -315,7 +326,7 @@ class CueEditorWidget(QWidget):
         # Bottom buttons
         button_layout = QHBoxLayout()
         
-        self.save_btn = QPushButton("Mentés")
+        self.save_btn = QPushButton(t("cue_editor.save"))
         self.save_btn.setShortcut("Ctrl+Return")
         self.save_btn.setStyleSheet(
             "QPushButton { background-color: #4CAF50; color: white; "
@@ -325,7 +336,7 @@ class CueEditorWidget(QWidget):
         )
         button_layout.addWidget(self.save_btn)
         
-        self.reset_btn = QPushButton("Visszaállítás")
+        self.reset_btn = QPushButton(t("cue_editor.reset"))
         self.reset_btn.setStyleSheet(
             "QPushButton { padding: 8px 16px; }"
         )
@@ -503,22 +514,35 @@ class CueEditorWidget(QWidget):
         if self._cue is None:
             return
         
-        text = self.translated_text.toPlainText()
-        if not text:
-            text = self.source_text.toPlainText()
+        # Get translated text, or source if no translation
+        translated = self.translated_text.toPlainText()
+        source = self.source_text.toPlainText()
         
-        result = self._lip_sync_estimator.estimate(text, self._cue.duration_ms)
+        # Use same logic as estimate_cue: if translated exists, compare to source
+        if translated:
+            text = translated
+            source_for_calc = source
+        else:
+            text = source
+            source_for_calc = ""  # No adjustment if using source as text
         
-        # Update indicator color and text
-        if result.ratio <= 0.9:
+        result = self._lip_sync_estimator.estimate(text, self._cue.duration_ms, source_for_calc)
+        
+        # Update cue's lip_sync_ratio for synchronization with cue_list
+        self._cue.lip_sync_ratio = result.ratio
+        
+        # Update indicator color and text using same thresholds as cue_list
+        from dubsync.utils.constants import LIPSYNC_THRESHOLD_GOOD, LIPSYNC_THRESHOLD_WARNING
+        
+        if result.ratio <= LIPSYNC_THRESHOLD_GOOD:
             color = COLOR_LIPSYNC_GOOD
-            status_text = "✓ Megfelelő"
-        elif result.ratio <= 1.05:
+            status_text = t("cue_editor.lipsync.good", ratio=int(result.ratio * 100))
+        elif result.ratio <= LIPSYNC_THRESHOLD_WARNING:
             color = COLOR_LIPSYNC_WARNING
-            status_text = "⚠ Határeset"
+            status_text = t("cue_editor.lipsync.close", ratio=int(result.ratio * 100))
         else:
             color = COLOR_LIPSYNC_TOO_LONG
-            status_text = "✗ Túl hosszú"
+            status_text = t("cue_editor.lipsync.too_long", ratio=int(result.ratio * 100))
         
         self.lipsync_indicator.setStyleSheet(
             f"background-color: {color}; border-radius: 4px;"
@@ -607,7 +631,7 @@ class CueEditorWidget(QWidget):
         self._cue = None
         self._is_dirty = False
         
-        self.index_label.setText("#-")
+        self.index_label.setText(t("cue_editor.index"))
         self.time_label.setText("00:00:00 → 00:00:00")
         self.duration_label.setText("(0.0s)")
         self.character_edit.clear()
@@ -620,7 +644,7 @@ class CueEditorWidget(QWidget):
         self.lipsync_indicator.setStyleSheet(
             "background-color: #CCCCCC; border-radius: 4px;"
         )
-        self.lipsync_label.setText("Nincs adat")
+        self.lipsync_label.setText(t("cue_editor.no_data"))
         self.lipsync_details.setText("")
         
         self._update_ui_state()

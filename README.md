@@ -1,179 +1,181 @@
-# DubSync - Professzionális Szinkronfordító Szerkesztő
+# DubSync - Professional Dubbing Translation Editor
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010+-lightgrey.svg)]()
 
-A DubSync egy professzionális, Windows-alapú asztali alkalmazás szinkronfordítók és szinkronrendezők számára. Az alkalmazás segítségével hatékonyan készíthetők magyar nyelvű szinkronszövegek, időkód-pontos ajkszinkronnal.
+> 🇭🇺 [Magyar verzió / Hungarian version](docs/README_HU.md)
 
-## 🎬 Főbb funkciók
+DubSync is a professional Windows desktop application for dubbing translators and directors. The application enables efficient creation of dubbed translations with frame-accurate lip-sync.
 
-### Projektkezelés
-- **Egyedi .dubsync formátum**: Hordozható SQLite-alapú projektfájl
-- **Automatikus mentés**: Soha ne veszítsd el a munkádat
-- **Legutóbbi projektek**: Gyors hozzáférés korábbi munkákhoz
+## 🎬 Key Features
+
+### Project Management
+- **Custom .dubsync format**: Portable SQLite-based project files
+- **Auto-save**: Never lose your work
+- **Recent projects**: Quick access to previous work
 
 ### SRT Import/Export
-- **Többféle kódolás**: UTF-8, UTF-8 BOM, CP1250, ISO-8859-2
-- **Intelligens tisztítás**: HTML és ASS tagek automatikus eltávolítása
-- **Kétirányú**: Import és export is támogatott
+- **Multiple encodings**: UTF-8, UTF-8 BOM, CP1250, ISO-8859-2
+- **Smart cleanup**: Automatic removal of HTML and ASS tags
+- **Bidirectional**: Both import and export supported
 
-### Videó lejátszás
-- **Beágyazott lejátszó**: Nincs szükség külső programra
-- **Szegmens lejátszás**: Csak az aktuális cue lejátszása
-- **Sebességszabályzás**: 0.5x - 2.0x sebesség
-- **Frame-pontos navigáció**: Előre/hátra léptetés képkockánként
+### Video Playback
+- **Embedded player**: No external software required
+- **Segment playback**: Play only the current cue
+- **Speed control**: 0.5x - 2.0x speed
+- **Frame-accurate navigation**: Step forward/backward by frames
 
-### Lip-Sync Becslés
-- **Valós idejű elemzés**: Gépelés közben frissülő eredmények
-- **Magyar nyelvre optimalizálva**: 13 karakter/másodperc alapértelmezett
-- **Forrásnyelv figyelembevétele**: Angol beszédsebesség alapján számított időkeret
-- **Szögletes zárójelek figyelmen kívül hagyása**: Rendezői utasítások nem számítanak
-- **Vizuális visszajelzés**: Színkódolt állapot (zöld/sárga/piros)
+### Lip-Sync Estimation
+- **Real-time analysis**: Results update while typing
+- **Optimized for Hungarian**: 13 characters/second default
+- **Source language consideration**: Time frame calculated based on English speech rate
+- **Bracket content ignored**: Director instructions don't count
+- **Visual feedback**: Color-coded status (green/yellow/red)
 
-### Lektori megjegyzések
-- **Cue-szintű kommentek**: Minden szöveghez külön megjegyzések
-- **Feloldás követés**: Megoldott/megoldatlan státusz
-- **Csapatmunka támogatás**: Több lektor közös munkája
+### Review Comments
+- **Cue-level comments**: Separate notes for each text
+- **Resolution tracking**: Resolved/unresolved status
+- **Team collaboration**: Multiple reviewers can work together
 
 ### PDF Export
-- **Klasszikus szinkronkönyv formátum**: Iparági standard
-- **Magyar ékezetek**: Teljes Unicode támogatás
-- **Kétnyelvű opció**: Forrás és célnyelv egymás mellett
+- **Classic dubbing script format**: Industry standard
+- **Full Unicode support**: Including accented characters
+- **Bilingual option**: Source and target language side by side
 
-### Plugin rendszer
-- **Bővíthető architektúra**: Saját plugin-ek írhatók
-- **Plugin típusok**: Export, QA, UI bővítés, szolgáltatások
-- **Beépített plugin-ek**:
-  - 🌍 Argos Fordító: Offline angol-magyar fordító
-  - CSV Export: Táblázatos export
-  - Basic QA: Alapvető minőségellenőrzés
+### Plugin System
+- **Extensible architecture**: Write your own plugins
+- **Plugin types**: Export, QA, UI extensions, services
+- **Built-in plugins**:
+  - 🌍 Argos Translator: Offline English-Hungarian translator
+  - CSV Export: Spreadsheet export
+  - Basic QA: Basic quality assurance checks
 
-### Beállítások
-- **Témák**: Sötét, világos, egyedi színek
-- **Általános beállítások**: Mentési hely, felhasználói adatok
-- **Plugin kezelés**: Pluginok ki/bekapcsolása, beállítások
+### Settings
+- **Themes**: Dark, light, custom colors
+- **General settings**: Save location, user data
+- **Plugin management**: Enable/disable plugins, configure settings
 
-## 📋 Rendszerkövetelmények
+## 📋 System Requirements
 
-- **Operációs rendszer**: Windows 10 vagy újabb
+- **Operating System**: Windows 10 or later
 - **Python**: 3.10+
 - **RAM**: minimum 4 GB
-- **Tárhely**: ~100 MB (+ projektek mérete)
-- **Videó codec-ek**: Windows Media Foundation támogatott formátumok
+- **Storage**: ~100 MB (+ project sizes)
+- **Video codecs**: Windows Media Foundation supported formats
 
-## 🚀 Telepítés
+## 🚀 Installation
 
-### Gyors indítás (ajánlott)
+### Quick Start (recommended)
 
 ```bash
-# Repository klónozása
+# Clone the repository
 git clone https://github.com/Levi0725/DubSync.git
 cd dubsync
 
-# Indítás (automatikusan beállítja a környezetet)
+# Launch (automatically sets up the environment)
 .\run.ps1   # PowerShell
-# vagy
+# or
 run.bat     # Command Prompt
 ```
 
-### Manuális telepítés
+### Manual Installation
 
-#### 1. Repository klónozása
+#### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Levi0725/DubSync.git
 cd dubsync
 ```
 
-#### 2. Virtuális környezet létrehozása
+#### 2. Create virtual environment
 
 ```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
-#### 3. Függőségek telepítése
+#### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 4. Alkalmazás indítása
+#### 4. Launch the application
 
 ```bash
 python -m dubsync
 ```
 
-Vagy fejlesztői módban:
+Or in development mode:
 
 ```bash
 pip install -e .
 dubsync
 ```
 
-## 📖 Használat
+## 📖 Usage
 
-### Új projekt létrehozása
+### Create a New Project
 
-1. `Fájl > Új projekt` (Ctrl+N)
-2. Válaszd ki a mentési helyet és adj nevet
-3. Állítsd be a forrás- és célnyelvet
+1. `File > New Project` (Ctrl+N)
+2. Choose the save location and name
+3. Set the source and target languages
 
-### SRT importálás
+### SRT Import
 
-1. `Fájl > SRT importálás` (Ctrl+I)
-2. Válaszd ki az SRT fájlt
-3. A cue-k automatikusan betöltődnek
+1. `File > Import SRT` (Ctrl+I)
+2. Select the SRT file
+3. Cues are loaded automatically
 
-### Videó csatolása
+### Attach Video
 
-1. `Fájl > Videó csatolása`
-2. Válaszd ki a videófájlt (MP4, AVI, MKV, stb.)
-3. A videó megjelenik a lejátszóban
+1. `File > Attach Video`
+2. Select the video file (MP4, AVI, MKV, etc.)
+3. Video appears in the player
 
-### Fordítás
+### Translation
 
-1. Kattints egy cue-ra a listában
-2. A szerkesztőben írd be a fordítást
-3. A lip-sync mutató valós időben frissül
-4. `Mentés` gomb → automatikus ugrás a következő sorra
+1. Click on a cue in the list
+2. Enter the translation in the editor
+3. The lip-sync indicator updates in real-time
+4. `Save` button → automatically jumps to the next line
 
-### Beállítások
+### Settings
 
-1. `Fájl > Alkalmazás beállítások` (Ctrl+,)
-2. Állítsd be az általános opciókat
-3. Kezeld a pluginokat (újraindítás szükséges)
-4. Válaszd ki a témát
+1. `File > Application Settings` (Ctrl+,)
+2. Configure general options
+3. Manage plugins (restart required)
+4. Select a theme
 
-### PDF export
+### PDF Export
 
-1. `Fájl > PDF export` (Ctrl+E)
-2. Válaszd ki a formátumot
-3. Állítsd be az opciókat
-4. Mentsd a PDF-et
+1. `File > PDF Export` (Ctrl+E)
+2. Choose the format
+3. Set the options
+4. Save the PDF
 
-## ⌨️ Billentyűkombinációk
+## ⌨️ Keyboard Shortcuts
 
-| Kombináció | Funkció |
-|------------|---------|
-| Ctrl+N | Új projekt |
-| Ctrl+O | Projekt megnyitása |
-| Ctrl+S | Mentés |
-| Ctrl+I | SRT importálás |
+| Shortcut | Function |
+|----------|----------|
+| Ctrl+N | New project |
+| Ctrl+O | Open project |
+| Ctrl+S | Save |
+| Ctrl+I | Import SRT |
 | Ctrl+E | PDF export |
-| Space | Videó lejátszás/megállítás |
-| F5 | Szegmens lejátszás |
-| , | Előző képkocka |
-| . | Következő képkocka |
-| Ctrl+↑ | Előző cue |
-| Ctrl+↓ | Következő cue |
-| Ctrl+F | Keresés |
-| F11 | Teljes képernyő |
+| Space | Play/pause video |
+| F5 | Segment playback |
+| , | Previous frame |
+| . | Next frame |
+| Ctrl+↑ | Previous cue |
+| Ctrl+↓ | Next cue |
+| Ctrl+F | Search |
+| F11 | Fullscreen |
 
-## 🔌 Plugin fejlesztés
+## 🔌 Plugin Development
 
-### Export plugin példa
+### Export Plugin Example
 
 ```python
 from dubsync.plugins.base import ExportPlugin
@@ -194,7 +196,7 @@ class MyExportPlugin(ExportPlugin):
         return True
 ```
 
-### QA plugin példa
+### QA Plugin Example
 
 ```python
 from dubsync.plugins.base import QAPlugin
@@ -209,25 +211,25 @@ class MyQAPlugin(QAPlugin):
         if len(cue.translated_text) > 100:
             issues.append({
                 "severity": "warning",
-                "message": "Túl hosszú szöveg"
+                "message": "Text too long"
             })
         return issues
 ```
 
-## 🧪 Tesztelés
+## 🧪 Testing
 
 ```bash
-# Összes teszt futtatása
+# Run all tests
 pytest
 
-# Részletes kimenet
+# Verbose output
 pytest -v
 
-# Lefedettség mérés
+# Coverage measurement
 pytest --cov=dubsync --cov-report=html
 ```
 
-## 📁 Projekt struktúra
+## 📁 Project Structure
 
 ```
 dubsync/
@@ -265,24 +267,26 @@ dubsync/
 └── setup.py
 ```
 
-## 🤝 Közreműködés
+## 🤝 Contributing
 
-1. Fork-old a repository-t
-2. Hozz létre egy feature branch-et (`git checkout -b feature/AmazingFeature`)
-3. Commit-old a változtatásokat (`git commit -m 'Add some AmazingFeature'`)
-4. Push-old a branch-et (`git push origin feature/AmazingFeature`)
-5. Nyiss egy Pull Request-et
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 Licenc
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-MIT License - lásd a [LICENSE](LICENSE) fájlt.
+## 📄 License
 
-## 🙏 Köszönetnyilvánítás
+MIT License - see the [LICENSE](LICENSE) file.
+
+## 🙏 Acknowledgments
 
 - Qt/PySide6 - GUI framework
-- ReportLab - PDF generálás
-- SQLite - Adatbázis motor
+- ReportLab - PDF generation
+- SQLite - Database engine
 
-## 📞 Kapcsolat
+## 📞 Contact
 
-Hibák jelentése és feature kérések: [GitHub Issues](https://github.com/Levi0725/DubSync/issues)
+Bug reports and feature requests: [GitHub Issues](https://github.com/Levi0725/DubSync/issues)

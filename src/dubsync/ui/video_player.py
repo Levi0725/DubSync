@@ -17,6 +17,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
 from dubsync.utils.time_utils import ms_to_timecode
+from dubsync.i18n import t
 
 
 class SubtitleOverlay(QLabel):
@@ -74,7 +75,7 @@ class FullscreenVideoWidget(QWidget):
         layout.addWidget(self.video_container)
         
         # Hint label
-        hint_label = QLabel("ESC - Kilépés | Szóköz - Lejátszás/Megállítás")
+        hint_label = QLabel(t("video_player.fullscreen_hint"))
         hint_label.setStyleSheet("color: #666; padding: 5px;")
         hint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(hint_label)
@@ -131,6 +132,7 @@ class VideoPlayerWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         
+        self._segment_start: Optional[int] = None
         self._segment_end: Optional[int] = None
         self._is_segment_playing = False
         
@@ -221,13 +223,13 @@ class VideoPlayerWidget(QWidget):
         self.prev_frame_btn = QPushButton("◀|")
         self.prev_frame_btn.setMinimumSize(44, 32)
         self.prev_frame_btn.setStyleSheet(self._get_button_style())
-        self.prev_frame_btn.setToolTip("Előző frame (←)")
+        self.prev_frame_btn.setToolTip(t("video_player.prev_frame_tooltip"))
         buttons_layout.addWidget(self.prev_frame_btn)
         
         self.next_frame_btn = QPushButton("|▶")
         self.next_frame_btn.setMinimumSize(44, 32)
         self.next_frame_btn.setStyleSheet(self._get_button_style())
-        self.next_frame_btn.setToolTip("Következő frame (→)")
+        self.next_frame_btn.setToolTip(t("video_player.next_frame_tooltip"))
         buttons_layout.addWidget(self.next_frame_btn)
         
         buttons_layout.addSpacing(20)
@@ -246,7 +248,7 @@ class VideoPlayerWidget(QWidget):
         buttons_layout.addStretch()
         
         # Speed control
-        speed_label = QLabel("Sebesség:")
+        speed_label = QLabel(t("video_player.speed"))
         speed_label.setStyleSheet("color: white;")
         buttons_layout.addWidget(speed_label)
         
@@ -276,14 +278,14 @@ class VideoPlayerWidget(QWidget):
         self.loop_btn.setMinimumSize(70, 32)
         self.loop_btn.setCheckable(True)
         self.loop_btn.setStyleSheet(self._get_button_style(True))
-        self.loop_btn.setToolTip("Cue ismétlése")
+        self.loop_btn.setToolTip(t("video_player.loop_tooltip"))
         buttons_layout.addWidget(self.loop_btn)
         
         # Fullscreen button
         self.fullscreen_btn = QPushButton("⛶")
         self.fullscreen_btn.setMinimumSize(44, 32)
         self.fullscreen_btn.setStyleSheet(self._get_button_style())
-        self.fullscreen_btn.setToolTip("Teljes képernyő (F)")
+        self.fullscreen_btn.setToolTip(t("video_player.fullscreen_tooltip"))
         buttons_layout.addWidget(self.fullscreen_btn)
         
         controls_layout.addLayout(buttons_layout)
@@ -291,7 +293,7 @@ class VideoPlayerWidget(QWidget):
         layout.addWidget(controls_frame)
         
         # No video placeholder
-        self.no_video_label = QLabel("Nincs betöltött videó")
+        self.no_video_label = QLabel(t("video_player.no_video"))
         self.no_video_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.no_video_label.setStyleSheet(
             "color: #999; font-size: 16px; background-color: #1a1a1a;"
@@ -416,6 +418,7 @@ class VideoPlayerWidget(QWidget):
             start_ms: Kezdő pozíció
             end_ms: Záró pozíció
         """
+        self._segment_start = start_ms
         self._segment_end = end_ms
         self._is_segment_playing = True
         self.player.setPosition(start_ms)
@@ -429,13 +432,9 @@ class VideoPlayerWidget(QWidget):
             return
         
         if self._segment_end and self.player.position() >= self._segment_end:
-            if self.loop_btn.isChecked():
+            if self.loop_btn.isChecked() and self._segment_start is not None:
                 # Loop: seek back to segment start
-                segment_start = self._segment_end - (
-                    self._segment_end - self.player.position()
-                )
-                # We need to track segment start too
-                self.player.setPosition(max(0, self._segment_end - 5000))
+                self.player.setPosition(self._segment_start)
             else:
                 self.player.pause()
                 self._is_segment_playing = False

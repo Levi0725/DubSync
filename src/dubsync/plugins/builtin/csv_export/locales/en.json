@@ -1,0 +1,29 @@
+{
+  "name": "CSV Export",
+  "description": "Export cues to CSV format",
+  "header": "📊 CSV Export",
+  "settings_group": "Export Settings",
+  "delimiter_label": "Delimiter:",
+  "delimiter_comma": "Comma (,)",
+  "delimiter_semicolon": "Semicolon (;)",
+  "delimiter_tab": "Tab",
+  "include_source": "Include source text",
+  "include_timing": "Include timing",
+  "include_comments": "Include comments",
+  "export_btn": "📥 Export to CSV",
+  "success_title": "Export Successful",
+  "success_message": "Exported {count} cues to:\n{path}",
+  "error_title": "Export Error",
+  "error_message": "Error exporting: {error}",
+  "file_dialog_title": "Save CSV File",
+  "csv_headers": {
+    "index": "Index",
+    "start_time": "Start",
+    "end_time": "End",
+    "character": "Character",
+    "source_text": "Source",
+    "translated_text": "Translation",
+    "comments": "Comments"
+  },
+  "menu_export": "📊 Export to CSV..."
+}

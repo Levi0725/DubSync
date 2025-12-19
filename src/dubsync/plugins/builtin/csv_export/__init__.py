@@ -20,6 +20,7 @@ from dubsync.plugins.base import ExportPlugin, UIPlugin, PluginInfo, PluginType
 from dubsync.models.project import Project
 from dubsync.models.cue import Cue
 from dubsync.utils.time_utils import ms_to_timecode
+from dubsync.i18n import t
 
 
 class CSVExportOptionsWidget(QWidget):
@@ -36,46 +37,46 @@ class CSVExportOptionsWidget(QWidget):
         layout.setSpacing(8)
         
         # Header
-        header = QLabel("📊 CSV Export")
+        header = QLabel(t("plugins.csv_export.header"))
         header.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(header)
         
         # Beállítások
-        settings_group = QGroupBox("Beállítások")
+        settings_group = QGroupBox(t("plugins.csv_export.settings"))
         form = QFormLayout(settings_group)
         
         # Elválasztó karakter
         self.delimiter_combo = QComboBox()
-        self.delimiter_combo.addItem("Pontosvessző (;)", ";")
-        self.delimiter_combo.addItem("Vessző (,)", ",")
-        self.delimiter_combo.addItem("Tabulátor", "\t")
-        form.addRow("Elválasztó:", self.delimiter_combo)
+        self.delimiter_combo.addItem(t("plugins.csv_export.delimiter_semicolon"), ";")
+        self.delimiter_combo.addItem(t("plugins.csv_export.delimiter_comma"), ",")
+        self.delimiter_combo.addItem(t("plugins.csv_export.delimiter_tab"), "\t")
+        form.addRow(t("plugins.csv_export.delimiter"), self.delimiter_combo)
         
         # Tartalom beállítások
-        self.include_source_cb = QCheckBox("Forrás szöveg")
+        self.include_source_cb = QCheckBox(t("plugins.csv_export.include_source"))
         self.include_source_cb.setChecked(True)
         form.addRow("", self.include_source_cb)
         
-        self.include_timecodes_cb = QCheckBox("Időkódok")
+        self.include_timecodes_cb = QCheckBox(t("plugins.csv_export.include_timecodes"))
         self.include_timecodes_cb.setChecked(True)
         form.addRow("", self.include_timecodes_cb)
         
-        self.include_character_cb = QCheckBox("Karakter nevek")
+        self.include_character_cb = QCheckBox(t("plugins.csv_export.include_character"))
         self.include_character_cb.setChecked(True)
         form.addRow("", self.include_character_cb)
         
-        self.include_notes_cb = QCheckBox("Megjegyzések")
+        self.include_notes_cb = QCheckBox(t("plugins.csv_export.include_notes"))
         self.include_notes_cb.setChecked(True)
         form.addRow("", self.include_notes_cb)
         
-        self.include_sfx_cb = QCheckBox("SFX jegyzetek")
+        self.include_sfx_cb = QCheckBox(t("plugins.csv_export.include_sfx"))
         self.include_sfx_cb.setChecked(True)
         form.addRow("", self.include_sfx_cb)
         
         layout.addWidget(settings_group)
         
         # Export gomb
-        self.export_btn = QPushButton("📊 Exportálás CSV-be...")
+        self.export_btn = QPushButton(t("plugins.csv_export.export_button"))
         self.export_btn.clicked.connect(self._on_export)
         layout.addWidget(self.export_btn)
         
@@ -101,8 +102,8 @@ class CSVExportOptionsWidget(QWidget):
         if not pm.is_open:
             QMessageBox.warning(
                 self,
-                "Nincs projekt",
-                "Nincs megnyitott projekt az exportáláshoz."
+                t("plugins.csv_export.no_project_title"),
+                t("plugins.csv_export.no_project_message")
             )
             return
         
@@ -110,9 +111,9 @@ class CSVExportOptionsWidget(QWidget):
         default_name = pm.project.title or "export"
         file_path, _ = QFileDialog.getSaveFileName(
             self,
-            "CSV Exportálás",
+            t("plugins.csv_export.file_dialog_title"),
             f"{default_name}.csv",
-            "CSV fájl (*.csv)"
+            t("plugins.csv_export.file_filter")
         )
         
         if not file_path:
@@ -126,14 +127,14 @@ class CSVExportOptionsWidget(QWidget):
         if self.plugin.export(Path(file_path), project, cues, options):
             QMessageBox.information(
                 self,
-                "Export sikeres",
-                f"A fájl sikeresen exportálva:\n{file_path}"
+                t("plugins.csv_export.success_title"),
+                t("plugins.csv_export.success_message", path=file_path)
             )
         else:
             QMessageBox.critical(
                 self,
-                "Export hiba",
-                "Hiba történt az exportálás során."
+                t("plugins.csv_export.error_title"),
+                t("plugins.csv_export.error_message")
             )
 
 
@@ -151,7 +152,7 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
     @property
     def info(self) -> PluginInfo:
         return PluginInfo(
-            id="builtin.export.csv",
+            id="csv_export",
             name="CSV Export",
             version="1.1.0",
             author="Levente Kulacsy",
@@ -167,7 +168,7 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
     
     @property
     def file_filter(self) -> str:
-        return "CSV fájl (*.csv)"
+        return t("plugins.csv_export.file_filter")
     
     def export(
         self,
@@ -191,18 +192,21 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
                 writer = csv.writer(f, delimiter=delimiter)
                 
                 # Header építése
-                header = ["#"]
+                header = [t("plugins.csv_export.csv_headers.index")]
                 if include_timecodes:
-                    header.extend(["Kezdés", "Vége"])
+                    header.extend([
+                        t("plugins.csv_export.csv_headers.start"),
+                        t("plugins.csv_export.csv_headers.end")
+                    ])
                 if include_character:
-                    header.append("Karakter")
+                    header.append(t("plugins.csv_export.csv_headers.character"))
                 if include_source:
-                    header.append("Forrás")
-                header.append("Fordítás")
+                    header.append(t("plugins.csv_export.csv_headers.source"))
+                header.append(t("plugins.csv_export.csv_headers.translation"))
                 if include_notes:
-                    header.append("Megjegyzés")
+                    header.append(t("plugins.csv_export.csv_headers.notes"))
                 if include_sfx:
-                    header.append("SFX")
+                    header.append(t("plugins.csv_export.csv_headers.sfx"))
                 
                 writer.writerow(header)
                 
@@ -245,7 +249,7 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
         actions = []
         
         # CSV Export menüpont
-        export_action = QAction("📊 CSV Export...", self._main_window)
+        export_action = QAction(t("plugins.csv_export.menu_item"), self._main_window)
         export_action.setShortcut("Ctrl+Shift+C")
         export_action.triggered.connect(self._on_export_menu)
         actions.append(export_action)
@@ -261,8 +265,8 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
         if not pm.is_open:
             QMessageBox.warning(
                 self._main_window,
-                "Nincs projekt",
-                "Nincs megnyitott projekt az exportáláshoz."
+                t("plugins.csv_export.no_project_title"),
+                t("plugins.csv_export.no_project_message")
             )
             return
         
@@ -270,9 +274,9 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
         default_name = pm.project.title or "export"
         file_path, _ = QFileDialog.getSaveFileName(
             self._main_window,
-            "CSV Exportálás",
+            t("plugins.csv_export.file_dialog_title"),
             f"{default_name}.csv",
-            "CSV fájl (*.csv)"
+            t("plugins.csv_export.file_filter")
         )
         
         if not file_path:
@@ -285,14 +289,14 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
         if self.export(Path(file_path), project, cues):
             QMessageBox.information(
                 self._main_window,
-                "Export sikeres",
-                f"A fájl sikeresen exportálva:\n{file_path}"
+                t("plugins.csv_export.success_title"),
+                t("plugins.csv_export.success_message", path=file_path)
             )
         else:
             QMessageBox.critical(
                 self._main_window,
-                "Export hiba",
-                "Hiba történt az exportálás során."
+                t("plugins.csv_export.error_title"),
+                t("plugins.csv_export.error_message")
             )
     
     def get_settings_widget(self) -> Optional[QWidget]:

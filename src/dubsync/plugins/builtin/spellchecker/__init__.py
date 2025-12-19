@@ -19,6 +19,7 @@ from PySide6.QtCore import Qt, Signal, Slot, QTimer
 from PySide6.QtGui import QAction, QTextCursor, QTextCharFormat, QColor
 
 from dubsync.plugins.base import UIPlugin, PluginInfo, PluginType, PluginDependency
+from dubsync.i18n import t
 
 
 class SpellcheckerEngine:
@@ -179,16 +180,16 @@ class SpellcheckerWidget(QWidget):
         layout.setSpacing(8)
         
         # Header
-        header = QLabel("🔤 Helyesírás")
+        header = QLabel(t("plugins.spellchecker.header"))
         header.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(header)
         
         # Státusz
         if self.engine.is_available:
-            self.status_label = QLabel("✅ Magyar szótár betöltve")
+            self.status_label = QLabel(t("plugins.spellchecker.status_ok"))
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
         else:
-            self.status_label = QLabel(f"❌ {self.engine.error_message}")
+            self.status_label = QLabel(t("plugins.spellchecker.status_error", error=self.engine.error_message))
             self.status_label.setStyleSheet("color: #f44336; font-size: 11px;")
         layout.addWidget(self.status_label)
         
@@ -196,7 +197,7 @@ class SpellcheckerWidget(QWidget):
         splitter = QSplitter(Qt.Orientation.Vertical)
         
         # Hibák csoport
-        errors_group = QGroupBox("Hibás szavak")
+        errors_group = QGroupBox(t("plugins.spellchecker.errors_group"))
         errors_layout = QVBoxLayout(errors_group)
         
         self.errors_list = QListWidget()
@@ -208,14 +209,14 @@ class SpellcheckerWidget(QWidget):
         # Hiba akció gombok
         error_btn_layout = QHBoxLayout()
         
-        self.ignore_btn = QPushButton("🚫 Kihagyás")
-        self.ignore_btn.setToolTip("Szó figyelmen kívül hagyása")
+        self.ignore_btn = QPushButton(t("plugins.spellchecker.ignore_btn"))
+        self.ignore_btn.setToolTip(t("plugins.spellchecker.ignore_tooltip"))
         self.ignore_btn.setEnabled(False)
         self.ignore_btn.clicked.connect(self._ignore_word)
         error_btn_layout.addWidget(self.ignore_btn)
         
-        self.add_word_btn = QPushButton("📝 Hozzáadás")
-        self.add_word_btn.setToolTip("Szó hozzáadása a szótárhoz")
+        self.add_word_btn = QPushButton(t("plugins.spellchecker.add_word_btn"))
+        self.add_word_btn.setToolTip(t("plugins.spellchecker.add_word_tooltip"))
         self.add_word_btn.setEnabled(False)
         self.add_word_btn.clicked.connect(self._add_word_to_dict)
         error_btn_layout.addWidget(self.add_word_btn)
@@ -224,7 +225,7 @@ class SpellcheckerWidget(QWidget):
         splitter.addWidget(errors_group)
         
         # Kivételek csoport
-        ignored_group = QGroupBox("Figyelmen kívül hagyott szavak")
+        ignored_group = QGroupBox(t("plugins.spellchecker.ignored_group"))
         ignored_layout = QVBoxLayout(ignored_group)
         
         self.ignored_list = QListWidget()
@@ -236,13 +237,13 @@ class SpellcheckerWidget(QWidget):
         ignored_btn_layout = QHBoxLayout()
         
         self.add_ignored_btn = QPushButton("➕")
-        self.add_ignored_btn.setToolTip("Új kivétel hozzáadása")
+        self.add_ignored_btn.setToolTip(t("plugins.spellchecker.add_ignored_tooltip"))
         self.add_ignored_btn.setMaximumWidth(40)
         self.add_ignored_btn.clicked.connect(self._add_ignored_manually)
         ignored_btn_layout.addWidget(self.add_ignored_btn)
         
         self.remove_ignored_btn = QPushButton("🗑️")
-        self.remove_ignored_btn.setToolTip("Kivétel törlése")
+        self.remove_ignored_btn.setToolTip(t("plugins.spellchecker.remove_ignored_tooltip"))
         self.remove_ignored_btn.setMaximumWidth(40)
         self.remove_ignored_btn.setEnabled(False)
         self.remove_ignored_btn.clicked.connect(self._remove_ignored)
@@ -255,18 +256,18 @@ class SpellcheckerWidget(QWidget):
         layout.addWidget(splitter)
         
         # Ellenőrzés gomb
-        self.check_btn = QPushButton("🔍 Szöveg ellenőrzése")
+        self.check_btn = QPushButton(t("plugins.spellchecker.check_btn"))
         self.check_btn.clicked.connect(self._request_check)
         layout.addWidget(self.check_btn)
         
         # Import/Export
         io_layout = QHBoxLayout()
         
-        self.import_btn = QPushButton("📂 Import")
+        self.import_btn = QPushButton(t("plugins.spellchecker.import_btn"))
         self.import_btn.clicked.connect(self._import_words)
         io_layout.addWidget(self.import_btn)
         
-        self.export_btn = QPushButton("💾 Export")
+        self.export_btn = QPushButton(t("plugins.spellchecker.export_btn"))
         self.export_btn.clicked.connect(self._export_words)
         io_layout.addWidget(self.export_btn)
         
@@ -323,10 +324,10 @@ class SpellcheckerWidget(QWidget):
                 action.setData(("replace", suggestion))
             menu.addSeparator()
         
-        ignore_action = menu.addAction("🚫 Figyelmen kívül hagyás")
+        ignore_action = menu.addAction(t("plugins.spellchecker.context_ignore"))
         ignore_action.setData(("ignore", error.word))
         
-        add_action = menu.addAction("📝 Hozzáadás a szótárhoz")
+        add_action = menu.addAction(t("plugins.spellchecker.context_add"))
         add_action.setData(("add", error.word))
         
         action = menu.exec_(self.errors_list.mapToGlobal(pos))
@@ -556,11 +557,11 @@ class SpellcheckerPlugin(UIPlugin):
     
     def initialize(self) -> bool:
         """Plugin inicializálása."""
-        return True
+        return super().initialize()  # Locale fájlok betöltése
     
     def create_dock_widget(self) -> Optional[QDockWidget]:
         """Helyesírás dock widget létrehozása."""
-        self._dock = QDockWidget("🔤 Helyesírás", self._main_window)
+        self._dock = QDockWidget(t("plugins.spellchecker.header"), self._main_window)
         self._dock.setObjectName("spellcheckerDock")
         self._dock.setAllowedAreas(
             Qt.DockWidgetArea.LeftDockWidgetArea |
@@ -577,7 +578,7 @@ class SpellcheckerPlugin(UIPlugin):
         """Menü elemek létrehozása."""
         actions = []
         
-        action = QAction("🔤 Helyesírás panel", self._main_window)
+        action = QAction(t("plugins.spellchecker.panel"), self._main_window)
         action.setCheckable(True)
         action.setChecked(True)
         action.triggered.connect(self._toggle_dock)

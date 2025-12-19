@@ -1,0 +1,22 @@
+{
+  "name": "Helyesírás-ellenőrző",
+  "description": "Magyar helyesírás-ellenőrző",
+  "header": "🔤 Helyesírás",
+  "status_ok": "✅ Magyar szótár betöltve",
+  "status_error": "❌ {error}",
+  "errors_group": "Hibás szavak",
+  "ignored_group": "Figyelmen kívül hagyott szavak",
+  "ignore_btn": "🚫 Kihagyás",
+  "ignore_tooltip": "Szó figyelmen kívül hagyása",
+  "add_word_btn": "📝 Hozzáadás",
+  "add_word_tooltip": "Szó hozzáadása a szótárhoz",
+  "add_ignored_tooltip": "Új kivétel hozzáadása",
+  "remove_ignored_tooltip": "Kivétel törlése",
+  "check_btn": "🔍 Szöveg ellenőrzése",
+  "import_btn": "📂 Import",
+  "export_btn": "💾 Export",
+  "context_ignore": "🚫 Figyelmen kívül hagyás",
+  "context_add": "📝 Hozzáadás a szótárhoz",
+  "panel": "🔤 Helyesírás",
+  "run_check": "🔍 Helyesírás-ellenőrzés"
+}

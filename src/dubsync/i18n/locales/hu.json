@@ -1,0 +1,315 @@
+{
+  "app": {
+    "name": "DubSync",
+    "version": "Verzió: {version}",
+    "description": "Professzionális szinkronfordítói editor",
+    "tagline": "Fordítók és lektorok számára"
+  },
+  "menu": {
+    "file": {
+      "_title": "&Fájl",
+      "new": "Ú&j projekt",
+      "open": "&Megnyitás...",
+      "save": "M&entés",
+      "save_as": "Mentés má&sként...",
+      "import": "&Import",
+      "import_srt": "SRT felirat...",
+      "import_video": "Videó...",
+      "export": "&Export",
+      "export_pdf": "PDF szövegkönyv...",
+      "export_srt": "SRT felirat...",
+      "project_settings": "Projekt &beállítások...",
+      "app_settings": "⚙️ &Alkalmazás beállítások...",
+      "exit": "&Kilépés"
+    },
+    "edit": {
+      "_title": "S&zerkesztés",
+      "undo": "&Visszavonás",
+      "redo": "&Mégis",
+      "add_cue": "Ú&j sor hozzáadása",
+      "insert_before": "Sor beszúrása &elé",
+      "insert_after": "Sor beszúrása &mögé",
+      "delete_mode": "🗑️ &Törlés mód",
+      "delete_cue": "Kijelölt sor &törlése",
+      "edit_timing": "&Időzítés szerkesztése...",
+      "recalc_lipsync": "Lip-sync &újraszámítás"
+    },
+    "navigate": {
+      "_title": "&Navigáció",
+      "prev_cue": "&Előző sor",
+      "next_cue": "&Következő sor",
+      "next_empty": "Következő &fordítatlan",
+      "next_lipsync": "Következő &lip-sync hiba",
+      "next_comment": "Következő &megjegyzés"
+    },
+    "view": {
+      "_title": "&Nézet",
+      "panels": "📋 Panelek",
+      "comments_panel": "💬 &Megjegyzések panel",
+      "fullscreen": "🖥️ &Teljes képernyő"
+    },
+    "help": {
+      "_title": "&Súgó",
+      "tutorial": "📖 &Útmutató",
+      "about": "ℹ️ &Névjegy"
+    },
+    "plugins": "🔌 &Pluginok"
+  },
+  "toolbar": {
+    "main": "Fő eszköztár"
+  },
+  "status": {
+    "new": "Új",
+    "translated": "Fordítva",
+    "needs_revision": "Javítandó",
+    "approved": "Jóváhagyva",
+    "all": "Minden státusz"
+  },
+  "cue_editor": {
+    "index": "#-",
+    "time_format": "{start} → {end}",
+    "duration": "({duration}s)",
+    "status_label": "Státusz:",
+    "collapse_tooltip": "Szerkesztő összecsukása/kinyitása",
+    "character": "Karakter:",
+    "character_placeholder": "Karakter neve...",
+    "source_lock_tooltip": "Forrásszöveg zárolása/feloldása",
+    "source_text": "Forrás szöveg:",
+    "translation": "Fordítás:",
+    "translation_placeholder": "Írja be a fordítást...",
+    "lipsync_group": "Lip-sync becslés",
+    "no_data": "Nincs adat",
+    "notes": "Megjegyzés:",
+    "notes_placeholder": "Rendezői utasítások, megjegyzések...",
+    "sfx": "Háttérhang / SFX:",
+    "sfx_placeholder": "Háttérzajok, zene, effektek...",
+    "save": "Mentés",
+    "reset": "Visszaállítás",
+    "prev": "◀ Előző",
+    "next": "Következő ▶",
+    "no_cue_selected": "Válasszon ki egy sort a listából a szerkesztéshez",
+    "lipsync": {
+      "good": "✓ Megfelelő ({ratio}%)",
+      "close": "⚠ Határeset ({ratio}%)",
+      "too_long": "✗ Túl hosszú ({ratio}%)",
+      "details_good": "Időtartam: {duration}s\nBecsült beszédidő: {estimated}s\nVan még hely.",
+      "details_close": "Időtartam: {duration}s\nBecsült beszédidő: {estimated}s\nA határ közelében, légy óvatos!",
+      "details_long": "Időtartam: {duration}s\nBecsült beszédidő: {estimated}s\nFontold meg a szöveg rövidítését!"
+    }
+  },
+  "cue_list": {
+    "search_placeholder": "Keresés...",
+    "columns": {
+      "index": "#",
+      "time_in": "Kezdés",
+      "time_out": "Vége",
+      "character": "Karakter",
+      "text": "Szöveg",
+      "status": "Státusz",
+      "lipsync": "LS"
+    },
+    "info": "{filtered} / {total} cue",
+    "context_menu": {
+      "insert": "➕ Sor beszúrása ide",
+      "delete": "🗑️ Sor törlése"
+    }
+  },
+  "video_player": {
+    "no_video": "Nincs betöltött videó",
+    "speed": "Sebesség:",
+    "loop_tooltip": "Cue ismétlése",
+    "fullscreen_tooltip": "Teljes képernyő (F)",
+    "prev_frame_tooltip": "Előző frame (←)",
+    "next_frame_tooltip": "Következő frame (→)",
+    "fullscreen_hint": "ESC - Kilépés | Szóköz - Lejátszás/Megállítás"
+  },
+  "comments_panel": {
+    "title": "Megjegyzések",
+    "select_cue": "Válasszon ki egy cue-t",
+    "header": "Megjegyzések - #{index}",
+    "no_comments": "Nincs megjegyzés",
+    "resolved": "✓ Lezárva",
+    "resolve": "Lezár",
+    "new_comment": "Új megjegyzés",
+    "author": "Név:",
+    "author_placeholder": "Felhasználónév...",
+    "content_placeholder": "Írja be a megjegyzést...",
+    "add": "Hozzáadás",
+    "default_author": "Felhasználó"
+  },
+  "dialogs": {
+    "project_settings": {
+      "title": "Projekt beállítások",
+      "project_title": "Projekt cím:",
+      "project_title_placeholder": "Projekt neve...",
+      "series": "Sorozat:",
+      "series_placeholder": "Sorozat címe...",
+      "season": "Évad",
+      "episode": "Rész",
+      "episode_title": "Rész címe:",
+      "episode_title_placeholder": "Epizód címe...",
+      "translator": "Fordító:",
+      "translator_placeholder": "Fordító neve...",
+      "editor": "Lektor:",
+      "editor_placeholder": "Lektor neve...",
+      "technical": "Technikai beállítások",
+      "framerate": "Frame rate:"
+    },
+    "about": {
+      "title": "{app_name} - Névjegy",
+      "version": "Verzió: {version}",
+      "description": "Professzionális szinkronfordítói editor",
+      "for_whom": "Fordítók és lektorok számára",
+      "features_title": "Funkciók:",
+      "features": {
+        "srt": "SRT import/export",
+        "video": "Videó lejátszás lip-sync ellenőrzéssel",
+        "comments": "Lektori megjegyzések",
+        "pdf": "PDF szövegkönyv export",
+        "plugins": "Plugin támogatás"
+      },
+      "close": "Bezárás"
+    },
+    "progress": {
+      "progress_format": "{current} / {total}"
+    },
+    "tutorial": {
+      "title": "{app_name} - Útmutató",
+      "welcome": "🎬 Üdvözöljük a {app_name}-ban!",
+      "understood": "Megértettem!"
+    },
+    "timing_editor": {
+      "title": "Időzítés szerkesztése",
+      "start": "Kezdés:",
+      "end": "Vége:",
+      "duration": "Hossz: {duration}",
+      "error_end_before_start": "⚠️ A vége nem lehet a kezdés előtt!"
+    },
+    "theme_settings": {
+      "title": "Téma beállítások",
+      "theme": "Téma:",
+      "dark": "🌙 Sötét",
+      "dark_contrast": "🌑 Sötét kontrasztos",
+      "light": "☀️ Világos",
+      "custom": "🎨 Egyedi",
+      "primary": "Elsődleges szín:",
+      "background": "Háttér:",
+      "surface": "Felület:",
+      "foreground": "Szöveg:",
+      "choose": "Válassz..."
+    },
+    "confirm_close": {
+      "title": "Mentetlen változások",
+      "message": "A projektben mentetlen változások vannak. Mentsük kilépés előtt?",
+      "save": "Mentés",
+      "discard": "Elvetés",
+      "cancel": "Mégse"
+    },
+    "confirm_delete": {
+      "title": "Sor törlése",
+      "message": "Biztosan törölni szeretné a(z) #{index}. sort?\nEzt a műveletet nem lehet visszavonni.",
+      "delete": "Törlés",
+      "cancel": "Mégse"
+    }
+  },
+  "settings": {
+    "title": "Alkalmazás beállítások",
+    "tabs": {
+      "general": "Általános",
+      "plugins": "Pluginok",
+      "download": "Plugin letöltések"
+    },
+    "general": {
+      "paths": "Alapértelmezett útvonalak",
+      "save_path": "Mentési hely:",
+      "save_path_placeholder": "Dokumentumok mappa",
+      "user_data": "Felhasználói adatok",
+      "default_name": "Alapértelmezett név:",
+      "default_name_placeholder": "A te neved...",
+      "autosave": "Automatikus mentés",
+      "autosave_enabled": "Engedélyezve",
+      "autosave_interval": "Mentési időköz:",
+      "autosave_minutes": " perc",
+      "lipsync": "Lip-sync becslés",
+      "speech_speed": "Beszédsebesség:",
+      "chars_per_sec": " kar/mp",
+      "language": "Nyelv",
+      "app_language": "Alkalmazás nyelve:",
+      "language_restart_hint": "A nyelvváltás az alkalmazás újraindítása után lép érvénybe"
+    },
+    "plugins": {
+      "available": "Elérhető pluginok:",
+      "info": "Plugin információk:",
+      "select_hint": "Válassz ki egy plugint a részletek megtekintéséhez",
+      "settings": "Beállítások:",
+      "settings_hint": "Válassz plugint a beállításokhoz",
+      "enable": "Engedélyezés",
+      "disable": "Letiltás",
+      "restart_warning": "⚠️ A változások csak újraindítás után lépnek érvénybe!",
+      "panel_settings": "Panel megjelenés",
+      "show_on_start": "Indulásnál megjelenjen",
+      "show_on_start_tooltip": "Ha bekapcsolod, a plugin panelje automatikusan megjelenik az alkalmazás indításakor",
+      "plugin_settings": "Plugin beállítások"
+    }
+  },
+  "messages": {
+    "project_created": "Új projekt létrehozva",
+    "project_opened": "Projekt megnyitva: {name}",
+    "project_saved": "Projekt mentve",
+    "srt_imported": "{count} felirat importálva",
+    "video_loaded": "Videó betöltve: {name}",
+    "export_success": "Sikeres exportálás: {path}",
+    "export_error": "Exportálási hiba: {error}",
+    "delete_mode_on": "🗑️ TÖRLÉS MÓD - Kattints egy sorra a törléshez",
+    "delete_mode_off": "",
+    "no_project": "Nincs nyitott projekt",
+    "lipsync_recalculated": "{count} cue lip-sync frissítve",
+    "error_loading": "Betöltési hiba: {error}",
+    "error_saving": "Mentési hiba: {error}",
+    "settings_load_error": "Beállítások betöltési hiba: {error}",
+    "settings_save_error": "Beállítások mentési hiba: {error}",
+    "settings_saved": "Beállítások mentve. Újraindítás szükséges a plugin változásokhoz.",
+    "cue_added": "Új sor hozzáadva",
+    "cue_inserted_before": "Sor beszúrva a {index}. pozíció elé",
+    "cue_inserted_after": "Sor beszúrva a {index}. pozíció mögé",
+    "cue_deleted": "Sor törölve (Ctrl+Z: visszavonás)",
+    "delete_mode_required": "A törlés módot be kell kapcsolni a sorok törléséhez.\nHasználd a Ctrl+D billentyűt vagy a menüt.",
+    "select_cue_for_timing": "Válassz ki egy sort az időzítés szerkesztéséhez.",
+    "timing_saved": "Időzítés mentve",
+    "no_more_empty_cues": "Nincs több fordítatlan cue",
+    "no_more_lipsync_issues": "Nincs több lip-sync probléma",
+    "searching_next_comment": "Következő megjegyzés keresése...",
+    "first_cue": "Első sor",
+    "last_cue": "Utolsó sor",
+    "warnings": "Figyelmeztetések",
+    "error": "Hiba"
+  },
+  "statistics": {
+    "format": "{total} sor | {translated} lefordítva ({percent}%)",
+    "format_with_lipsync": "{total} sor | {translated} lefordítva ({percent}%) | {lipsync_issues} lip-sync hiba"
+  },
+  "filters": {
+    "all_statuses": "Minden státusz"
+  },
+  "buttons": {
+    "ok": "OK",
+    "cancel": "Mégse",
+    "save": "Mentés",
+    "close": "Bezárás",
+    "apply": "Alkalmaz",
+    "yes": "Igen",
+    "no": "Nem",
+    "browse": "..."
+  },
+  "plugins": {
+    "types": {
+      "export": "Export",
+      "qa": "QA",
+      "import": "Import",
+      "tool": "Eszköz",
+      "ui": "UI",
+      "service": "Szolgáltatás",
+      "language": "Nyelv"
+    }
+  }
+}

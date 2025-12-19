@@ -1,0 +1,29 @@
+{
+  "name": "CSV Export",
+  "description": "Feliratok exportálása CSV formátumba",
+  "header": "📊 CSV Export",
+  "settings_group": "Export beállítások",
+  "delimiter_label": "Elválasztó:",
+  "delimiter_comma": "Vessző (,)",
+  "delimiter_semicolon": "Pontosvessző (;)",
+  "delimiter_tab": "Tabulátor",
+  "include_source": "Forrásszöveg hozzáadása",
+  "include_timing": "Időkódok hozzáadása",
+  "include_comments": "Megjegyzések hozzáadása",
+  "export_btn": "📥 Exportálás CSV-be",
+  "success_title": "Sikeres exportálás",
+  "success_message": "{count} felirat exportálva:\n{path}",
+  "error_title": "Exportálási hiba",
+  "error_message": "Hiba az exportálás során: {error}",
+  "file_dialog_title": "CSV fájl mentése",
+  "csv_headers": {
+    "index": "Sorszám",
+    "start_time": "Kezdés",
+    "end_time": "Vége",
+    "character": "Karakter",
+    "source_text": "Forrás",
+    "translated_text": "Fordítás",
+    "comments": "Megjegyzések"
+  },
+  "menu_export": "📊 Exportálás CSV-be..."
+}

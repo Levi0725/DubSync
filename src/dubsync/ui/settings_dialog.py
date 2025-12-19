@@ -36,6 +36,20 @@ class GeneralSettingsTab(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         
+        # Nyelvi beállítások (legfelülre)
+        lang_group = QGroupBox("Nyelv / Language")
+        lang_layout = QFormLayout(lang_group)
+        
+        self.language_combo = QComboBox()
+        self._populate_languages()
+        lang_layout.addRow("Alkalmazás nyelve / App language:", self.language_combo)
+        
+        self.language_hint = QLabel("⚠️ A nyelvváltás az alkalmazás újraindítása után lép érvénybe.")
+        self.language_hint.setStyleSheet("color: #ff9800; font-size: 11px;")
+        lang_layout.addRow("", self.language_hint)
+        
+        layout.addWidget(lang_group)
+        
         # Alapértelmezett útvonalak
         paths_group = QGroupBox("Alapértelmezett útvonalak")
         paths_layout = QFormLayout(paths_group)
@@ -90,6 +104,20 @@ class GeneralSettingsTab(QWidget):
         
         layout.addStretch()
     
+    def _populate_languages(self):
+        """Elérhető nyelvek betöltése a legördülő menübe."""
+        try:
+            from dubsync.i18n import get_available_languages
+            
+            languages = get_available_languages()
+            for lang in languages:
+                display_text = f"{lang.flag} {lang.name}" if lang.flag else lang.name
+                self.language_combo.addItem(display_text, lang.code)
+        except Exception as e:
+            # Fallback ha az i18n még nincs inicializálva
+            self.language_combo.addItem("🇬🇧 English", "en")
+            self.language_combo.addItem("🇭🇺 Magyar", "hu")
+    
     def _browse_save_path(self):
         path = QFileDialog.getExistingDirectory(
             self, "Válassz mentési mappát",
@@ -104,6 +132,13 @@ class GeneralSettingsTab(QWidget):
         self.autosave_check.setChecked(self.settings.auto_save_enabled)
         self.autosave_interval.setValue(self.settings.auto_save_interval)
         self.chars_per_sec.setValue(self.settings.lipsync_chars_per_second)
+        
+        # Nyelv beállítása
+        current_lang = self.settings.language
+        for i in range(self.language_combo.count()):
+            if self.language_combo.itemData(i) == current_lang:
+                self.language_combo.setCurrentIndex(i)
+                break
     
     def save_settings(self):
         self.settings.default_save_path = self.save_path_edit.text()
@@ -111,6 +146,9 @@ class GeneralSettingsTab(QWidget):
         self.settings.auto_save_enabled = self.autosave_check.isChecked()
         self.settings.auto_save_interval = self.autosave_interval.value()
         self.settings.lipsync_chars_per_second = self.chars_per_sec.value()
+        
+        # Nyelv mentése
+        self.settings.language = self.language_combo.currentData()
 
 
 class PluginsSettingsTab(QWidget):
@@ -280,6 +318,7 @@ class PluginsSettingsTab(QWidget):
             PluginType.TOOL: "🔧",
             PluginType.UI: "🖼️",
             PluginType.SERVICE: "⚙️",
+            PluginType.LANGUAGE: "🌐",
         }
         return icons.get(plugin_type, "📦")
     
@@ -649,7 +688,7 @@ class SettingsDialog(QDialog):
         self._initial_tab = initial_tab
         
         self.setWindowTitle("Beállítások")
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(800, 800)
         
         self._setup_ui()
         self._set_initial_tab()

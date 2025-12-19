@@ -27,6 +27,7 @@ class PluginType(Enum):
     TOOL = auto()        # Egyéb eszköz plugin
     UI = auto()          # UI bővítő plugin (ablakok, panelek, menük)
     SERVICE = auto()     # Háttérszolgáltatás plugin (API-k, fordítók)
+    LANGUAGE = auto()    # Nyelv bővítő plugin (i18n)
 
 
 @dataclass
@@ -81,13 +82,34 @@ class PluginInterface(ABC):
         """
         Plugin inicializálása.
         
-        Betöltéskor hívódik. Visszatérési érték False esetén
-        a plugin nem töltődik be.
+        Betöltéskor hívódik. Automatikusan betölti a plugin 
+        locale fájljait a locales/ mappából ha létezik.
+        Visszatérési érték False esetén a plugin nem töltődik be.
         
         Returns:
             True, ha sikeres
         """
+        self._load_plugin_locales()
         return True
+    
+    def _load_plugin_locales(self) -> None:
+        """
+        Plugin locale fájlok betöltése.
+        
+        A plugin locales/ mappájából tölti be az összes JSON fájlt.
+        """
+        try:
+            # Plugin könyvtár meghatározása
+            import inspect
+            plugin_file = inspect.getfile(self.__class__)
+            plugin_dir = Path(plugin_file).parent
+            locales_dir = plugin_dir / "locales"
+            
+            if locales_dir.exists() and locales_dir.is_dir():
+                from dubsync.i18n.plugin_support import load_plugin_translations_from_locales_dir
+                load_plugin_translations_from_locales_dir(self.info.id, locales_dir)
+        except Exception as e:
+            print(f"Error loading plugin locales for {self.info.id}: {e}")
     
     def shutdown(self) -> None:
         """
@@ -367,6 +389,110 @@ class TranslationPlugin(ServicePlugin):
         return f"translator_{self.info.id}"
 
 
+class LanguagePlugin(PluginInterface):
+    """
+    Nyelv bővítő plugin alap osztály.
+    
+    Language pluginok új nyelveket adhatnak az alkalmazáshoz.
+    """
+    
+    @property
+    @abstractmethod
+    def language_code(self) -> str:
+        """
+        Nyelv ISO 639-1 kódja.
+        
+        Returns:
+            Nyelv kód (pl. "de", "es", "fr")
+        """
+        pass
+    
+    @property
+    @abstractmethod
+    def language_name(self) -> str:
+        """
+        Nyelv natív neve.
+        
+        Returns:
+            Natív név (pl. "Deutsch", "Español")
+        """
+        pass
+    
+    @property
+    def language_name_en(self) -> str:
+        """
+        Nyelv angol neve.
+        
+        Returns:
+            Angol név (pl. "German", "Spanish")
+        """
+        return self.language_name
+    
+    @property
+    def language_flag(self) -> str:
+        """
+        Nyelv zászló emojija.
+        
+        Returns:
+            Zászló emoji (pl. "🇩🇪", "🇪🇸")
+        """
+        return ""
+    
+    @property
+    def is_rtl(self) -> bool:
+        """
+        Jobbról balra írás-e.
+        
+        Returns:
+            True ha RTL nyelv
+        """
+        return False
+    
+    def get_translations_path(self) -> Optional["Path"]:
+        """
+        Fordítások JSON fájl útvonala.
+        
+        Returns:
+            Path objektum vagy None
+        """
+        if self._plugin_dir:
+            path = self._plugin_dir / "locales" / f"{self.language_code}.json"
+            if path.exists():
+                return path
+        return None
+    
+    def initialize(self) -> bool:
+        """
+        Plugin inicializálása - nyelv regisztrálása.
+        
+        Returns:
+            True ha sikeres
+        """
+        try:
+            from dubsync.i18n import get_locale_manager
+            from dubsync.i18n.manager import LanguageInfo
+            
+            locale_mgr = get_locale_manager()
+            
+            # Nyelv info létrehozása
+            lang_info = LanguageInfo(
+                code=self.language_code,
+                name=self.language_name,
+                name_en=self.language_name_en,
+                flag=self.language_flag,
+                rtl=self.is_rtl
+            )
+            
+            # Nyelv regisztrálása
+            translations_path = self.get_translations_path()
+            locale_mgr.register_language(lang_info, translations_path)
+            
+            return True
+        except Exception as e:
+            print(f"Error initializing language plugin: {e}")
+            return False
+
+
 class PluginManager:
     """
     Plugin kezelő.
@@ -381,6 +507,7 @@ class PluginManager:
         self._ui_plugins: Dict[str, UIPlugin] = {}
         self._service_plugins: Dict[str, ServicePlugin] = {}
         self._translation_plugins: Dict[str, TranslationPlugin] = {}
+        self._language_plugins: Dict[str, LanguagePlugin] = {}
         self._enabled_plugins: set = set()
         self._plugin_settings: Dict[str, Dict[str, Any]] = {}
     
@@ -424,6 +551,9 @@ class PluginManager:
         if isinstance(plugin, QAPlugin):
             self._qa_plugins[info.id] = plugin
         
+        if isinstance(plugin, LanguagePlugin):
+            self._language_plugins[info.id] = plugin
+        
         return True
     
     def unregister(self, plugin_id: str) -> bool:
@@ -449,6 +579,7 @@ class PluginManager:
         self._ui_plugins.pop(plugin_id, None)
         self._service_plugins.pop(plugin_id, None)
         self._translation_plugins.pop(plugin_id, None)
+        self._language_plugins.pop(plugin_id, None)
         
         return True
     
@@ -519,6 +650,13 @@ class PluginManager:
             plugins = [p for p in plugins if self.is_enabled(p.info.id)]
         return plugins
     
+    def get_language_plugins(self, enabled_only: bool = True) -> List[LanguagePlugin]:
+        """Nyelv pluginok lekérése."""
+        plugins = list(self._language_plugins.values())
+        if enabled_only:
+            plugins = [p for p in plugins if self.is_enabled(p.info.id)]
+        return plugins
+    
     def save_plugin_settings(self, plugin_id: str, settings: Dict[str, Any]) -> None:
         """Plugin beállítások mentése."""
         self._plugin_settings[plugin_id] = settings
@@ -538,4 +676,5 @@ class PluginManager:
         self._ui_plugins.clear()
         self._service_plugins.clear()
         self._translation_plugins.clear()
+        self._language_plugins.clear()
         self._enabled_plugins.clear()

@@ -22,6 +22,7 @@ from dubsync.utils.constants import (
     LIPSYNC_THRESHOLD_GOOD, LIPSYNC_THRESHOLD_WARNING
 )
 from dubsync.utils.time_utils import ms_to_timecode
+from dubsync.i18n import t
 
 
 class CueListWidget(QWidget):
@@ -66,16 +67,16 @@ class CueListWidget(QWidget):
         filter_layout = QHBoxLayout()
         
         self.search_edit = QLineEdit()
-        self.search_edit.setPlaceholderText("Keresés...")
+        self.search_edit.setPlaceholderText(t("cue_list.search_placeholder"))
         self.search_edit.setClearButtonEnabled(True)
         filter_layout.addWidget(self.search_edit)
         
         self.status_filter = QComboBox()
-        self.status_filter.addItem("Minden státusz", None)
-        self.status_filter.addItem("Új", CueStatus.NEW.value)
-        self.status_filter.addItem("Fordítva", CueStatus.TRANSLATED.value)
-        self.status_filter.addItem("Javítandó", CueStatus.NEEDS_REVISION.value)
-        self.status_filter.addItem("Jóváhagyva", CueStatus.APPROVED.value)
+        self.status_filter.addItem(t("filters.all_statuses"), None)
+        self.status_filter.addItem(t("status.new"), CueStatus.NEW.value)
+        self.status_filter.addItem(t("status.translated"), CueStatus.TRANSLATED.value)
+        self.status_filter.addItem(t("status.needs_revision"), CueStatus.NEEDS_REVISION.value)
+        self.status_filter.addItem(t("status.approved"), CueStatus.APPROVED.value)
         filter_layout.addWidget(self.status_filter)
         
         layout.addLayout(filter_layout)
@@ -84,7 +85,13 @@ class CueListWidget(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels([
-            "#", "Kezdés", "Vége", "Karakter", "Szöveg", "Státusz", "LS"
+            t("cue_list.columns.index"),
+            t("cue_list.columns.time_in"),
+            t("cue_list.columns.time_out"),
+            t("cue_list.columns.character"),
+            t("cue_list.columns.text"),
+            t("cue_list.columns.status"),
+            t("cue_list.columns.lipsync")
         ])
         
         # Table settings
@@ -170,7 +177,7 @@ class CueListWidget(QWidget):
             self._populate_row(row, cue)
         
         self.info_label.setText(
-            f"{len(filtered_cues)} / {len(self._cues)} cue"
+            t("cue_list.info", filtered=len(filtered_cues), total=len(self._cues))
         )
     
     def _populate_row(self, row: int, cue: Cue):
@@ -363,12 +370,12 @@ class CueListWidget(QWidget):
         
         menu = QMenu(self)
         
-        insert_action = QAction("➕ Sor beszúrása ide", self)
+        insert_action = QAction(t("cue_list.context_menu.insert"), self)
         insert_action.triggered.connect(lambda: self._request_insert(item.row()))
         menu.addAction(insert_action)
         
         if self._delete_mode:
-            delete_action = QAction("🗑️ Sor törlése", self)
+            delete_action = QAction(t("cue_list.context_menu.delete"), self)
             delete_action.triggered.connect(lambda: self._request_delete(item.row()))
             menu.addAction(delete_action)
         

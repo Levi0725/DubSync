@@ -1,93 +1,93 @@
 # Contributing to DubSync
 
-Köszönjük, hogy hozzá szeretnél járulni a DubSync projekthez! 🎬
+Thank you for your interest in contributing to the DubSync project! 🎬
 
-## 🐛 Hibajelentés
+## 🐛 Bug Reports
 
-Ha hibát találtál, kérjük nyiss egy Issue-t és add meg:
+If you found a bug, please open an Issue and include:
 
-1. **A hiba leírása** - Mi történt?
-2. **Elvárt viselkedés** - Mi kellett volna történjen?
-3. **Reprodukálási lépések** - Hogyan lehet megismételni a hibát?
-4. **Környezet** - Windows verzió, Python verzió
-5. **Képernyőkép** - Ha releváns
+1. **Bug description** - What happened?
+2. **Expected behavior** - What should have happened?
+3. **Reproduction steps** - How can the bug be reproduced?
+4. **Environment** - Windows version, Python version
+5. **Screenshot** - If relevant
 
-## 💡 Funkció javaslat
+## 💡 Feature Requests
 
-Ha új funkciót szeretnél, nyiss egy Issue-t és írd le:
+If you'd like a new feature, open an Issue and describe:
 
-1. **A funkció leírása** - Mit csinálna?
-2. **Miért hasznos?** - Ki használná és mikor?
-3. **Példák** - Hogyan nézne ki a gyakorlatban?
+1. **Feature description** - What would it do?
+2. **Why is it useful?** - Who would use it and when?
+3. **Examples** - How would it look in practice?
 
-## 🔧 Pull Request készítése
+## 🔧 Creating a Pull Request
 
-### Előkészületek
+### Prerequisites
 
-1. Fork-old a repository-t
-2. Klónozd a fork-ot: `git clone https://github.com/TE-USERNAME/dubsync.git`
-3. Hozz létre egy branch-et: `git checkout -b feature/uj-funkcio`
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/YOUR-USERNAME/dubsync.git`
+3. Create a branch: `git checkout -b feature/new-feature`
 
-### Kód stílus
+### Code Style
 
-- PEP 8 követése
-- Típus annotációk használata ahol lehetséges
-- Docstringek írása minden publikus metódushoz
-- Magyar nyelv a felhasználói üzenetekben
+- Follow PEP 8
+- Use type annotations where possible
+- Write docstrings for all public methods
+- Keep user-facing messages clear and descriptive
 
-### Tesztek
+### Tests
 
 ```bash
-# Tesztek futtatása
+# Run tests
 pytest tests/ -v
 
-# Csak specifikus teszt
+# Run specific test
 pytest tests/test_models.py -v
 ```
 
-### Commit üzenetek
+### Commit Messages
 
 ```
-feat: Új funkció leírása
-fix: Hibajavítás leírása
-docs: Dokumentáció módosítás
-refactor: Kód átszervezés
-test: Teszt hozzáadás/módosítás
+feat: New feature description
+fix: Bug fix description
+docs: Documentation changes
+refactor: Code refactoring
+test: Test additions/modifications
 ```
 
-### PR benyújtása
+### Submitting PR
 
-1. Push-old a változásokat: `git push origin feature/uj-funkcio`
-2. Nyiss egy Pull Request-et
-3. Írd le a változásokat részletesen
-4. Várd meg a review-t
+1. Push your changes: `git push origin feature/new-feature`
+2. Open a Pull Request
+3. Describe your changes in detail
+4. Wait for review
 
-## 📋 Fejlesztési útmutató
+## 📋 Development Guide
 
-### Virtuális környezet
+### Virtual Environment
 
 ```bash
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
-pip install -r requirements-dev.txt  # Fejlesztői függőségek
+pip install -r requirements-dev.txt  # Development dependencies
 ```
 
-### Projekt struktúra
+### Project Structure
 
 ```
 src/dubsync/
-├── models/      # Adatmodellek (Project, Cue, Comment)
-├── services/    # Üzleti logika (ProjectManager, PDFExporter)
-├── ui/          # Qt widgetek és dialógusok
-├── plugins/     # Plugin rendszer
-└── utils/       # Segédfüggvények
+├── models/      # Data models (Project, Cue, Comment)
+├── services/    # Business logic (ProjectManager, PDFExporter)
+├── ui/          # Qt widgets and dialogs
+├── plugins/     # Plugin system
+└── utils/       # Utility functions
 ```
 
-### Plugin fejlesztés
+### Plugin Development
 
-Lásd: [docs/PLUGIN_DEVELOPMENT.md](docs/PLUGIN_DEVELOPMENT.md)
+See: [docs/PLUGIN_DEVELOPMENT.md](docs/PLUGIN_DEVELOPMENT.md)
 
-## 📜 Licensz
+## 📜 License
 
-A hozzájárulásodat MIT licensz alatt teszed közzé.
+Your contributions will be published under the MIT license.

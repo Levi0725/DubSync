@@ -28,6 +28,9 @@ class AppSettings:
     show_line_numbers: bool = True
     compact_mode: bool = False
     
+    # Nyelvi beállítások (i18n)
+    language: str = "en"  # ISO 639-1 kód (en, hu, stb.)
+    
     # Lip-sync beállítások
     lipsync_chars_per_second: float = 13.0
     lipsync_warning_threshold: float = 0.95
@@ -160,6 +163,14 @@ class SettingsManager:
         self._settings.theme = value
     
     @property
+    def language(self) -> str:
+        return self._settings.language
+    
+    @language.setter
+    def language(self, value: str) -> None:
+        self._settings.language = value
+    
+    @property
     def auto_save_enabled(self) -> bool:
         return self._settings.auto_save_enabled
     
@@ -190,6 +201,27 @@ class SettingsManager:
     @enabled_plugins.setter
     def enabled_plugins(self, value: Set[str]) -> None:
         self._settings.enabled_plugins = value
+    
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Általános beállítás lekérése kulcs alapján.
+        
+        Args:
+            key: A beállítás neve (pl. 'data_dir', 'theme', stb.)
+            default: Alapértelmezett érték ha nem létezik
+            
+        Returns:
+            A beállítás értéke vagy az alapértelmezett
+        """
+        # Speciális kezelés a data_dir-hez
+        if key == "data_dir":
+            return str(self._config_dir)
+        
+        # Próbáljuk meg az AppSettings-ből lekérni
+        if hasattr(self._settings, key):
+            return getattr(self._settings, key)
+        
+        return default
     
     def get_plugin_settings(self, plugin_id: str) -> Dict[str, Any]:
         """Plugin beállítások lekérése."""

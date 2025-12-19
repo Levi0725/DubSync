@@ -1,38 +1,36 @@
-# DubSync Architecture Documentation
+# DubSync Architektúra Dokumentáció
 
-> 🇭🇺 [Magyar verzió / Hungarian version](ARCHITECTURE_HU.md)
+## Áttekintés
 
-## Overview
+A DubSync egy többrétegű architektúrát használ, amely elválasztja az adatkezelést, az üzleti logikát és a felhasználói felületet. Ez a dokumentum részletezi az alkalmazás belső felépítését.
 
-DubSync uses a multi-layered architecture that separates data management, business logic, and the user interface. This document details the internal structure of the application.
-
-## Architectural Layers
+## Architekturális rétegek
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    UI Layer                         │
-│   (PySide6/Qt Widgets, Dialogs, Events)             │
+│                    UI Réteg                         │
+│   (PySide6/Qt Widgets, Dialógusok, Események)       │
 ├─────────────────────────────────────────────────────┤
-│                Service Layer                        │
-│   (Business logic, Processing, Export/Import)       │
+│                Service Réteg                        │
+│   (Üzleti logika, Feldolgozás, Export/Import)       │
 ├─────────────────────────────────────────────────────┤
-│                 Model Layer                         │
-│   (Data structures, ORM-like CRUD operations)       │
+│                 Model Réteg                         │
+│   (Adatstruktúrák, ORM-szerű CRUD műveletek)        │
 ├─────────────────────────────────────────────────────┤
-│              Database Layer                         │
-│   (SQLite, Schema management, Transactions)         │
+│              Adatbázis Réteg                        │
+│   (SQLite, Séma kezelés, Tranzakciók)               │
 └─────────────────────────────────────────────────────┘
 ```
 
-## Components
+## Komponensek
 
-### 1. Database Layer (`models/database.py`)
+### 1. Adatbázis réteg (`models/database.py`)
 
-The `DatabaseManager` class is responsible for SQLite database management.
+A `DatabaseManager` osztály felelős az SQLite adatbázis kezeléséért.
 
 ```python
 class DatabaseManager:
-    """SQLite database wrapper."""
+    """SQLite adatbázis wrapper."""
     
     def __init__(self, db_path: Path | str = ":memory:")
     def execute(self, query: str, params: tuple = ()) -> list
@@ -42,16 +40,16 @@ class DatabaseManager:
     def rollback(self) -> None
 ```
 
-**Schema Structure:**
+**Séma felépítés:**
 
 ```sql
--- Project metadata
+-- Projekt metaadatok
 CREATE TABLE metadata (
     key TEXT PRIMARY KEY,
     value TEXT
 );
 
--- Project information
+-- Projekt információk
 CREATE TABLE project (
     id INTEGER PRIMARY KEY,
     title TEXT NOT NULL,
@@ -63,7 +61,7 @@ CREATE TABLE project (
     modified_at TIMESTAMP
 );
 
--- Sync cues
+-- Szinkron cue-k
 CREATE TABLE cue (
     id INTEGER PRIMARY KEY,
     project_id INTEGER NOT NULL,
@@ -79,7 +77,7 @@ CREATE TABLE cue (
     FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE
 );
 
--- Review comments
+-- Lektori megjegyzések
 CREATE TABLE comment (
     id INTEGER PRIMARY KEY,
     cue_id INTEGER NOT NULL,
@@ -91,7 +89,7 @@ CREATE TABLE comment (
 );
 ```
 
-### 2. Model Layer
+### 2. Model réteg
 
 #### Project (`models/project.py`)
 
@@ -135,7 +133,7 @@ class Cue:
     def duration_ms(self) -> int
     
     @property
-    def time_in_tc(self) -> str  # Timecode format
+    def time_in_tc(self) -> str  # Timecode formátum
     
     @property
     def time_out_tc(self) -> str
@@ -156,11 +154,11 @@ class Comment:
     def resolve(self) -> None
 ```
 
-### 3. Service Layer
+### 3. Service réteg
 
 #### SRTParser (`services/srt_parser.py`)
 
-Responsible for reading and processing SRT files.
+Az SRT fájlok beolvasásáért és feldolgozásáért felelős.
 
 ```python
 class SRTParser:
@@ -171,19 +169,19 @@ class SRTParser:
     def get_errors(self) -> list[str]
 ```
 
-**Supported Encodings:**
-- UTF-8 (with and without BOM)
+**Támogatott kódolások:**
+- UTF-8 (BOM-mal és anélkül)
 - CP1250 (Windows Central European)
 - ISO-8859-2 (Latin-2)
 
-**Cleanup Operations:**
-- HTML tag removal (`<i>`, `<b>`, `<font>`, etc.)
-- ASS style code removal (`{\an8}`, `{\pos()}`, etc.)
-- Whitespace normalization
+**Tisztítási műveletek:**
+- HTML tagek eltávolítása (`<i>`, `<b>`, `<font>`, stb.)
+- ASS stílus kódok eltávolítása (`{\an8}`, `{\pos()}`, stb.)
+- Whitespace normalizálás
 
 #### LipSyncEstimator (`services/lip_sync.py`)
 
-Estimates lip-sync accuracy based on speech rate.
+Magyar beszédsebesség alapján becsüli a lip-sync megfelelőséget.
 
 ```python
 class LipSyncEstimator:
@@ -203,14 +201,14 @@ class LipSyncResult:
     status: LipSyncStatus  # GOOD, WARNING, TOO_LONG
 ```
 
-**Status Thresholds:**
-- `GOOD`: ratio ≤ 0.95 (Green)
-- `WARNING`: 0.95 < ratio ≤ 1.0 (Yellow)
-- `TOO_LONG`: ratio > 1.0 (Red)
+**Státusz határok:**
+- `GOOD`: ratio ≤ 0.95 (Zöld)
+- `WARNING`: 0.95 < ratio ≤ 1.0 (Sárga)
+- `TOO_LONG`: ratio > 1.0 (Piros)
 
 #### PDFExporter (`services/pdf_export.py`)
 
-Classic dubbing script format PDF generation.
+Klasszikus magyar szinkronkönyv formátumú PDF generálás.
 
 ```python
 class PDFExporter:
@@ -229,12 +227,12 @@ class PDFExportConfig:
     include_source: bool = True
     include_translated: bool = True
     include_timecodes: bool = True
-    layout: str = "standard"  # or "bilingual_columns"
+    layout: str = "standard"  # vagy "bilingual_columns"
 ```
 
 #### ProjectManager (`services/project_manager.py`)
 
-High-level project management operations.
+Magas szintű projektkezelési műveletek.
 
 ```python
 class ProjectManager:
@@ -251,95 +249,95 @@ class ProjectManager:
     def link_video(self, video_path: Path) -> None
 ```
 
-### 4. UI Layer
+### 4. UI réteg
 
 #### MainWindow (`ui/main_window.py`)
 
-Main window structure:
+A főablak felépítése:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Menu: File | Edit | View | Tools | Help                 │
+│ Menü: Fájl | Szerkesztés | Nézet | Eszközök | Súgó      │
 ├─────────────────────────────────────────────────────────┤
-│ Toolbar: [New][Open][Save] | [Import][Export]           │
+│ Eszköztár: [Új][Megnyitás][Mentés] | [Import][Export]   │
 ├────────────────────┬────────────────────────────────────┤
 │                    │                                    │
-│    Cue List        │       Video Player                │
+│    Cue Lista       │       Videó Lejátszó              │
 │    (QTableView)    │       (QVideoWidget)              │
 │                    │                                    │
 │                    ├────────────────────────────────────┤
 │                    │                                    │
-│                    │       Cue Editor                  │
-│                    │       - Source text               │
-│                    │       - Translation               │
-│                    │       - Lip-sync indicator        │
+│                    │       Cue Szerkesztő              │
+│                    │       - Forrás szöveg             │
+│                    │       - Fordítás                  │
+│                    │       - Lip-sync mutató           │
 │                    │                                    │
 ├────────────────────┴────────────────────────────────────┤
-│ [Dockable] Comments Panel                               │
+│ [Dokkolható] Megjegyzések Panel                         │
 ├─────────────────────────────────────────────────────────┤
-│ Status: Project name | Cue: 15/120 | Lip-sync: OK       │
+│ Státusz: Projekt neve | Cue: 15/120 | Lip-sync: OK      │
 └─────────────────────────────────────────────────────────┘
 ```
 
-#### Components:
+#### Komponensek:
 
 - **CueListWidget** (`ui/cue_list.py`): QTableView + custom model
-- **CueEditorWidget** (`ui/cue_editor.py`): Text editor with lip-sync indicator
+- **CueEditorWidget** (`ui/cue_editor.py`): Szövegszerkesztő lip-sync mutatóval
 - **VideoPlayerWidget** (`ui/video_player.py`): QMediaPlayer wrapper
-- **CommentsPanelWidget** (`ui/comments_panel.py`): Dockable comments
-- **SettingsDialog** (`ui/settings_dialog.py`): Settings window
+- **CommentsPanelWidget** (`ui/comments_panel.py`): Dokkolható megjegyzések
+- **SettingsDialog** (`ui/settings_dialog.py`): Beállítások ablak
 
-#### Main Window Menu Structure
+#### Főablak menüstruktúra
 
 ```
-File
-├── New Project (Ctrl+N)
-├── Open (Ctrl+O)
-├── Save (Ctrl+S)
+Fájl
+├── Új projekt (Ctrl+N)
+├── Megnyitás (Ctrl+O)
+├── Mentés (Ctrl+S)
 ├── ─────────────
-├── Application Settings (Ctrl+,)
-└── Exit (Ctrl+Q)
+├── Alkalmazás beállítások (Ctrl+,)
+└── Kilépés (Ctrl+Q)
 
-Edit
-├── Undo (Ctrl+Z)
-├── Redo (Ctrl+Y)
+Szerkesztés
+├── Visszavonás (Ctrl+Z)
+├── Újra (Ctrl+Y)
 ├── ─────────────
-├── Find (Ctrl+F)
-└── Replace (Ctrl+H)
+├── Keresés (Ctrl+F)
+└── Csere (Ctrl+H)
 
-View
-├── Fullscreen (F11)
+Nézet
+├── Teljes képernyő (F11)
 ├── ─────────────
-├── Comments Panel
-└── [Plugin panels...]
+├── Megjegyzések panel
+└── [Plugin panelek...]
 
-Tools
+Eszközök
 ├── Import SRT
 ├── Export...
 ├── ─────────────
-└── [Plugin menus...]
+└── [Plugin menük...]
 ```
 
-### 5. Plugin System
+### 5. Plugin rendszer
 
-The DubSync plugin system supports six main plugin types:
+A DubSync plugin rendszere hat fő plugin típust támogat:
 
 ```python
 from enum import Enum
 
 class PluginType(Enum):
-    EXPORT = "export"      # Export formats
-    QA = "qa"              # Quality assurance
-    IMPORT = "import"      # Import formats
-    TOOL = "tool"          # General tools
-    UI = "ui"              # UI elements (panels, menus)
-    SERVICE = "service"    # Background services
+    EXPORT = "export"      # Export formátumok
+    QA = "qa"              # Minőségellenőrzés
+    IMPORT = "import"      # Import formátumok
+    TOOL = "tool"          # Általános eszközök
+    UI = "ui"              # UI elemek (panelek, menük)
+    SERVICE = "service"    # Háttérszolgáltatások
 ```
 
-#### Plugin Base Classes
+#### Plugin alap osztályok
 
 ```python
-# Base interface (all plugins)
+# Alap interfész (minden plugin)
 class PluginInterface(ABC):
     @property
     @abstractmethod
@@ -362,7 +360,7 @@ class QAPlugin(PluginInterface):
     @abstractmethod
     def check_cue(self, cue: Cue) -> list[dict]: ...
 
-# UI plugin
+# UI plugin (ÚJ)
 class UIPlugin(PluginInterface):
     def create_dock_widget(self) -> Optional[QDockWidget]: ...
     def create_menu_items(self) -> List[QAction]: ...
@@ -370,12 +368,12 @@ class UIPlugin(PluginInterface):
     def on_project_opened(self, project: Project) -> None: ...
     def on_project_closed(self) -> None: ...
 
-# Service plugin
+# Service plugin (ÚJ)
 class ServicePlugin(PluginInterface):
     def start(self) -> None: ...
     def stop(self) -> None: ...
 
-# Translation plugin
+# Translation plugin (ÚJ)
 class TranslationPlugin(ServicePlugin):
     @abstractmethod
     def translate(self, text: str, source_lang: str, target_lang: str) -> str: ...
@@ -399,24 +397,24 @@ class PluginManager:
     def disable_plugin(self, plugin_id: str) -> None
 ```
 
-#### Plugin Registration
+#### Plugin regisztráció
 
 ```python
 from dubsync.plugins.registry import PluginRegistry
 
 registry = PluginRegistry()
-registry.discover_builtin()  # Built-in plugins
-registry.load_from_directory(plugins_dir)  # External plugins
+registry.discover_builtin()  # Beépített plugin-ek
+registry.load_from_directory(plugins_dir)  # Külső plugin-ek
 ```
 
-### 6. Settings System
+### 6. Settings rendszer (ÚJ)
 
-The `SettingsManager` manages application settings.
+A `SettingsManager` kezeli az alkalmazás beállításait.
 
 ```python
 @dataclass
 class AppSettings:
-    # General
+    # Általános
     default_project_dir: str
     default_author: str
     autosave_enabled: bool
@@ -431,7 +429,7 @@ class AppSettings:
     theme: str
     custom_colors: Dict[str, str]
     
-    # Plugins
+    # Pluginok
     enabled_plugins: List[str]
     plugin_settings: Dict[str, Dict]
 
@@ -447,31 +445,31 @@ class SettingsManager:
     def set_plugin_settings(self, plugin_id: str, settings: dict) -> None: ...
     
     @property
-    def config_dir(self) -> Path: ...  # Platform-specific
+    def config_dir(self) -> Path: ...  # Platform-specifikus
     
     @property
     def plugins_dir(self) -> Path: ...
 ```
 
-**Configuration Storage:**
+**Konfiguráció tárolás:**
 
 - **Windows**: `%APPDATA%\dubsync\settings.json`
 - **macOS**: `~/Library/Application Support/dubsync/settings.json`
 - **Linux**: `~/.config/dubsync/settings.json`
 
-## Data Flow
+## Adatfolyam
 
-### SRT Import Process
+### SRT Import folyamat
 
 ```
-SRT File
+SRT Fájl
     │
     ▼
 SRTParser.parse_file()
     │
-    ├─► Encoding detection
-    ├─► HTML/ASS tag cleanup
-    ├─► Timecode parsing
+    ├─► Kódolás detektálás
+    ├─► HTML/ASS tag tisztítás
+    ├─► Időkód parse
     │
     ▼
 list[SRTEntry]
@@ -485,17 +483,17 @@ list[Cue]
     ▼
 ProjectManager.import_srt()
     │
-    ├─► Delete existing cues (optional)
-    ├─► Save new cues to DB
+    ├─► Meglévő cue-k törlése (opcionális)
+    ├─► Új cue-k mentése DB-be
     │
     ▼
-UI refresh
+UI frissítés
 ```
 
-### Lip-sync Calculation
+### Lip-sync számítás
 
 ```
-Cue editing
+Cue szerkesztése
     │
     ▼
 CueEditor.on_text_changed()
@@ -503,37 +501,37 @@ CueEditor.on_text_changed()
     ▼
 LipSyncEstimator.estimate_cue()
     │
-    ├─► Text normalization
-    ├─► Character count / time calculation
-    ├─► Ratio determination
-    ├─► Status assignment
+    ├─► Szöveg normalizálás
+    ├─► Karakterszám / idő számítás
+    ├─► Ratio meghatározás
+    ├─► Státusz beállítás
     │
     ▼
 LipSyncResult
     │
     ▼
-UI lip-sync indicator update
+UI lip-sync mutató frissítés
 ```
 
-## Configuration
+## Konfiguráció
 
-### Constants (`utils/constants.py`)
+### Konstansok (`utils/constants.py`)
 
 ```python
-# Default values
+# Alapértelmezett értékek
 DEFAULT_FRAME_RATE = 25.0
 CHARS_PER_SECOND_NORMAL = 13.0
 
-# Lip-sync thresholds
+# Lip-sync küszöbök
 LIPSYNC_WARNING_THRESHOLD = 0.95
 LIPSYNC_ERROR_THRESHOLD = 1.0
 
-# Colors
-COLOR_LIPSYNC_GOOD = "#4CAF50"      # Green
-COLOR_LIPSYNC_WARNING = "#FFC107"   # Yellow
-COLOR_LIPSYNC_TOO_LONG = "#F44336"  # Red
+# Színek
+COLOR_LIPSYNC_GOOD = "#4CAF50"      # Zöld
+COLOR_LIPSYNC_WARNING = "#FFC107"   # Sárga
+COLOR_LIPSYNC_TOO_LONG = "#F44336"  # Piros
 
-# Cue statuses
+# Cue státuszok
 class CueStatus:
     NEW = "new"
     TRANSLATED = "translated"
@@ -541,99 +539,98 @@ class CueStatus:
     APPROVED = "approved"
 ```
 
-## Testing Strategy
+## Tesztelési stratégia
 
-### Unit Tests
+### Unit tesztek
 
-Each module has its own test file:
+Minden modul saját teszt fájllal rendelkezik:
 
-- `test_time_utils.py` - Time utility functions
-- `test_srt_parser.py` - SRT reading
-- `test_lip_sync.py` - Lip-sync estimation
-- `test_database.py` - Database operations
+- `test_time_utils.py` - Időkezelő függvények
+- `test_srt_parser.py` - SRT beolvasás
+- `test_lip_sync.py` - Lip-sync becslés
+- `test_database.py` - Adatbázis műveletek
 - `test_models.py` - Model CRUD
-- `test_project_manager.py` - Project management
-- `test_pdf_export.py` - PDF generation
-- `test_plugins.py` - Plugin system
+- `test_project_manager.py` - Projektkezelés
+- `test_pdf_export.py` - PDF generálás
+- `test_plugins.py` - Plugin rendszer
 
-### Fixtures (`conftest.py`)
+### Fixture-ök (`conftest.py`)
 
 ```python
 @pytest.fixture
 def temp_dir():
-    """Temporary directory for tests."""
+    """Ideiglenes könyvtár tesztekhez."""
 
 @pytest.fixture
 def memory_db():
-    """In-memory database."""
+    """Memória adatbázis."""
 
 @pytest.fixture
 def sample_project(memory_db):
-    """Sample project with data."""
+    """Minta projekt adatokkal."""
 
 @pytest.fixture
 def sample_cues():
-    """Sample cue list."""
+    """Minta cue lista."""
 ```
 
-## Extension Possibilities
+## Bővítési lehetőségek
 
-1. **New export formats**: Implement ExportPlugin
-2. **QA rules**: Implement QAPlugin
-3. **UI elements**: UIPlugin with dockable panels
-4. **Translation services**: Implement TranslationPlugin
-5. **Video formats**: Codec plugins
-6. **Cloud sync**: Cloud service integration
-7. **Collaboration**: WebSocket-based real-time sync
+1. **Új export formátumok**: ExportPlugin implementálása
+2. **QA szabályok**: QAPlugin implementálása
+3. **UI elemek**: UIPlugin dokkolható panelekkel
+4. **Fordító szolgáltatások**: TranslationPlugin implementálása
+5. **Videó formátumok**: Codec plugin-ek
+6. **Felhő szinkron**: Cloud service integráció
+7. **Együttműködés**: WebSocket alapú valós idejű szinkron
 
-## File Structure
+## Fájl struktúra
 
 ```
 dubsync/
 ├── docs/
-│   ├── ARCHITECTURE.md        # This document
-│   ├── ARCHITECTURE_HU.md     # Hungarian version
-│   ├── PLUGIN_DEVELOPMENT.md
-│   └── PLUGIN_DEVELOPMENT_HU.md
+│   ├── ARCHITECTURE.md        # English version
+│   ├── ARCHITECTURE_HU.md     # This document (Hungarian)
+│   └── PLUGIN_DEVELOPMENT.md
 ├── src/
 │   └── dubsync/
 │       ├── __init__.py
 │       ├── __main__.py
-│       ├── app.py          # Application entry point
+│       ├── app.py          # Alkalmazás entry point
 │       ├── main.py
-│       ├── models/         # Data model layer
+│       ├── models/         # Adatmodell réteg
 │       │   ├── database.py
 │       │   ├── project.py
 │       │   ├── cue.py
 │       │   └── comment.py
-│       ├── services/       # Business logic layer
+│       ├── services/       # Üzleti logika réteg
 │       │   ├── srt_parser.py
 │       │   ├── lip_sync.py
 │       │   ├── pdf_export.py
 │       │   ├── project_manager.py
-│       │   └── settings_manager.py
-│       ├── plugins/        # Plugin system
+│       │   └── settings_manager.py  # ÚJ
+│       ├── plugins/        # Plugin rendszer
 │       │   ├── base.py
 │       │   ├── registry.py
 │       │   └── builtin/
-│       │       ├── basic_qa/
-│       │       ├── csv_export/
-│       │       └── translator/
-│       ├── ui/             # User interface
+│       │       ├── basic_qa.py
+│       │       ├── csv_export.py
+│       │       └── translator/  # ÚJ
+│       ├── ui/             # Felhasználói felület
 │       │   ├── main_window.py
 │       │   ├── cue_list.py
 │       │   ├── cue_editor.py
 │       │   ├── video_player.py
 │       │   ├── comments_panel.py
-│       │   ├── settings_dialog.py
+│       │   ├── settings_dialog.py  # ÚJ
 │       │   ├── dialogs.py
 │       │   └── theme.py
 │       └── utils/
 │           ├── constants.py
 │           └── time_utils.py
 ├── tests/
-├── run.bat                 # Windows launcher script
-├── run.ps1                 # PowerShell launcher script
+├── run.bat                 # Windows indító script
+├── run.ps1                 # PowerShell indító script
 ├── requirements.txt
 └── README.md
 ```

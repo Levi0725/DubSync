@@ -20,6 +20,7 @@ from dubsync.plugins.base import (
 from dubsync.models.project import Project
 from dubsync.models.cue import Cue
 from dubsync.utils.constants import LIPSYNC_THRESHOLD_WARNING
+from dubsync.i18n import t
 
 
 class QAResultsWidget(QWidget):
@@ -40,18 +41,22 @@ class QAResultsWidget(QWidget):
         layout.setSpacing(8)
         
         # Header
-        header = QLabel("🔍 QA Ellenőrzés")
+        header = QLabel(t("plugins.basic_qa.header"))
         header.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(header)
         
         # Összesítő
-        self.summary_label = QLabel("Nincs ellenőrzés futtatva")
+        self.summary_label = QLabel(t("plugins.basic_qa.no_check"))
         self.summary_label.setStyleSheet("color: #888; font-size: 11px;")
         layout.addWidget(self.summary_label)
         
         # Eredmények fa
         self.results_tree = QTreeWidget()
-        self.results_tree.setHeaderLabels(["#", "Probléma", "Javaslat"])
+        self.results_tree.setHeaderLabels([
+            t("plugins.basic_qa.columns.index"),
+            t("plugins.basic_qa.columns.issue"),
+            t("plugins.basic_qa.columns.suggestion")
+        ])
         self.results_tree.setRootIsDecorated(False)
         self.results_tree.setAlternatingRowColors(True)
         self.results_tree.itemDoubleClicked.connect(self._on_item_double_clicked)
@@ -66,11 +71,11 @@ class QAResultsWidget(QWidget):
         # Gombok
         btn_layout = QHBoxLayout()
         
-        self.run_btn = QPushButton("▶️ Ellenőrzés futtatása")
+        self.run_btn = QPushButton(t("plugins.basic_qa.run"))
         self.run_btn.clicked.connect(self._run_check)
         btn_layout.addWidget(self.run_btn)
         
-        self.clear_btn = QPushButton("🗑️ Törlés")
+        self.clear_btn = QPushButton(t("plugins.basic_qa.clear"))
         self.clear_btn.clicked.connect(self._clear_results)
         btn_layout.addWidget(self.clear_btn)
         
@@ -83,7 +88,7 @@ class QAResultsWidget(QWidget):
         
         pm = self.plugin._main_window.project_manager
         if not pm.is_open:
-            self.summary_label.setText("⚠️ Nincs megnyitott projekt")
+            self.summary_label.setText(t("plugins.basic_qa.no_project"))
             return
         
         project = pm.project
@@ -101,12 +106,12 @@ class QAResultsWidget(QWidget):
         infos = sum(1 for i in self._issues if i.severity == "info")
         
         if not self._issues:
-            self.summary_label.setText("✅ Nincs probléma!")
+            self.summary_label.setText(t("plugins.basic_qa.no_issues"))
             self.summary_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
             return
         
         self.summary_label.setText(
-            f"🔴 {errors} hiba │ 🟡 {warnings} figyelmeztetés │ 🔵 {infos} info"
+            f"🔴 {errors} {t('plugins.basic_qa.errors')} │ 🟡 {warnings} {t('plugins.basic_qa.warnings')} │ 🔵 {infos} info"
         )
         self.summary_label.setStyleSheet("color: #fff; font-size: 11px;")
         
@@ -136,7 +141,7 @@ class QAResultsWidget(QWidget):
         """Eredmények törlése."""
         self._issues = []
         self.results_tree.clear()
-        self.summary_label.setText("Nincs ellenőrzés futtatva")
+        self.summary_label.setText(t("plugins.basic_qa.no_check"))
         self.summary_label.setStyleSheet("color: #888; font-size: 11px;")
     
     def _on_item_double_clicked(self, item: QTreeWidgetItem, column: int):
@@ -166,7 +171,7 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
     @property
     def info(self) -> PluginInfo:
         return PluginInfo(
-            id="builtin.qa.basic",
+            id="basic_qa",
             name="Alapvető QA",
             version="1.1.0",
             author="Levente Kulacsy",
@@ -186,8 +191,8 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="warning",
-                    message="Hiányzó fordítás",
-                    suggestion="Adjon meg fordítást a cue-hoz"
+                    message=t("plugins.basic_qa.issues.missing_translation"),
+                    suggestion=t("plugins.basic_qa.issues.missing_translation_suggestion")
                 ))
             
             # Lip-sync hiba
@@ -195,8 +200,8 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="error",
-                    message=f"Túl hosszú szöveg (lip-sync: {cue.lip_sync_ratio:.0%})",
-                    suggestion="Rövidítse a fordítást"
+                    message=t("plugins.basic_qa.issues.lipsync_too_long", ratio=f"{cue.lip_sync_ratio:.0%}"),
+                    suggestion=t("plugins.basic_qa.issues.lipsync_suggestion")
                 ))
             
             text = cue.translated_text or ""
@@ -206,8 +211,8 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="info",
-                    message="Dupla szóköz a szövegben",
-                    suggestion="Távolítsa el a dupla szóközöket"
+                    message=t("plugins.basic_qa.issues.double_space"),
+                    suggestion=t("plugins.basic_qa.issues.double_space_suggestion")
                 ))
             
             # Hiányzó karakter név
@@ -215,8 +220,8 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="info",
-                    message="Hiányzó karakter név",
-                    suggestion="Adja meg a beszélő karakter nevét"
+                    message=t("plugins.basic_qa.issues.missing_character"),
+                    suggestion=t("plugins.basic_qa.issues.missing_character_suggestion")
                 ))
             
             # Felesleges whitespace
@@ -224,8 +229,8 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="info",
-                    message="Felesleges szóköz a szöveg elején/végén",
-                    suggestion="Távolítsa el a felesleges szóközöket"
+                    message=t("plugins.basic_qa.issues.extra_whitespace"),
+                    suggestion=t("plugins.basic_qa.issues.extra_whitespace_suggestion")
                 ))
         
         return issues
@@ -234,7 +239,7 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
     
     def create_dock_widget(self) -> Optional[QDockWidget]:
         """QA dock widget létrehozása."""
-        self._dock = QDockWidget("🔍 QA Ellenőrzés", self._main_window)
+        self._dock = QDockWidget(t("plugins.basic_qa.header"), self._main_window)
         self._dock.setObjectName("qaCheckDock")
         self._dock.setAllowedAreas(
             Qt.DockWidgetArea.LeftDockWidgetArea |
@@ -253,14 +258,14 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
         actions = []
         
         # Panel toggle
-        toggle_action = QAction("🔍 QA Panel", self._main_window)
+        toggle_action = QAction(t("plugins.basic_qa.panel"), self._main_window)
         toggle_action.setCheckable(True)
         toggle_action.setChecked(True)
         toggle_action.triggered.connect(self._toggle_dock)
         actions.append(toggle_action)
         
         # Ellenőrzés futtatása
-        run_action = QAction("▶️ QA Ellenőrzés futtatása", self._main_window)
+        run_action = QAction(t("plugins.basic_qa.run_qa"), self._main_window)
         run_action.setShortcut("F7")
         run_action.triggered.connect(self._run_check_from_menu)
         actions.append(run_action)

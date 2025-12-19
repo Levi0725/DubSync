@@ -16,6 +16,7 @@ from dubsync.models.cue import Cue
 from dubsync.models.comment import Comment
 from dubsync.utils.constants import CommentStatus
 from dubsync.services.settings_manager import SettingsManager
+from dubsync.i18n import t
 
 if TYPE_CHECKING:
     from dubsync.models.database import Database
@@ -63,7 +64,7 @@ class CommentWidget(QFrame):
         header_layout.addStretch()
         
         if self.comment.is_resolved:
-            resolved_label = QLabel("✓ Lezárva")
+            resolved_label = QLabel(t("comments_panel.resolved"))
             resolved_label.setStyleSheet(f"color: {colors.success};")
             header_layout.addWidget(resolved_label)
         
@@ -80,7 +81,7 @@ class CommentWidget(QFrame):
             actions_layout = QHBoxLayout()
             actions_layout.addStretch()
             
-            self.resolve_btn = QPushButton("Lezár")
+            self.resolve_btn = QPushButton(t("comments_panel.resolve"))
             self.resolve_btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {colors.success};
@@ -128,7 +129,7 @@ class CommentsPanelWidget(QWidget):
         layout.setContentsMargins(4, 4, 4, 4)
         
         # Header
-        self.header_label = QLabel("Válasszon ki egy cue-t")
+        self.header_label = QLabel(t("comments_panel.select_cue"))
         self.header_label.setStyleSheet("font-weight: bold; padding: 4px;")
         layout.addWidget(self.header_label)
         
@@ -146,26 +147,26 @@ class CommentsPanelWidget(QWidget):
         layout.addWidget(scroll, 1)
         
         # New comment section
-        new_comment_group = QGroupBox("Új megjegyzés")
+        new_comment_group = QGroupBox(t("comments_panel.new_comment"))
         new_comment_layout = QVBoxLayout(new_comment_group)
         
         # Author
         author_layout = QHBoxLayout()
-        author_layout.addWidget(QLabel("Név:"))
+        author_layout.addWidget(QLabel(t("comments_panel.author")))
         self.author_edit = QLineEdit()
-        self.author_edit.setPlaceholderText("Felhasználónév...")
+        self.author_edit.setPlaceholderText(t("comments_panel.author_placeholder"))
         
         # Alapértelmezett név a beállításokból
         settings = SettingsManager()
         default_name = settings.default_author_name
-        self.author_edit.setText(default_name if default_name else "Lektor")
+        self.author_edit.setText(default_name if default_name else t("comments_panel.default_author"))
         
         author_layout.addWidget(self.author_edit)
         new_comment_layout.addLayout(author_layout)
         
         # Comment text
         self.comment_edit = QTextEdit()
-        self.comment_edit.setPlaceholderText("Írja be a megjegyzést...")
+        self.comment_edit.setPlaceholderText(t("comments_panel.content_placeholder"))
         self.comment_edit.setMaximumHeight(80)
         new_comment_layout.addWidget(self.comment_edit)
         
@@ -174,7 +175,7 @@ class CommentsPanelWidget(QWidget):
         theme = ThemeManager()
         colors = theme.colors
         
-        self.add_btn = QPushButton("Hozzáadás")
+        self.add_btn = QPushButton(t("comments_panel.add"))
         self.add_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {colors.primary};
@@ -220,7 +221,7 @@ class CommentsPanelWidget(QWidget):
         self._cue = cue
         self._db = db
         
-        self.header_label.setText(f"Megjegyzések - #{cue.cue_index}")
+        self.header_label.setText(t("comments_panel.header", index=cue.cue_index))
         
         self._load_comments()
         self._update_ui_state()
@@ -252,7 +253,7 @@ class CommentsPanelWidget(QWidget):
             theme = ThemeManager()
             colors = theme.colors
             
-            no_comments = QLabel("Nincs megjegyzés")
+            no_comments = QLabel(t("comments_panel.no_comments"))
             no_comments.setStyleSheet(f"color: {colors.foreground_muted}; padding: 20px;")
             no_comments.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.comments_layout.insertWidget(0, no_comments)
@@ -267,7 +268,7 @@ class CommentsPanelWidget(QWidget):
         if not content:
             return
         
-        author = self.author_edit.text().strip() or "Felhasználó"
+        author = self.author_edit.text().strip() or t("comments_panel.default_author")
         
         comment = Comment(
             cue_id=self._cue.id,
@@ -301,6 +302,6 @@ class CommentsPanelWidget(QWidget):
         self._db = None
         self._comments = []
         
-        self.header_label.setText("Válasszon ki egy cue-t")
+        self.header_label.setText(t("comments_panel.select_cue"))
         self._load_comments()
         self._update_ui_state()

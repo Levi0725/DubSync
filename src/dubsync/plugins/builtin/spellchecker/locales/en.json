@@ -1,0 +1,22 @@
+{
+  "name": "Spellchecker",
+  "description": "Hungarian spellchecker",
+  "header": "🔤 Spellchecker",
+  "status_ok": "✅ Hungarian dictionary loaded",
+  "status_error": "❌ {error}",
+  "errors_group": "Spelling errors",
+  "ignored_group": "Ignored words",
+  "ignore_btn": "🚫 Ignore",
+  "ignore_tooltip": "Ignore this word",
+  "add_word_btn": "📝 Add",
+  "add_word_tooltip": "Add word to dictionary",
+  "add_ignored_tooltip": "Add new exception",
+  "remove_ignored_tooltip": "Remove exception",
+  "check_btn": "🔍 Check text",
+  "import_btn": "📂 Import",
+  "export_btn": "💾 Export",
+  "context_ignore": "🚫 Ignore",
+  "context_add": "📝 Add to dictionary",
+  "panel": "🔤 Spellchecker",
+  "run_check": "🔍 Run spellcheck"
+}

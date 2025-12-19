@@ -18,6 +18,7 @@ from PySide6.QtCore import Qt, Signal, Slot, QSettings
 from PySide6.QtGui import QAction, QKeySequence, QIcon, QCloseEvent, QUndoStack, QUndoCommand
 
 from dubsync.utils.constants import APP_NAME, APP_VERSION, PROJECT_EXTENSION
+from dubsync.i18n import t
 from dubsync.services.project_manager import (
     ProjectManager, get_project_filter, get_srt_filter, get_video_filter
 )
@@ -37,7 +38,7 @@ class DeleteCueCommand(QUndoCommand):
     """Undo command cue törléshez."""
     
     def __init__(self, main_window, cue_data: dict, parent=None):
-        super().__init__("Sor törlése", parent)
+        super().__init__(t("dialogs.confirm_delete.title"), parent)
         self._main_window = main_window
         self._cue_data = cue_data
         self._cue_id = cue_data.get('id')
@@ -92,7 +93,7 @@ class ThemeSettingsDialog(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Téma beállítások")
+        self.setWindowTitle(t("dialogs.theme_settings.title"))
         self.setMinimumWidth(400)
         
         layout = QVBoxLayout(self)
@@ -100,11 +101,11 @@ class ThemeSettingsDialog(QDialog):
         form_layout = QFormLayout()
         
         self.theme_combo = QComboBox()
-        self.theme_combo.addItem("🌙 Sötét", ThemeType.DARK)
-        self.theme_combo.addItem("🌑 Sötét kontrasztos", ThemeType.DARK_CONTRAST)
-        self.theme_combo.addItem("☀️ Világos", ThemeType.LIGHT)
-        self.theme_combo.addItem("🎨 Egyedi", ThemeType.CUSTOM)
-        form_layout.addRow("Téma:", self.theme_combo)
+        self.theme_combo.addItem(t("dialogs.theme_settings.dark"), ThemeType.DARK)
+        self.theme_combo.addItem(t("dialogs.theme_settings.dark_contrast"), ThemeType.DARK_CONTRAST)
+        self.theme_combo.addItem(t("dialogs.theme_settings.light"), ThemeType.LIGHT)
+        self.theme_combo.addItem(t("dialogs.theme_settings.custom"), ThemeType.CUSTOM)
+        form_layout.addRow(t("dialogs.theme_settings.theme"), self.theme_combo)
         
         layout.addLayout(form_layout)
         
@@ -113,14 +114,14 @@ class ThemeSettingsDialog(QDialog):
         
         self.color_buttons = {}
         color_labels = {
-            "primary": "Elsődleges szín:",
-            "background": "Háttér:",
-            "surface": "Felület:",
-            "foreground": "Szöveg:",
+            "primary": t("dialogs.theme_settings.primary"),
+            "background": t("dialogs.theme_settings.background"),
+            "surface": t("dialogs.theme_settings.surface"),
+            "foreground": t("dialogs.theme_settings.foreground"),
         }
         
         for key, label in color_labels.items():
-            btn = QPushButton("Válassz...")
+            btn = QPushButton(t("dialogs.theme_settings.choose"))
             btn.setProperty("color_key", key)
             btn.clicked.connect(self._on_color_click)
             self.color_buttons[key] = btn
@@ -280,7 +281,7 @@ class MainWindow(QMainWindow):
         
         self.main_splitter.addWidget(center_widget)
         
-        self.comments_dock = QDockWidget("Megjegyzések", self)
+        self.comments_dock = QDockWidget(t("comments_panel.title"), self)
         self.comments_dock.setObjectName("commentsDock")
         self.comments_dock.setAllowedAreas(
             Qt.DockWidgetArea.RightDockWidgetArea | Qt.DockWidgetArea.LeftDockWidgetArea
@@ -296,47 +297,47 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
         
         # === File menu ===
-        file_menu = menubar.addMenu("&Fájl")
+        file_menu = menubar.addMenu(t("menu.file._title"))
         
-        self.action_new = QAction("Ú&j projekt", self)
+        self.action_new = QAction(t("menu.file.new"), self)
         self.action_new.setShortcut(QKeySequence.StandardKey.New)
         self.action_new.triggered.connect(self._on_new_project)
         file_menu.addAction(self.action_new)
         
-        self.action_open = QAction("&Megnyitás...", self)
+        self.action_open = QAction(t("menu.file.open"), self)
         self.action_open.setShortcut(QKeySequence.StandardKey.Open)
         self.action_open.triggered.connect(self._on_open_project)
         file_menu.addAction(self.action_open)
         
-        self.action_save = QAction("M&entés", self)
+        self.action_save = QAction(t("menu.file.save"), self)
         self.action_save.setShortcut(QKeySequence.StandardKey.Save)
         self.action_save.triggered.connect(self._on_save_project)
         file_menu.addAction(self.action_save)
         
-        self.action_save_as = QAction("Mentés má&sként...", self)
+        self.action_save_as = QAction(t("menu.file.save_as"), self)
         self.action_save_as.setShortcut(QKeySequence("Ctrl+Shift+S"))
         self.action_save_as.triggered.connect(self._on_save_project_as)
         file_menu.addAction(self.action_save_as)
         
         file_menu.addSeparator()
         
-        import_menu = file_menu.addMenu("&Import")
+        import_menu = file_menu.addMenu(t("menu.file.import"))
         
-        self.action_import_srt = QAction("SRT felirat...", self)
+        self.action_import_srt = QAction(t("menu.file.import_srt"), self)
         self.action_import_srt.triggered.connect(self._on_import_srt)
         import_menu.addAction(self.action_import_srt)
         
-        self.action_import_video = QAction("Videó...", self)
+        self.action_import_video = QAction(t("menu.file.import_video"), self)
         self.action_import_video.triggered.connect(self._on_import_video)
         import_menu.addAction(self.action_import_video)
         
-        self.export_menu = file_menu.addMenu("&Export")
+        self.export_menu = file_menu.addMenu(t("menu.file.export"))
         
-        self.action_export_pdf = QAction("PDF szövegkönyv...", self)
+        self.action_export_pdf = QAction(t("menu.file.export_pdf"), self)
         self.action_export_pdf.triggered.connect(self._on_export_pdf)
         self.export_menu.addAction(self.action_export_pdf)
         
-        self.action_export_srt = QAction("SRT felirat...", self)
+        self.action_export_srt = QAction(t("menu.file.export_srt"), self)
         self.action_export_srt.triggered.connect(self._on_export_srt)
         self.export_menu.addAction(self.action_export_srt)
         
@@ -344,57 +345,57 @@ class MainWindow(QMainWindow):
         
         file_menu.addSeparator()
         
-        self.action_settings = QAction("Projekt &beállítások...", self)
+        self.action_settings = QAction(t("menu.file.project_settings"), self)
         self.action_settings.triggered.connect(self._on_project_settings)
         file_menu.addAction(self.action_settings)
         
-        self.action_app_settings = QAction("⚙️ &Alkalmazás beállítások...", self)
+        self.action_app_settings = QAction(t("menu.file.app_settings"), self)
         self.action_app_settings.setShortcut(QKeySequence("Ctrl+,"))
         self.action_app_settings.triggered.connect(self._on_app_settings)
         file_menu.addAction(self.action_app_settings)
         
         file_menu.addSeparator()
         
-        self.action_exit = QAction("&Kilépés", self)
+        self.action_exit = QAction(t("menu.file.exit"), self)
         self.action_exit.setShortcut(QKeySequence.StandardKey.Quit)
         self.action_exit.triggered.connect(self.close)
         file_menu.addAction(self.action_exit)
         
         # === Edit menu ===
-        edit_menu = menubar.addMenu("S&zerkesztés")
+        edit_menu = menubar.addMenu(t("menu.edit._title"))
         
-        self.action_undo = self._undo_stack.createUndoAction(self, "&Visszavonás")
+        self.action_undo = self._undo_stack.createUndoAction(self, t("menu.edit.undo"))
         self.action_undo.setShortcut(QKeySequence.StandardKey.Undo)
         edit_menu.addAction(self.action_undo)
         
-        self.action_redo = self._undo_stack.createRedoAction(self, "&Mégis")
+        self.action_redo = self._undo_stack.createRedoAction(self, t("menu.edit.redo"))
         self.action_redo.setShortcut(QKeySequence.StandardKey.Redo)
         edit_menu.addAction(self.action_redo)
         
         edit_menu.addSeparator()
         
-        self.action_add_cue = QAction("Ú&j sor hozzáadása", self)
+        self.action_add_cue = QAction(t("menu.edit.add_cue"), self)
         self.action_add_cue.setShortcut(QKeySequence("Ctrl+Shift+N"))
         self.action_add_cue.triggered.connect(self._on_add_cue)
         edit_menu.addAction(self.action_add_cue)
         
-        self.action_insert_cue_before = QAction("Sor beszúrása &elé", self)
+        self.action_insert_cue_before = QAction(t("menu.edit.insert_before"), self)
         self.action_insert_cue_before.setShortcut(QKeySequence("Ctrl+Shift+Up"))
         self.action_insert_cue_before.triggered.connect(self._on_insert_cue_before)
         edit_menu.addAction(self.action_insert_cue_before)
         
-        self.action_insert_cue_after = QAction("Sor beszúrása &mögé", self)
+        self.action_insert_cue_after = QAction(t("menu.edit.insert_after"), self)
         self.action_insert_cue_after.setShortcut(QKeySequence("Ctrl+Shift+Down"))
         self.action_insert_cue_after.triggered.connect(self._on_insert_cue_after)
         edit_menu.addAction(self.action_insert_cue_after)
         
-        self.action_delete_mode = QAction("🗑️ &Törlés mód", self)
+        self.action_delete_mode = QAction(t("menu.edit.delete_mode"), self)
         self.action_delete_mode.setShortcut(QKeySequence("Ctrl+D"))
         self.action_delete_mode.setCheckable(True)
         self.action_delete_mode.triggered.connect(self._on_toggle_delete_mode)
         edit_menu.addAction(self.action_delete_mode)
         
-        self.action_delete_cue = QAction("Kijelölt sor &törlése", self)
+        self.action_delete_cue = QAction(t("menu.edit.delete_cue"), self)
         self.action_delete_cue.setShortcut(QKeySequence.StandardKey.Delete)
         self.action_delete_cue.triggered.connect(self._on_delete_cue)
         self.action_delete_cue.setEnabled(False)
@@ -402,84 +403,84 @@ class MainWindow(QMainWindow):
         
         edit_menu.addSeparator()
         
-        self.action_edit_timing = QAction("&Időzítés szerkesztése...", self)
+        self.action_edit_timing = QAction(t("menu.edit.edit_timing"), self)
         self.action_edit_timing.setShortcut(QKeySequence("Ctrl+T"))
         self.action_edit_timing.triggered.connect(self._on_edit_timing)
         edit_menu.addAction(self.action_edit_timing)
         
         edit_menu.addSeparator()
         
-        self.action_recalc_lipsync = QAction("Lip-sync &újraszámítás", self)
+        self.action_recalc_lipsync = QAction(t("menu.edit.recalc_lipsync"), self)
         self.action_recalc_lipsync.triggered.connect(self._on_recalculate_lipsync)
         edit_menu.addAction(self.action_recalc_lipsync)
         
         # === Navigate menu ===
-        nav_menu = menubar.addMenu("&Navigáció")
+        nav_menu = menubar.addMenu(t("menu.navigate._title"))
         
-        self.action_prev_cue = QAction("&Előző sor", self)
+        self.action_prev_cue = QAction(t("menu.navigate.prev_cue"), self)
         self.action_prev_cue.setShortcut(QKeySequence("Ctrl+Up"))
         self.action_prev_cue.triggered.connect(self._on_goto_prev_cue)
         nav_menu.addAction(self.action_prev_cue)
         
-        self.action_next_cue = QAction("&Következő sor", self)
+        self.action_next_cue = QAction(t("menu.navigate.next_cue"), self)
         self.action_next_cue.setShortcut(QKeySequence("Ctrl+Down"))
         self.action_next_cue.triggered.connect(self._on_goto_next_cue)
         nav_menu.addAction(self.action_next_cue)
         
         nav_menu.addSeparator()
         
-        self.action_next_empty = QAction("Következő &fordítatlan", self)
+        self.action_next_empty = QAction(t("menu.navigate.next_empty"), self)
         self.action_next_empty.setShortcut(QKeySequence("Ctrl+E"))
         self.action_next_empty.triggered.connect(self._on_goto_next_empty)
         nav_menu.addAction(self.action_next_empty)
         
-        self.action_next_lipsync = QAction("Következő &lip-sync hiba", self)
+        self.action_next_lipsync = QAction(t("menu.navigate.next_lipsync"), self)
         self.action_next_lipsync.setShortcut(QKeySequence("Ctrl+L"))
         self.action_next_lipsync.triggered.connect(self._on_goto_next_lipsync_issue)
         nav_menu.addAction(self.action_next_lipsync)
         
-        self.action_next_comment = QAction("Következő &megjegyzés", self)
+        self.action_next_comment = QAction(t("menu.navigate.next_comment"), self)
         self.action_next_comment.setShortcut(QKeySequence("Ctrl+M"))
         self.action_next_comment.triggered.connect(self._on_goto_next_comment)
         nav_menu.addAction(self.action_next_comment)
         
         # === View menu ===
-        self.view_menu = menubar.addMenu("&Nézet")
+        self.view_menu = menubar.addMenu(t("menu.view._title"))
         
         # Panelek közvetlenül a menüben (jobb UX)
-        self.view_menu.addSection("📋 Panelek")
+        self.view_menu.addSection(t("menu.view.panels"))
         
         self.action_toggle_comments = self.comments_dock.toggleViewAction()
-        self.action_toggle_comments.setText("💬 &Megjegyzések panel")
+        self.action_toggle_comments.setText(t("menu.view.comments_panel"))
         self.view_menu.addAction(self.action_toggle_comments)
         
         # Plugin panelek itt lesznek hozzáadva a _setup_plugins()-ban
         
         self.view_menu.addSeparator()
         
-        self.action_fullscreen = QAction("🖥️ &Teljes képernyő", self)
+        self.action_fullscreen = QAction(t("menu.view.fullscreen"), self)
         self.action_fullscreen.setShortcut(QKeySequence("F11"))
         self.action_fullscreen.setCheckable(True)
         self.action_fullscreen.triggered.connect(self._toggle_fullscreen)
         self.view_menu.addAction(self.action_fullscreen)
         
         # === Help menu ===
-        help_menu = menubar.addMenu("&Súgó")
+        help_menu = menubar.addMenu(t("menu.help._title"))
         
-        self.action_tutorial = QAction("📖 &Útmutató", self)
+        self.action_tutorial = QAction(t("menu.help.tutorial"), self)
         self.action_tutorial.setShortcut(QKeySequence("F1"))
         self.action_tutorial.triggered.connect(self._on_tutorial)
         help_menu.addAction(self.action_tutorial)
         
         help_menu.addSeparator()
         
-        self.action_about = QAction("ℹ️ &Névjegy", self)
+        self.action_about = QAction(t("menu.help.about"), self)
         self.action_about.triggered.connect(self._on_about)
         help_menu.addAction(self.action_about)
     
     def _setup_toolbar(self):
         """Eszköztár beállítása."""
-        toolbar = QToolBar("Fő eszköztár")
+        toolbar = QToolBar(t("toolbar.main"))
         toolbar.setObjectName("mainToolbar")
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
@@ -637,7 +638,7 @@ class MainWindow(QMainWindow):
         """Pluginok menü lekérése vagy létrehozása."""
         if not hasattr(self, '_plugins_menu'):
             menubar = self.menuBar()
-            self._plugins_menu = menubar.addMenu("🔌 &Pluginok")
+            self._plugins_menu = menubar.addMenu(t("menu.plugins"))
         return self._plugins_menu
     
     def _notify_plugins_cue_selected(self, cue):
@@ -905,7 +906,7 @@ class MainWindow(QMainWindow):
         # Kezdőmappa a beállításokból
         start_dir = self.settings_manager.default_save_path or ""
         
-        file_path, _ = QFileDialog.getOpenFileName(self, "SRT import", start_dir, get_srt_filter())
+        file_path, _ = QFileDialog.getOpenFileName(self, t("menu.file.import_srt").replace("...", ""), start_dir, get_srt_filter())
         
         if file_path:
             try:
@@ -916,14 +917,14 @@ class MainWindow(QMainWindow):
                 # Lock source text after import
                 self.cue_editor.set_source_locked(True)
                 
-                msg = f"{count} felirat importálva"
+                msg = t("messages.srt_imported", count=count)
                 if errors:
-                    msg += f"\n\nFigyelmeztetések:\n" + "\n".join(errors[:5])
+                    msg += f"\n\n{t('messages.warnings')}:\n" + "\n".join(errors[:5])
                 
-                QMessageBox.information(self, "Import kész", msg)
+                QMessageBox.information(self, t("menu.file.import"), msg)
                 self._update_title()
             except Exception as e:
-                QMessageBox.critical(self, "Hiba", f"Import hiba: {e}")
+                QMessageBox.critical(self, t("messages.error"), t("messages.error_loading", error=str(e)))
     
     @Slot()
     def _on_import_video(self):
@@ -933,16 +934,16 @@ class MainWindow(QMainWindow):
         # Kezdőmappa a beállításokból
         start_dir = self.settings_manager.default_save_path or ""
         
-        file_path, _ = QFileDialog.getOpenFileName(self, "Videó betöltése", start_dir, get_video_filter())
+        file_path, _ = QFileDialog.getOpenFileName(self, t("menu.file.import_video").replace("...", ""), start_dir, get_video_filter())
         
         if file_path:
             try:
                 self.video_player.load_video(Path(file_path))
                 self.project_manager.update_project(video_path=file_path)
                 self._update_title()
-                self.statusBar().showMessage("Videó betöltve", 3000)
+                self.statusBar().showMessage(t("messages.video_loaded", name=Path(file_path).name), 3000)
             except Exception as e:
-                QMessageBox.critical(self, "Hiba", f"Videó betöltési hiba: {e}")
+                QMessageBox.critical(self, t("messages.error"), t("messages.error_loading", error=str(e)))
     
     @Slot()
     def _on_export_pdf(self):
@@ -957,7 +958,7 @@ class MainWindow(QMainWindow):
         default_file = Path(start_dir) / f"{default_name}.pdf" if start_dir else f"{default_name}.pdf"
         
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "PDF export", str(default_file), "PDF fájl (*.pdf)"
+            self, t("menu.file.export_pdf").replace("...", ""), str(default_file), "PDF (*.pdf)"
         )
         
         if file_path:
@@ -965,9 +966,9 @@ class MainWindow(QMainWindow):
                 cues = self.project_manager.get_cues()
                 exporter = PDFExporter()
                 exporter.export(Path(file_path), self.project_manager.project, cues)
-                QMessageBox.information(self, "Export kész", f"PDF sikeresen létrehozva:\n{file_path}")
+                QMessageBox.information(self, t("menu.file.export"), t("messages.export_success", path=file_path))
             except Exception as e:
-                QMessageBox.critical(self, "Hiba", f"Export hiba: {e}")
+                QMessageBox.critical(self, t("messages.error"), t("messages.export_error", error=str(e)))
     
     @Slot()
     def _on_export_srt(self):
@@ -978,7 +979,7 @@ class MainWindow(QMainWindow):
         start_dir = self.settings_manager.default_save_path or ""
         default_file = Path(start_dir) / "forditas.srt" if start_dir else "forditas.srt"
         
-        file_path, _ = QFileDialog.getSaveFileName(self, "SRT export", str(default_file), get_srt_filter())
+        file_path, _ = QFileDialog.getSaveFileName(self, t("menu.file.export_srt").replace("...", ""), str(default_file), get_srt_filter())
         
         if file_path:
             try:
@@ -986,9 +987,9 @@ class MainWindow(QMainWindow):
                 cues = self.project_manager.get_cues()
                 content = export_to_srt(cues, use_translated=True)
                 Path(file_path).write_text(content, encoding="utf-8")
-                QMessageBox.information(self, "Export kész", f"SRT sikeresen létrehozva:\n{file_path}")
+                QMessageBox.information(self, t("menu.file.export"), t("messages.export_success", path=file_path))
             except Exception as e:
-                QMessageBox.critical(self, "Hiba", f"Export hiba: {e}")
+                QMessageBox.critical(self, t("messages.error"), t("messages.export_error", error=str(e)))
     
     def _on_plugin_export(self, plugin):
         """Plugin export végrehajtása."""
@@ -1013,11 +1014,11 @@ class MainWindow(QMainWindow):
                 cues = self.project_manager.get_cues()
                 plugin.export(Path(file_path), self.project_manager.project, cues)
                 QMessageBox.information(
-                    self, "Export kész", 
-                    f"{plugin.info.name} sikeresen létrehozva:\n{file_path}"
+                    self, t("menu.file.export"), 
+                    t("messages.export_success", path=file_path)
                 )
             except Exception as e:
-                QMessageBox.critical(self, "Hiba", f"Export hiba: {e}")
+                QMessageBox.critical(self, t("messages.error"), t("messages.export_error", error=str(e)))
     
     @Slot()
     def _on_project_settings(self):
@@ -1071,7 +1072,7 @@ class MainWindow(QMainWindow):
         
         if dialog.exec():
             # Beállítások mentve
-            self.statusBar().showMessage("Beállítások mentve. Újraindítás szükséges a plugin változásokhoz.", 3000)
+            self.statusBar().showMessage(t("messages.settings_saved"), 3000)
     
     @Slot()
     def _on_toggle_delete_mode(self):
@@ -1079,9 +1080,9 @@ class MainWindow(QMainWindow):
         self._update_delete_mode_ui()
         
         if self._delete_mode:
-            self.statusBar().showMessage("Törlés mód bekapcsolva - kattints egy sorra a törléshez", 3000)
+            self.statusBar().showMessage(t("messages.delete_mode_on"), 3000)
         else:
-            self.statusBar().showMessage("Törlés mód kikapcsolva", 2000)
+            self.statusBar().showMessage(t("messages.delete_mode_off"), 2000)
     
     @Slot()
     def _on_add_cue(self):
@@ -1102,7 +1103,7 @@ class MainWindow(QMainWindow):
         # Unlock source text for new cue
         self.cue_editor.set_source_locked(False)
         
-        self.statusBar().showMessage("Új sor hozzáadva", 2000)
+        self.statusBar().showMessage(t("messages.cue_added"), 2000)
     
     @Slot()
     def _on_insert_cue_before(self):
@@ -1121,7 +1122,7 @@ class MainWindow(QMainWindow):
         self.cue_list.select_cue(cue.id)
         self._update_title()
         self._update_statistics()
-        self.statusBar().showMessage(f"Sor beszúrva a {current_index}. pozíció elé", 2000)
+        self.statusBar().showMessage(t("messages.cue_inserted_before", index=current_index), 2000)
     
     @Slot()
     def _on_insert_cue_after(self):
@@ -1138,7 +1139,7 @@ class MainWindow(QMainWindow):
         self.cue_list.select_cue(cue.id)
         self._update_title()
         self._update_statistics()
-        self.statusBar().showMessage(f"Sor beszúrva a {current_index}. pozíció mögé", 2000)
+        self.statusBar().showMessage(t("messages.cue_inserted_after", index=current_index), 2000)
     
     @Slot(int)
     def _on_insert_cue_at(self, after_index: int):
@@ -1164,14 +1165,13 @@ class MainWindow(QMainWindow):
     def _on_delete_cue_confirmed(self, cue_id: int):
         if not self._delete_mode:
             QMessageBox.warning(
-                self, "Törlés mód",
-                "A törlés módot be kell kapcsolni a sorok törléséhez.\n"
-                "Használd a Ctrl+D billentyűt vagy a menüt."
+                self, t("menu.edit.delete_mode"),
+                t("messages.delete_mode_required")
             )
             return
         
         reply = QMessageBox.question(
-            self, "Sor törlése", "Biztosan törölni szeretnéd ezt a sort?",
+            self, t("dialogs.confirm_delete.title"), t("dialogs.confirm_delete.message", index=cue_id),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
@@ -1199,7 +1199,7 @@ class MainWindow(QMainWindow):
                 cmd = DeleteCueCommand(self, cue_data)
                 self._undo_stack.push(cmd)
                 
-                self.statusBar().showMessage("Sor törölve (Ctrl+Z: visszavonás)", 3000)
+                self.statusBar().showMessage(t("messages.cue_deleted"), 3000)
     
     @Slot()
     def _on_edit_timing(self):
@@ -1208,7 +1208,7 @@ class MainWindow(QMainWindow):
         
         cue_id = self.cue_list.get_selected_cue_id()
         if not cue_id:
-            QMessageBox.information(self, "Időzítés", "Válassz ki egy sort az időzítés szerkesztéséhez.")
+            QMessageBox.information(self, t("dialogs.timing_editor.title"), t("messages.select_cue_for_timing"))
             return
         
         cue = self.project_manager.get_cue(cue_id)
@@ -1224,7 +1224,7 @@ class MainWindow(QMainWindow):
             self._refresh_cue_list()
             self._update_title()
             self._update_statistics()
-            self.statusBar().showMessage("Ídőzítés mentve", 2000)
+            self.statusBar().showMessage(t("messages.timing_saved"), 2000)
     
     @Slot()
     def _on_recalculate_lipsync(self):
@@ -1234,7 +1234,7 @@ class MainWindow(QMainWindow):
         count = self.project_manager.recalculate_all_lipsync()
         self._refresh_cue_list()
         self._update_statistics()
-        self.statusBar().showMessage(f"{count} cue lip-sync frissítve", 3000)
+        self.statusBar().showMessage(t("messages.lipsync_recalculated", count=count), 3000)
     
     @Slot()
     def _on_goto_next_empty(self):
@@ -1251,7 +1251,7 @@ class MainWindow(QMainWindow):
         if cue:
             self.cue_list.select_cue(cue.id)
         else:
-            self.statusBar().showMessage("Nincs több fordítatlan cue", 3000)
+            self.statusBar().showMessage(t("messages.no_more_empty_cues"), 3000)
     
     @Slot()
     def _on_goto_next_lipsync_issue(self):
@@ -1268,11 +1268,11 @@ class MainWindow(QMainWindow):
         if cue:
             self.cue_list.select_cue(cue.id)
         else:
-            self.statusBar().showMessage("Nincs több lip-sync probléma", 3000)
+            self.statusBar().showMessage(t("messages.no_more_lipsync_issues"), 3000)
     
     @Slot()
     def _on_goto_next_comment(self):
-        self.statusBar().showMessage("Következő megjegyzés keresése...", 3000)
+        self.statusBar().showMessage(t("messages.searching_next_comment"), 3000)
     
     @Slot()
     def _on_about(self):
@@ -1326,13 +1326,16 @@ class MainWindow(QMainWindow):
     def _on_cue_saved(self):
         cue = self.cue_editor.get_cue()
         if cue:
+            # Save the current cue index BEFORE refreshing (refresh loses selection)
+            current_cue_index = cue.cue_index
+            
             self.project_manager.save_cue(cue)
             self._refresh_cue_list()
             self._update_title()
             self._update_statistics()
             
-            # Ugrás a következő sorra
-            self._goto_next_cue()
+            # Go to the next cue in sequence based on saved index
+            self._goto_next_cue_from_index(current_cue_index)
     
     @Slot()
     def _on_cue_status_changed(self):
@@ -1358,6 +1361,18 @@ class MainWindow(QMainWindow):
             return
         
         current_index = self.cue_list.get_current_index()
+        self._goto_next_cue_from_index(current_index)
+    
+    def _goto_next_cue_from_index(self, current_index: int):
+        """
+        Ugrás a következő sorra adott index alapján.
+        
+        Args:
+            current_index: Jelenlegi cue index
+        """
+        if not self.project_manager.is_open:
+            return
+        
         cues = self.project_manager.get_cues()
         
         # Keressük a következő cue-t
@@ -1367,7 +1382,7 @@ class MainWindow(QMainWindow):
                 return
         
         # Ha nincs több, maradunk az utolsón
-        self.statusBar().showMessage("Utolsó sor", 2000)
+        self.statusBar().showMessage(t("messages.last_cue"), 2000)
     
     @Slot()
     def _on_goto_next_cue(self):
@@ -1394,4 +1409,4 @@ class MainWindow(QMainWindow):
         if prev_cue:
             self.cue_list.select_cue(prev_cue.id)
         else:
-            self.statusBar().showMessage("Első sor", 2000)
+            self.statusBar().showMessage(t("messages.first_cue"), 2000)
