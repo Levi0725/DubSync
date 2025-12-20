@@ -1,7 +1,7 @@
 """
 DubSync Settings Dialog
 
-Beállítások dialógus ablak.
+Application settings dialog.
 """
 
 from pathlib import Path
@@ -22,10 +22,11 @@ from dubsync.services.settings_manager import SettingsManager
 from dubsync.plugins.base import PluginManager, PluginInterface
 from dubsync.ui.theme import ThemeManager, ThemeType, THEMES, ThemeColors
 from dubsync.utils.constants import APP_NAME, APP_VERSION
+from dubsync.i18n import t
 
 
 class GeneralSettingsTab(QWidget):
-    """Általános beállítások fül."""
+    """General settings tab."""
     
     def __init__(self, settings: SettingsManager, parent=None):
         super().__init__(parent)
@@ -36,69 +37,69 @@ class GeneralSettingsTab(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         
-        # Nyelvi beállítások (legfelülre)
-        lang_group = QGroupBox("Nyelv / Language")
+        # Language settings (at top)
+        lang_group = QGroupBox(t("settings.general.language"))
         lang_layout = QFormLayout(lang_group)
         
         self.language_combo = QComboBox()
         self._populate_languages()
-        lang_layout.addRow("Alkalmazás nyelve / App language:", self.language_combo)
+        lang_layout.addRow(t("settings.general.app_language"), self.language_combo)
         
-        self.language_hint = QLabel("⚠️ A nyelvváltás az alkalmazás újraindítása után lép érvénybe.")
+        self.language_hint = QLabel(t("settings.general.language_restart_hint"))
         self.language_hint.setStyleSheet("color: #ff9800; font-size: 11px;")
         lang_layout.addRow("", self.language_hint)
         
         layout.addWidget(lang_group)
         
-        # Alapértelmezett útvonalak
-        paths_group = QGroupBox("Alapértelmezett útvonalak")
+        # Default paths
+        paths_group = QGroupBox(t("settings.general.paths"))
         paths_layout = QFormLayout(paths_group)
         
         save_path_layout = QHBoxLayout()
         self.save_path_edit = QLineEdit()
-        self.save_path_edit.setPlaceholderText("Dokumentumok mappa")
+        self.save_path_edit.setPlaceholderText(t("settings.general.save_path_placeholder"))
         save_path_layout.addWidget(self.save_path_edit)
-        self.save_path_btn = QPushButton("...")
+        self.save_path_btn = QPushButton(t("buttons.browse"))
         self.save_path_btn.setMaximumWidth(30)
         self.save_path_btn.clicked.connect(self._browse_save_path)
         save_path_layout.addWidget(self.save_path_btn)
-        paths_layout.addRow("Mentési hely:", save_path_layout)
+        paths_layout.addRow(t("settings.general.save_path"), save_path_layout)
         
         layout.addWidget(paths_group)
         
-        # Felhasználói adatok
-        user_group = QGroupBox("Felhasználói adatok")
+        # User data
+        user_group = QGroupBox(t("settings.general.user_data"))
         user_layout = QFormLayout(user_group)
         
         self.author_edit = QLineEdit()
-        self.author_edit.setPlaceholderText("A te neved...")
-        user_layout.addRow("Alapértelmezett név:", self.author_edit)
+        self.author_edit.setPlaceholderText(t("settings.general.default_name_placeholder"))
+        user_layout.addRow(t("settings.general.default_name"), self.author_edit)
         
         layout.addWidget(user_group)
         
-        # Automatikus mentés
-        autosave_group = QGroupBox("Automatikus mentés")
+        # Auto-save
+        autosave_group = QGroupBox(t("settings.general.autosave"))
         autosave_layout = QFormLayout(autosave_group)
         
-        self.autosave_check = QCheckBox("Engedélyezve")
-        autosave_layout.addRow("Automatikus mentés:", self.autosave_check)
+        self.autosave_check = QCheckBox(t("settings.general.autosave_enabled"))
+        autosave_layout.addRow(t("settings.general.autosave") + ":", self.autosave_check)
         
         self.autosave_interval = QSpinBox()
         self.autosave_interval.setRange(1, 60)
-        self.autosave_interval.setSuffix(" perc")
-        autosave_layout.addRow("Mentési időköz:", self.autosave_interval)
+        self.autosave_interval.setSuffix(t("settings.general.autosave_minutes"))
+        autosave_layout.addRow(t("settings.general.autosave_interval"), self.autosave_interval)
         
         layout.addWidget(autosave_group)
         
-        # Lip-sync beállítások
-        lipsync_group = QGroupBox("Lip-sync becslés")
+        # Lip-sync settings
+        lipsync_group = QGroupBox(t("settings.general.lipsync"))
         lipsync_layout = QFormLayout(lipsync_group)
         
         self.chars_per_sec = QDoubleSpinBox()
         self.chars_per_sec.setRange(5.0, 25.0)
         self.chars_per_sec.setDecimals(1)
-        self.chars_per_sec.setSuffix(" kar/mp")
-        lipsync_layout.addRow("Beszédsebesség:", self.chars_per_sec)
+        self.chars_per_sec.setSuffix(t("settings.general.chars_per_sec"))
+        lipsync_layout.addRow(t("settings.general.speech_speed"), self.chars_per_sec)
         
         layout.addWidget(lipsync_group)
         
@@ -121,7 +122,7 @@ class GeneralSettingsTab(QWidget):
     def _browse_save_path(self):
         if path := QFileDialog.getExistingDirectory(
             self,
-            "Válassz mentési mappát",
+            t("dialogs.project_settings.select_folder") if "dialogs.project_settings.select_folder" in dir(t) else "Select folder",
             self.save_path_edit.text() or str(Path.home()),
         ):
             self.save_path_edit.setText(path)
@@ -152,7 +153,7 @@ class GeneralSettingsTab(QWidget):
 
 
 class PluginsSettingsTab(QWidget):
-    """Pluginok beállítások fül."""
+    """Plugins settings tab."""
     
     plugins_changed = Signal()
     
@@ -168,25 +169,25 @@ class PluginsSettingsTab(QWidget):
     def _setup_ui(self):
         layout = QHBoxLayout(self)
         
-        # === Bal oldal - Plugin lista ===
+        # === Left side - Plugin list ===
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
         left_layout.setContentsMargins(0, 0, 0, 0)
         
-        left_layout.addWidget(QLabel("Elérhető pluginok:"))
+        left_layout.addWidget(QLabel(t("settings.plugins.available")))
         
         self.plugin_list = QListWidget()
         self.plugin_list.itemClicked.connect(self._on_plugin_selected)
         left_layout.addWidget(self.plugin_list)
         
-        # Engedélyezés gombok
+        # Enable/disable buttons
         btn_layout = QHBoxLayout()
-        self.enable_btn = QPushButton("Engedélyezés")
+        self.enable_btn = QPushButton(t("settings.plugins.enable"))
         self.enable_btn.clicked.connect(self._on_enable_plugin)
         self.enable_btn.setEnabled(False)
         btn_layout.addWidget(self.enable_btn)
         
-        self.disable_btn = QPushButton("Letiltás")
+        self.disable_btn = QPushButton(t("settings.plugins.disable"))
         self.disable_btn.clicked.connect(self._on_disable_plugin)
         self.disable_btn.setEnabled(False)
         btn_layout.addWidget(self.disable_btn)
@@ -194,28 +195,28 @@ class PluginsSettingsTab(QWidget):
         
         layout.addWidget(left_widget, 1)
         
-        # === Közép - Plugin leírás ===
+        # === Center - Plugin description ===
         center_widget = QWidget()
         center_layout = QVBoxLayout(center_widget)
         center_layout.setContentsMargins(0, 0, 0, 0)
         
-        center_layout.addWidget(QLabel("Plugin információk:"))
+        center_layout.addWidget(QLabel(t("settings.plugins.info")))
         
         self.details_stack = QStackedWidget()
         
-        # Üres állapot
-        empty_label = QLabel("Válassz ki egy plugint a részletek megtekintéséhez")
+        # Empty state
+        empty_label = QLabel(t("settings.plugins.select_hint"))
         empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_label.setStyleSheet("color: #888;")
         self.details_stack.addWidget(empty_label)
         
-        # Részletek widget
+        # Details widget
         details_widget = QWidget()
         details_layout = QVBoxLayout(details_widget)
         details_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Figyelmeztetés (csak aktiváláskor látszik)
-        self.restart_warning = QLabel("⚠️ A változások csak újraindítás után lépnek érvénybe!")
+        # Warning (visible only when activated)
+        self.restart_warning = QLabel(t("settings.plugins.restart_warning"))
         self.restart_warning.setStyleSheet(
             "color: #ff9800; padding: 8px; background-color: rgba(255, 152, 0, 0.15); "
             "border-radius: 4px; margin-bottom: 8px;"
@@ -245,40 +246,38 @@ class PluginsSettingsTab(QWidget):
         
         layout.addWidget(center_widget, 2)
         
-        # === Jobb oldal - Beállítások ===
+        # === Right side - Settings ===
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
         right_layout.setContentsMargins(0, 0, 0, 0)
         
-        right_layout.addWidget(QLabel("Beállítások:"))
+        right_layout.addWidget(QLabel(t("settings.plugins.settings")))
         
         self.settings_stack = QStackedWidget()
         
-        # Üres állapot
-        empty_settings = QLabel("Válassz plugint a beállításokhoz")
+        # Empty state
+        empty_settings = QLabel(t("settings.plugins.settings_hint"))
         empty_settings.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_settings.setStyleSheet("color: #888;")
         self.settings_stack.addWidget(empty_settings)
         
-        # Beállítások widget
+        # Settings widget
         settings_widget = QWidget()
         self.settings_widget_layout = QVBoxLayout(settings_widget)
         self.settings_widget_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Panel láthatóság beállítás (UI pluginokhoz)
-        self.panel_visibility_group = QGroupBox("Panel megjelenés")
+        # Panel visibility settings (for UI plugins)
+        self.panel_visibility_group = QGroupBox(t("settings.plugins.panel_settings"))
         panel_layout = QVBoxLayout(self.panel_visibility_group)
-        self.show_panel_on_start = QCheckBox("Indulásnál megjelenjen")
-        self.show_panel_on_start.setToolTip(
-            "Ha bekapcsolod, a plugin panelje automatikusan megjelenik az alkalmazás indításakor"
-        )
+        self.show_panel_on_start = QCheckBox(t("settings.plugins.show_on_start"))
+        self.show_panel_on_start.setToolTip(t("settings.plugins.show_on_start_tooltip"))
         self.show_panel_on_start.stateChanged.connect(self._on_panel_visibility_changed)
         panel_layout.addWidget(self.show_panel_on_start)
         self.panel_visibility_group.setVisible(False)
         self.settings_widget_layout.addWidget(self.panel_visibility_group)
         
-        # Plugin egyedi beállítások
-        self.plugin_settings_group = QGroupBox("Plugin beállítások")
+        # Plugin custom settings
+        self.plugin_settings_group = QGroupBox(t("settings.plugins.plugin_settings"))
         self.plugin_settings_layout = QVBoxLayout(self.plugin_settings_group)
         self.plugin_settings_container = QWidget()
         self.plugin_settings_layout.addWidget(self.plugin_settings_container)
@@ -682,7 +681,7 @@ class SettingsDialog(QDialog):
         self.theme_manager = ThemeManager()
         self._initial_tab = initial_tab
         
-        self.setWindowTitle("Beállítások")
+        self.setWindowTitle(t("settings.title"))
         self.setMinimumSize(800, 800)
         
         self._setup_ui()
@@ -694,42 +693,47 @@ class SettingsDialog(QDialog):
         # Tab widget
         self.tab_widget = QTabWidget()
         
-        # Általános beállítások
+        # General settings
         self.general_tab = GeneralSettingsTab(self.settings)
-        self.tab_widget.addTab(self.general_tab, "⚙️ Általános")
+        self.tab_widget.addTab(self.general_tab, t("settings.tabs.general"))
         
-        # Plugin beállítások
+        # Plugin settings
         self.plugins_tab = PluginsSettingsTab(self.settings, self.plugin_manager)
-        self.tab_widget.addTab(self.plugins_tab, "🔌 Pluginok")
+        self.tab_widget.addTab(self.plugins_tab, t("settings.tabs.plugins"))
         
-        # Plugin letöltés
+        # Plugin download
         self.download_tab = PluginDownloadTab()
-        self.tab_widget.addTab(self.download_tab, "📥 Plugin letöltés")
+        self.tab_widget.addTab(self.download_tab, t("settings.tabs.download"))
         
-        # Téma beállítások
+        # Theme settings
         self.theme_tab = ThemeSettingsTab(self.theme_manager)
         self.theme_tab.theme_changed.connect(self._on_theme_preview)
-        self.tab_widget.addTab(self.theme_tab, "🎨 Téma")
+        self.tab_widget.addTab(self.theme_tab, t("dialogs.theme_settings.title"))
         
-        # Névjegy
+        # About
         self.about_tab = AboutTab()
-        self.tab_widget.addTab(self.about_tab, "ℹ️ Névjegy")
+        self.tab_widget.addTab(self.about_tab, t("menu.help.about"))
         
         layout.addWidget(self.tab_widget)
         
-        # Gombok
+        # Buttons
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok |
             QDialogButtonBox.StandardButton.Cancel |
             QDialogButtonBox.StandardButton.Apply
         )
+        # Translate standard buttons
+        buttons.button(QDialogButtonBox.StandardButton.Ok).setText(t("buttons.ok"))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(t("buttons.cancel"))
+        buttons.button(QDialogButtonBox.StandardButton.Apply).setText(t("buttons.apply"))
+        
         buttons.accepted.connect(self._on_accept)
         buttons.rejected.connect(self.reject)
         buttons.button(QDialogButtonBox.StandardButton.Apply).clicked.connect(self._on_apply)
         layout.addWidget(buttons)
     
     def _set_initial_tab(self):
-        """Kezdő fül beállítása."""
+        """Set initial tab."""
         if self._initial_tab:
             tab_map = {
                 "general": self.TAB_GENERAL,

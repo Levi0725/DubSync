@@ -196,16 +196,10 @@ class CueEditorWidget(QWidget):
         
         # Collapse button
         self.collapse_btn = QPushButton()
-        self.collapse_btn.setText("▼")
+        self.collapse_btn.setText("[-]")
         self.collapse_btn.setToolTip(t("cue_editor.collapse_tooltip"))
         self.collapse_btn.setFixedSize(28, 28)
         self.collapse_btn.setCheckable(True)
-        self.collapse_btn.setStyleSheet("""
-            QPushButton { 
-                font-size: 14px; 
-                font-family: 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif;
-            }
-        """)
         self.collapse_btn.clicked.connect(self._toggle_collapse)
         header_layout.addWidget(self.collapse_btn)
         
@@ -237,17 +231,11 @@ class CueEditorWidget(QWidget):
         
         # Source lock button
         self.source_lock_btn = QPushButton()
-        self.source_lock_btn.setText("🔒")
+        self.source_lock_btn.setText("[L]")
         self.source_lock_btn.setToolTip(t("cue_editor.source_lock_tooltip"))
         self.source_lock_btn.setFixedSize(28, 28)
         self.source_lock_btn.setCheckable(True)
         self.source_lock_btn.setChecked(True)  # Default: locked
-        self.source_lock_btn.setStyleSheet("""
-            QPushButton { 
-                font-size: 16px; 
-                font-family: 'Segoe UI Emoji', 'Segoe UI Symbol', 'Arial Unicode MS', sans-serif;
-            }
-        """)
         self.source_lock_btn.clicked.connect(self._on_source_lock_toggled)
         char_layout.addWidget(self.source_lock_btn)
         
@@ -383,10 +371,10 @@ class CueEditorWidget(QWidget):
     
     @Slot()
     def _toggle_collapse(self):
-        """Szerkesztő tartalom összecsukása/kinyitása."""
+        """Toggle editor content collapse/expand."""
         self._collapsed = self.collapse_btn.isChecked()
         self.content_widget.setVisible(not self._collapsed)
-        self.collapse_btn.setText("▶" if self._collapsed else "▼")
+        self.collapse_btn.setText("[+]" if self._collapsed else "[-]")
         
         # Set maximum height when collapsed to make widget smaller
         if self._collapsed:
@@ -402,19 +390,19 @@ class CueEditorWidget(QWidget):
         self._update_source_text_style()
     
     def _update_source_text_style(self):
-        """Forrásszöveg stílus frissítése a zárolás állapota alapján."""
+        """Update source text style based on lock state."""
         from dubsync.ui.theme import ThemeManager
         theme = ThemeManager()
         colors = theme.colors
         
         if self._source_locked:
-            self.source_lock_btn.setText("🔒")
+            self.source_lock_btn.setText("[L]")
             # Locked: slightly muted appearance
             self.source_text.setStyleSheet(
                 f"background-color: {colors.surface}; color: {colors.foreground_muted};"
             )
         else:
-            self.source_lock_btn.setText("🔓")
+            self.source_lock_btn.setText("[U]")
             # Unlocked: normal editable appearance
             self.source_text.setStyleSheet(
                 f"background-color: {colors.input_background}; color: {colors.foreground};"

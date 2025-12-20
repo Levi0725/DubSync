@@ -163,12 +163,12 @@ class CSVExportPlugin(ExportPlugin, UIPlugin):
     def info(self) -> PluginInfo:
         return PluginInfo(
             id="csv_export",
-            name="CSV Export",
+            name=t("plugins.csv_export.name"),
             version="1.1.0",
             author="Levente Kulacsy",
-            description="Cue-k exportálása CSV formátumba",
+            description=t("plugins.csv_export.description"),
             plugin_type=PluginType.EXPORT,
-            icon="📊",
+            icon="",
             readme_path="README.md"
         )
     

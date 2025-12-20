@@ -636,13 +636,13 @@ class GlossaryPlugin(UIPlugin):
     def info(self) -> PluginInfo:
         return PluginInfo(
             id="glossary",
-            name="Szótár",
+            name=t("plugins.glossary.name"),
             version="1.0.0",
             author="Levente Kulacsy",
-            description="Egyéni fordító szótár import/export .glossync fájlokkal",
+            description=t("plugins.glossary.description"),
             plugin_type=PluginType.UI,
             dependencies=[],
-            icon="📖",
+            icon="",
             readme_path="README.md"
         )
     

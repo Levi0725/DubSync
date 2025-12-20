@@ -539,15 +539,15 @@ class SpellcheckerPlugin(UIPlugin):
     def info(self) -> PluginInfo:
         return PluginInfo(
             id="spellchecker",
-            name="Helyesírás",
+            name=t("plugins.spellchecker.name"),
             version="1.0.0",
             author="Levente Kulacsy",
-            description="Magyar helyesírás-ellenőrző egyéni kivételekkel",
+            description=t("plugins.spellchecker.description"),
             plugin_type=PluginType.UI,
             dependencies=[
                 PluginDependency("spylls", "0.1.5", optional=True),
             ],
-            icon="🔤",
+            icon="",
             readme_path="README.md"
         )
     

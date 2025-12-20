@@ -302,15 +302,15 @@ class ArgosTranslatorPlugin(UIPlugin, TranslationPlugin):
     def info(self) -> PluginInfo:
         return PluginInfo(
             id="argos_translator",
-            name="Argos Fordító",
+            name=t("plugins.translator.name"),
             version="1.0.0",
             author="Levente Kulacsy - Argos Translate Team",
-            description="Offline angol-magyar fordító az Argos Translate motorral",
+            description=t("plugins.translator.description"),
             plugin_type=PluginType.UI,
             dependencies=[
                 PluginDependency("argostranslate", "1.9.0"),
             ],
-            icon="🌍",
+            icon="",
             readme_path="README.md"
         )
     

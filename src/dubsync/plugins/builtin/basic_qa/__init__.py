@@ -171,12 +171,12 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
     def info(self) -> PluginInfo:
         return PluginInfo(
             id="basic_qa",
-            name="Alapvető QA",
+            name=t("plugins.basic_qa.name"),
             version="1.1.0",
             author="Levente Kulacsy",
-            description="Alapvető minőségellenőrzési szabályok",
+            description=t("plugins.basic_qa.description"),
             plugin_type=PluginType.QA,
-            icon="🔍",
+            icon="",
             readme_path="README.md"
         )
     
