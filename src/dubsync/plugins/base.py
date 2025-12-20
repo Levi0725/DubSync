@@ -1,8 +1,8 @@
 """
 DubSync Plugin Base
 
-Plugin alap osztályok és interfészek.
-Támogatja az export, QA, import, tool, UI és service pluginokat.
+Plugin default classes and interfaces.
+Supports export, QA, import, tool, UI, and service plugins.
 """
 
 
@@ -21,40 +21,40 @@ if TYPE_CHECKING:
 
 class PluginType(Enum):
     """
-    Plugin típusok.
+    Plugin types.
     """
-    EXPORT = auto()      # Export plugin (PDF, DOCX, CSV, stb.)
-    QA = auto()          # Minőségellenőrzés plugin
-    IMPORT = auto()      # Import plugin (egyedi formátumok)
-    TOOL = auto()        # Egyéb eszköz plugin
-    UI = auto()          # UI bővítő plugin (ablakok, panelek, menük)
-    SERVICE = auto()     # Háttérszolgáltatás plugin (API-k, fordítók)
-    LANGUAGE = auto()    # Nyelv bővítő plugin (i18n)
+    EXPORT = auto()      # Export plugin (PDF, DOCX, CSV, etc.)
+    QA = auto()          # Quality assurance plugin
+    IMPORT = auto()      # Import plugin (custom formats)
+    TOOL = auto()        # Other tool plugin
+    UI = auto()          # UI extension plugin (windows, panels, menus)
+    SERVICE = auto()     # Background service plugin (APIs, translators)
+    LANGUAGE = auto()    # Language extension plugin (i18n)
 
 
 @dataclass
 class PluginDependency:
-    """Plugin függőség leírása."""
-    package_name: str       # pip package név
-    min_version: str = ""   # Minimum verzió (opcionális)
-    optional: bool = False  # Opcionális függőség
+    """Plugin dependency description."""
+    package_name: str       # pip package name
+    min_version: str = ""   # Minimum version (optional)
+    optional: bool = False  # Optional dependency
 
 
 @dataclass
 class PluginInfo:
     """
-    Plugin metaadatok.
+    Plugin metadata.
     """
-    id: str                     # Egyedi azonosító
-    name: str                   # Megjelenített név
-    version: str                # Verzió (pl. "1.0.0")
-    author: str                 # Szerző
-    description: str            # Rövid leírás
-    plugin_type: PluginType     # Plugin típus
+    id: str                     # Unique identifier
+    name: str                   # Display name
+    version: str                # Version (e.g., "1.0.0")
+    author: str                 # Author
+    description: str            # Short description
+    plugin_type: PluginType     # Plugin type
     dependencies: List[PluginDependency] = field(default_factory=list)
-    homepage: str = ""          # Plugin honlap URL
-    readme_path: str = ""       # README.md relatív útvonal
-    icon: str = ""              # Ikon emoji vagy path
+    homepage: str = ""          # Plugin homepage URL
+    readme_path: str = ""       # README.md relative path
+    icon: str = ""              # Icon emoji or path
     
     def __str__(self) -> str:
         return f"{self.name} v{self.version} by {self.author}"
@@ -62,12 +62,12 @@ class PluginInfo:
 
 class PluginInterface(ABC):
     """
-    Plugin interfész.
+    Plugin interface.
     
-    Minden plugin-nak implementálnia kell ezt az interfészt.
+    Every plugin must implement this interface.
     """
     
-    _plugin_dir: Optional[Path] = None  # Plugin könyvtár útvonala
+    _plugin_dir: Optional[Path] = None  # Plugin directory path
     
     @property
     @abstractmethod
@@ -82,26 +82,26 @@ class PluginInterface(ABC):
     
     def initialize(self) -> bool:
         """
-        Plugin inicializálása.
+        Plugin initialization.
         
-        Betöltéskor hívódik. Automatikusan betölti a plugin 
-        locale fájljait a locales/ mappából ha létezik.
-        Visszatérési érték False esetén a plugin nem töltődik be.
+        Called on load. Automatically loads the plugin 
+        locale files from the locales/ folder if it exists.
+        Returns False to prevent the plugin from loading.
         
         Returns:
-            True, ha sikeres
+            True, if successful
         """
         self._load_plugin_locales()
         return True
     
     def _load_plugin_locales(self) -> None:
         """
-        Plugin locale fájlok betöltése.
+        Plugin locale file loading.
         
-        A plugin locales/ mappájából tölti be az összes JSON fájlt.
+        Loads all JSON files from the plugin's locales/ folder.
         """
         try:
-            # Plugin könyvtár meghatározása
+            # Determine plugin directory
             import inspect
             plugin_file = inspect.getfile(self.__class__)
             plugin_dir = Path(plugin_file).parent
@@ -115,45 +115,45 @@ class PluginInterface(ABC):
     
     def shutdown(self) -> None:
         """
-        Plugin leállítása.
+        Plugin shutdown.
         
-        Az alkalmazás bezárásakor hívódik.
+        Called when the application is closing.
         """
         pass
     
     def get_settings_widget(self) -> Optional["QWidget"]:
         """
-        Beállítások widget lekérése.
+        Get settings widget.
         
         Returns:
-            QWidget a beállításokhoz, vagy None
+            QWidget for settings, or None
         """
         return None
     
     def load_settings(self, settings: Dict[str, Any]) -> None:
         """
-        Plugin beállítások betöltése.
+        Load plugin settings.
         
         Args:
-            settings: Korábban mentett beállítások
+            settings: Previously saved settings
         """
         pass
     
     def save_settings(self) -> Dict[str, Any]:
         """
-        Plugin beállítások mentése.
+        Save plugin settings.
         
         Returns:
-            Mentendő beállítások
+            Settings to save
         """
         return {}
     
     def get_long_description(self) -> str:
         """
-        Hosszú leírás lekérése (README tartalma).
+        Get long description (README content).
         
         Returns:
-            Markdown formátumú leírás
+            Markdown formatted description
         """
         if self._plugin_dir and self.info.readme_path:
             with contextlib.suppress(Exception):
@@ -165,30 +165,30 @@ class PluginInterface(ABC):
 
 class ExportPlugin(PluginInterface):
     """
-    Export plugin alap osztály.
+    Export plugin base class.
     
-    Export pluginok egyedi formátumokba exportálnak.
+    Export plugins export to custom formats.
     """
     
     @property
     def file_extension(self) -> str:
         """
-        Kimeneti fájl kiterjesztése.
+        Output file extension.
         
         Returns:
-            Kiterjesztés (pl. ".docx")
+            Extension (e.g., ".docx")
         """
         return ".txt"
     
     @property
     def file_filter(self) -> str:
         """
-        Fájl dialógus szűrő.
+        File dialog filter.
         
         Returns:
-            Szűrő string (pl. "Word dokumentum (*.docx)")
+            Filter string (e.g., "Word Document (*.docx)")
         """
-        return f"Szövegfájl (*{self.file_extension})"
+        return f"Text Files (*{self.file_extension})"
     
     @abstractmethod
     def export(
@@ -199,16 +199,16 @@ class ExportPlugin(PluginInterface):
         options: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
-        Export végrehajtása.
+        Perform export.
         
         Args:
-            output_path: Kimeneti fájl elérési útja
-            project: Projekt objektum
-            cues: Cue lista
-            options: Egyedi opciók (opcionális)
+            output_path: Output file path
+            project: Project object
+            cues: Cue list
+            options: Custom options (optional)
             
         Returns:
-            True, ha sikeres
+            True, if successful
         """
         pass
 
@@ -216,19 +216,19 @@ class ExportPlugin(PluginInterface):
 @dataclass
 class QAIssue:
     """
-    QA probléma leírása.
+    QA issue description.
     """
-    cue_id: int             # Érintett cue azonosító
+    cue_id: int             # Affected cue ID
     severity: str           # "error", "warning", "info"
-    message: str            # Probléma leírása
-    suggestion: str = ""    # Javítási javaslat
+    message: str            # Issue description
+    suggestion: str = ""    # Suggestion for fix
 
 
 class QAPlugin(PluginInterface):
     """
-    QA (minőségellenőrzés) plugin alap osztály.
+    QA (quality assurance) plugin base class.
     
-    QA pluginok egyedi szabályokat ellenőriznek.
+    QA plugins check custom rules.
     """
     
     @abstractmethod
@@ -238,122 +238,122 @@ class QAPlugin(PluginInterface):
         cues: List["Cue"]
     ) -> List[QAIssue]:
         """
-        Ellenőrzés végrehajtása.
+        Perform check.
         
         Args:
-            project: Projekt objektum
-            cues: Cue lista
+            project: Project object
+            cues: Cue list
             
         Returns:
-            Talált problémák listája
+            List of found issues
         """
         pass
 
 
 class UIPlugin(PluginInterface):
     """
-    UI bővítő plugin alap osztály.
+    UI extension plugin base class.
     
-    UI pluginok új ablakokat, paneleket, menüket adhatnak hozzá.
+    UI plugins can add new windows, panels, menus.
     """
     
     _main_window: Optional["QMainWindow"] = None
     
     def set_main_window(self, main_window: "QMainWindow") -> None:
-        """Fő ablak referencia beállítása."""
+        """Set main window reference."""
         self._main_window = main_window
     
     def create_dock_widget(self) -> Optional["QDockWidget"]:
         """
-        Dokkolható widget létrehozása.
+        Create dockable widget.
         
         Returns:
-            QDockWidget vagy None
+            QDockWidget or None
         """
         return None
     
     def create_menu_items(self) -> List["QAction"]:
         """
-        Menü elemek létrehozása.
+        Create menu items.
         
         Returns:
-            QAction lista a menühöz
+            List of QAction for the menu
         """
         return []
     
     def create_toolbar_items(self) -> List["QAction"]:
         """
-        Eszköztár elemek létrehozása.
+        Create toolbar items.
         
         Returns:
-            QAction lista az eszköztárhoz
+            List of QAction for the toolbar
         """
         return []
     
     def on_cue_selected(self, cue: "Cue") -> None:
         """
-        Cue kiválasztás esemény.
+        Cue selection event.
         
         Args:
-            cue: Kiválasztott cue
+            cue: Selected cue
         """
         pass
     
     def on_project_opened(self, project: "Project") -> None:
         """
-        Projekt megnyitás esemény.
+        Project opened event.
         
         Args:
-            project: Megnyitott projekt
+            project: Opened project
         """
         pass
     
     def on_project_closed(self) -> None:
-        """Projekt bezárás esemény."""
+        """Project closed event."""
         pass
 
 
 class ServicePlugin(PluginInterface):
     """
-    Háttérszolgáltatás plugin alap osztály.
+    Background service plugin base class.
     
-    Service pluginok API-kat, fordítókat és más szolgáltatásokat biztosítanak.
+    Service plugins provide APIs, translators, and other services.
     """
     
     @abstractmethod
     def get_service_name(self) -> str:
         """
-        Szolgáltatás neve.
+        Service name.
         
         Returns:
-            Szolgáltatás azonosító név
+            Service identifier name
         """
         pass
     
     def is_available(self) -> bool:
         """
-        Ellenőrzi, hogy a szolgáltatás elérhető-e.
+        Check if the service is available.
         
         Returns:
-            True, ha elérhető
+            True if available
         """
         return True
     
     def get_status(self) -> str:
         """
-        Szolgáltatás állapot.
+        Service status.
         
         Returns:
-            Állapot szöveg
+            Status text
         """
-        return "OK" if self.is_available() else "Nem elérhető"
+        return "OK" if self.is_available() else "Unavailable"
 
 
 class TranslationPlugin(ServicePlugin):
     """
-    Fordító szolgáltatás plugin alap osztály.
+    Translation service plugin base class.
     
-    Translation pluginok szövegfordítást biztosítanak.
+    Translation plugins provide text translation.
     """
     
     @abstractmethod
@@ -364,24 +364,24 @@ class TranslationPlugin(ServicePlugin):
         target_lang: str
     ) -> str:
         """
-        Szöveg fordítása.
+        Translate text.
         
         Args:
-            text: Fordítandó szöveg
-            source_lang: Forrásnyelv kód (pl. "en")
-            target_lang: Célnyelv kód (pl. "hu")
+            text: Text to translate
+            source_lang: Source language code (e.g., "en")
+            target_lang: Target language code (e.g., "hu")
             
         Returns:
-            Lefordított szöveg
+            Translated text
         """
         pass
     
     def get_supported_languages(self) -> List[tuple]:
         """
-        Támogatott nyelvpárok lekérése.
+        Get supported language pairs.
         
         Returns:
-            Lista (source_code, target_code, display_name) tuple-okkal
+            List of (source_code, target_code, display_name) tuples
         """
         return []
     
@@ -391,19 +391,19 @@ class TranslationPlugin(ServicePlugin):
 
 class LanguagePlugin(PluginInterface):
     """
-    Nyelv bővítő plugin alap osztály.
+    Language extension plugin base class.
     
-    Language pluginok új nyelveket adhatnak az alkalmazáshoz.
+    Language plugins can add new languages to the application.
     """
     
     @property
     @abstractmethod
     def language_code(self) -> str:
         """
-        Nyelv ISO 639-1 kódja.
+        Language ISO 639-1 code.
         
         Returns:
-            Nyelv kód (pl. "de", "es", "fr")
+            Language code (e.g., "de", "es", "fr")
         """
         pass
     
@@ -411,49 +411,49 @@ class LanguagePlugin(PluginInterface):
     @abstractmethod
     def language_name(self) -> str:
         """
-        Nyelv natív neve.
+        Language native name.
         
         Returns:
-            Natív név (pl. "Deutsch", "Español")
+            Native name (e.g., "Deutsch", "Español")
         """
         pass
     
     @property
     def language_name_en(self) -> str:
         """
-        Nyelv angol neve.
+        Language name in English.
         
         Returns:
-            Angol név (pl. "German", "Spanish")
+            English name (e.g., "German", "Spanish")
         """
         return self.language_name
     
     @property
     def language_flag(self) -> str:
         """
-        Nyelv zászló emojija.
+        Language flag emoji.
         
         Returns:
-            Zászló emoji (pl. "🇩🇪", "🇪🇸")
+            Flag emoji (e.g., "🇩🇪", "🇪🇸")
         """
         return ""
     
     @property
     def is_rtl(self) -> bool:
         """
-        Jobbról balra írás-e.
+        Is right-to-left writing.
         
         Returns:
-            True ha RTL nyelv
+            True if RTL language
         """
         return False
     
     def get_translations_path(self) -> Optional["Path"]:
         """
-        Fordítások JSON fájl útvonala.
+        Path to translations JSON file.
         
         Returns:
-            Path objektum vagy None
+            Path object or None
         """
         if self._plugin_dir:
             path = self._plugin_dir / "locales" / f"{self.language_code}.json"
@@ -463,10 +463,10 @@ class LanguagePlugin(PluginInterface):
     
     def initialize(self) -> bool:
         """
-        Plugin inicializálása - nyelv regisztrálása.
+        Plugin initialization - language registration.
         
         Returns:
-            True ha sikeres
+            True if successful
         """
         try:
             from dubsync.i18n import get_locale_manager
@@ -474,7 +474,7 @@ class LanguagePlugin(PluginInterface):
             
             locale_mgr = get_locale_manager()
             
-            # Nyelv info létrehozása
+            # Create language info
             lang_info = LanguageInfo(
                 code=self.language_code,
                 name=self.language_name,
@@ -483,7 +483,7 @@ class LanguagePlugin(PluginInterface):
                 rtl=self.is_rtl
             )
             
-            # Nyelv regisztrálása
+            # Register language
             translations_path = self.get_translations_path()
             locale_mgr.register_language(lang_info, translations_path)
             
@@ -495,9 +495,9 @@ class LanguagePlugin(PluginInterface):
 
 class PluginManager:
     """
-    Plugin kezelő.
+    Plugin manager.
     
-    Pluginok betöltése, kezelése, futtatása.
+    Loading, managing, and running plugins.
     """
     
     def __init__(self):
@@ -513,14 +513,14 @@ class PluginManager:
     
     def register(self, plugin: PluginInterface, enabled: bool = False) -> bool:
         """
-        Plugin regisztrálása.
+        Register plugin.
         
         Args:
-            plugin: Plugin objektum
-            enabled: Alapból engedélyezett-e (default: False)
+            plugin: Plugin object
+            enabled: Enabled by default (default: False)
             
         Returns:
-            True, ha sikeres
+            True if successful
         """
         info = plugin.info
         
@@ -535,7 +535,7 @@ class PluginManager:
         if enabled:
             self._enabled_plugins.add(info.id)
         
-        # Típus szerinti regisztráció - plugin lehet egyszerre több típusú is!
+        # Type-based registration - a plugin can be multiple types at once!
         if isinstance(plugin, TranslationPlugin):
             self._translation_plugins[info.id] = plugin
         
@@ -558,13 +558,13 @@ class PluginManager:
     
     def unregister(self, plugin_id: str) -> bool:
         """
-        Plugin eltávolítása.
+        Unregister plugin.
         
         Args:
-            plugin_id: Plugin azonosító
+            plugin_id: Plugin identifier
             
         Returns:
-            True, ha sikeres
+            True if successful
         """
         if plugin_id not in self._plugins:
             return False
@@ -584,89 +584,89 @@ class PluginManager:
         return True
     
     def enable_plugin(self, plugin_id: str) -> bool:
-        """Plugin engedélyezése."""
+        """Enable plugin."""
         if plugin_id in self._plugins:
             self._enabled_plugins.add(plugin_id)
             return True
         return False
     
     def disable_plugin(self, plugin_id: str) -> bool:
-        """Plugin letiltása."""
+        """Disable plugin."""
         self._enabled_plugins.discard(plugin_id)
         return True
     
     def is_enabled(self, plugin_id: str) -> bool:
-        """Ellenőrzi, hogy a plugin engedélyezett-e."""
+        """Check if plugin is enabled."""
         return plugin_id in self._enabled_plugins
     
     def get_enabled_plugins(self) -> set:
-        """Engedélyezett pluginok listája."""
+        """Get list of enabled plugins."""
         return self._enabled_plugins.copy()
     
     def set_enabled_plugins(self, enabled: set) -> None:
-        """Engedélyezett pluginok beállítása."""
+        """Set enabled plugins."""
         self._enabled_plugins = enabled.copy()
     
     def get_plugin(self, plugin_id: str) -> Optional[PluginInterface]:
-        """Plugin lekérése azonosító alapján."""
+        """Get plugin by identifier."""
         return self._plugins.get(plugin_id)
     
     def get_all_plugins(self) -> List[PluginInterface]:
-        """Összes plugin lekérése."""
+        """Get all plugins."""
         return list(self._plugins.values())
     
     def get_export_plugins(self, enabled_only: bool = True) -> List[ExportPlugin]:
-        """Export pluginok lekérése."""
+        """Get export plugins."""
         plugins = list(self._export_plugins.values())
         if enabled_only:
             plugins = [p for p in plugins if self.is_enabled(p.info.id)]
         return plugins
     
     def get_qa_plugins(self, enabled_only: bool = True) -> List[QAPlugin]:
-        """QA pluginok lekérése."""
+        """Get QA plugins."""
         plugins = list(self._qa_plugins.values())
         if enabled_only:
             plugins = [p for p in plugins if self.is_enabled(p.info.id)]
         return plugins
     
     def get_ui_plugins(self, enabled_only: bool = True) -> List[UIPlugin]:
-        """UI pluginok lekérése."""
+        """Get UI plugins."""
         plugins = list(self._ui_plugins.values())
         if enabled_only:
             plugins = [p for p in plugins if self.is_enabled(p.info.id)]
         return plugins
     
     def get_service_plugins(self, enabled_only: bool = True) -> List[ServicePlugin]:
-        """Service pluginok lekérése."""
+        """Get service plugins."""
         plugins = list(self._service_plugins.values())
         if enabled_only:
             plugins = [p for p in plugins if self.is_enabled(p.info.id)]
         return plugins
     
     def get_translation_plugins(self, enabled_only: bool = True) -> List[TranslationPlugin]:
-        """Fordító pluginok lekérése."""
+        """Get translation plugins."""
         plugins = list(self._translation_plugins.values())
         if enabled_only:
             plugins = [p for p in plugins if self.is_enabled(p.info.id)]
         return plugins
     
     def get_language_plugins(self, enabled_only: bool = True) -> List[LanguagePlugin]:
-        """Nyelv pluginok lekérése."""
+        """Get language plugins."""
         plugins = list(self._language_plugins.values())
         if enabled_only:
             plugins = [p for p in plugins if self.is_enabled(p.info.id)]
         return plugins
     
     def save_plugin_settings(self, plugin_id: str, settings: Dict[str, Any]) -> None:
-        """Plugin beállítások mentése."""
+        """Save plugin settings."""
         self._plugin_settings[plugin_id] = settings
     
     def get_plugin_settings(self, plugin_id: str) -> Dict[str, Any]:
-        """Plugin beállítások lekérése."""
+        """Get plugin settings."""
         return self._plugin_settings.get(plugin_id, {})
     
     def shutdown_all(self) -> None:
-        """Összes plugin leállítása."""
+        """Shutdown all plugins."""
         for plugin in self._plugins.values():
             plugin.shutdown()
         

@@ -1,7 +1,7 @@
 """
 DubSync Comments Panel Widget
 
-Lektori megjegyzések panel.
+Reviewer comments panel.
 """
 
 from typing import Optional, List, TYPE_CHECKING
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class CommentWidget(QFrame):
     """
-    Egyetlen megjegyzés widget.
+    Single comment widget.
     """
     
     resolved = Signal(int)  # comment_id
@@ -37,7 +37,7 @@ class CommentWidget(QFrame):
         self._setup_ui()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         from dubsync.ui.theme import ThemeManager
         theme = ThemeManager()
         colors = theme.colors
@@ -110,7 +110,7 @@ class CommentWidget(QFrame):
 
 class CommentsPanelWidget(QWidget):
     """
-    Megjegyzések panel a kiválasztott cue-hoz.
+    Comments panel for the selected cue.
     """
     
     # Signals
@@ -128,7 +128,7 @@ class CommentsPanelWidget(QWidget):
         self._connect_signals()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         
@@ -203,11 +203,11 @@ class CommentsPanelWidget(QWidget):
         self._update_ui_state()
     
     def _connect_signals(self):
-        """Signal kapcsolatok."""
+        """Connect signals."""
         self.add_btn.clicked.connect(self._on_add_comment)
     
     def _update_ui_state(self):
-        """UI állapot frissítése."""
+        """Update UI state."""
         has_cue = self._cue is not None
         
         self.add_btn.setEnabled(has_cue)
@@ -216,11 +216,11 @@ class CommentsPanelWidget(QWidget):
     
     def set_cue(self, cue: Cue, db: "Database"):
         """
-        Cue beállítása.
+        Set cue.
         
         Args:
-            cue: Cue objektum
-            db: Adatbázis kapcsolat
+            cue: Cue object
+            db: Database connection
         """
         self._cue = cue
         self._db = db
@@ -231,7 +231,7 @@ class CommentsPanelWidget(QWidget):
         self._update_ui_state()
     
     def _load_comments(self):
-        """Megjegyzések betöltése."""
+        """Load comments."""
         # Clear existing
         while self.comments_layout.count() > 1:  # Keep stretch
             item = self.comments_layout.takeAt(0)
@@ -269,7 +269,7 @@ class CommentsPanelWidget(QWidget):
     
     @Slot()
     def _on_add_comment(self):
-        """Megjegyzés hozzáadása."""
+        """Add comment."""
         if self._cue is None or self._db is None:
             return
         
@@ -293,7 +293,7 @@ class CommentsPanelWidget(QWidget):
     
     @Slot(int)
     def _on_comment_resolved(self, comment_id: int):
-        """Megjegyzés lezárása."""
+        """Resolve comment."""
         if self._db is None:
             return
         
@@ -306,7 +306,7 @@ class CommentsPanelWidget(QWidget):
         self.comment_resolved.emit(comment_id)
     
     def clear(self):
-        """Panel törlése."""
+        """Clear panel."""
         self._cue = None
         self._db = None
         self._comments = []

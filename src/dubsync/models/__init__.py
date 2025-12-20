@@ -1,7 +1,7 @@
 """
 DubSync Models
 
-Adatmodellek és adatbázis kezelés.
+Database models and management.
 """
 
 from dubsync.models.database import Database, init_database

@@ -1,7 +1,7 @@
 """
 DubSync - Main Entry Point
 
-Alkalmazás indítása és inicializálása.
+Initializes and starts the DubSync application.
 """
 
 import sys
@@ -16,7 +16,7 @@ if str(src_path) not in sys.path:
 
 def main():
     """
-    Fő belépési pont az alkalmazáshoz.
+    Primary application entry point.
     """
     from PySide6.QtWidgets import QApplication
     from PySide6.QtCore import Qt, QTimer

@@ -1,7 +1,7 @@
 """
 DubSync Settings Manager
 
-Alkalmazás beállítások kezelése.
+App settings management.
 """
 
 import json
@@ -14,38 +14,38 @@ from PySide6.QtCore import QSettings, QStandardPaths
 
 @dataclass
 class AppSettings:
-    """Alkalmazás beállítások."""
-    # Általános beállítások
+    """Application settings."""
+    # General settings
     default_save_path: str = ""
     default_author_name: str = ""
     auto_save_enabled: bool = True
-    auto_save_interval: int = 5  # percben
+    auto_save_interval: int = 5  # in minutes
     
-    # UI beállítások
+    # UI settings
     theme: str = "dark"
-    custom_theme_colors: Dict[str, str] = field(default_factory=dict)  # Egyedi téma színek
+    custom_theme_colors: Dict[str, str] = field(default_factory=dict)  # Custom theme colors
     font_size: int = 10
     show_line_numbers: bool = True
     compact_mode: bool = False
     
-    # Nyelvi beállítások (i18n)
-    language: str = "en"  # ISO 639-1 kód (en, hu, stb.)
+    # Language settings (i18n)
+    language: str = "en"  # ISO 639-1 code (en, hu, etc.)
     
-    # Lip-sync beállítások
+    # Lip-sync settings
     lipsync_chars_per_second: float = 13.0
     lipsync_warning_threshold: float = 0.95
     lipsync_error_threshold: float = 1.05
     
-    # Export beállítások
+    # Export settings
     default_export_format: str = "pdf"
     include_source_in_export: bool = True
     
-    # Plugin beállítások
+    # Plugin settings
     enabled_plugins: Set[str] = field(default_factory=set)
     plugin_settings: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    plugin_panel_visibility: Dict[str, bool] = field(default_factory=dict)  # Plugin panel láthatóság induláskor
+    plugin_panel_visibility: Dict[str, bool] = field(default_factory=dict)  # Plugin panel visibility on startup
     
-    # Utolsó útvonalak
+    # Last paths
     last_project_path: str = ""
     last_import_path: str = ""
     last_export_path: str = ""
@@ -54,9 +54,9 @@ class AppSettings:
 
 class SettingsManager:
     """
-    Beállítások kezelő.
+    Settings manager.
     
-    Központi hely az alkalmazás beállításainak kezeléséhez.
+    Central place for managing application settings.
     """
     
     _instance: Optional['SettingsManager'] = None
@@ -80,7 +80,7 @@ class SettingsManager:
         self._load_settings()
     
     def _get_config_dir(self) -> Path:
-        """Konfiguráció könyvtár lekérése."""
+        """Get configuration directory."""
         # Windows: %APPDATA%/DubSync
         config_path = Path(QStandardPaths.writableLocation(
             QStandardPaths.StandardLocation.AppDataLocation
@@ -90,24 +90,24 @@ class SettingsManager:
     
     @property
     def config_dir(self) -> Path:
-        """Konfiguráció könyvtár."""
+        """Configuration directory."""
         return self._config_dir
     
     @property
     def plugins_dir(self) -> Path:
-        """Plugin könyvtár."""
+        """Plugins directory."""
         plugins_path = self._config_dir / "plugins"
         plugins_path.mkdir(parents=True, exist_ok=True)
         return plugins_path
     
     def _load_settings(self) -> None:
-        """Beállítások betöltése."""
+        """Load settings."""
         if self._settings_file.exists():
             try:
                 with open(self._settings_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 
-                # Frissítjük a beállításokat
+                # Update settings
                 for key, value in data.items():
                     if hasattr(self._settings, key):
                         if key == 'enabled_plugins':
@@ -115,9 +115,9 @@ class SettingsManager:
                         else:
                             setattr(self._settings, key, value)
             except Exception as e:
-                print(f"Beállítások betöltési hiba: {e}")
+                print(f"Error loading settings: {e}")
         
-        # Alapértelmezett mentési hely beállítása
+        # Set default save path
         if not self._settings.default_save_path:
             docs_path = QStandardPaths.writableLocation(
                 QStandardPaths.StandardLocation.DocumentsLocation
@@ -125,18 +125,18 @@ class SettingsManager:
             self._settings.default_save_path = docs_path
     
     def save_settings(self) -> None:
-        """Beállítások mentése."""
+        """Save settings."""
         try:
             data = asdict(self._settings)
-            # Set-et listává alakítjuk JSON-hoz
+            # Convert set to list for JSON
             data['enabled_plugins'] = list(data['enabled_plugins'])
             
             with open(self._settings_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"Beállítások mentési hiba: {e}")
+            print(f"Error saving settings: {e}")
     
-    # Getterek és setterek
+    # Getters and setters
     
     @property
     def default_save_path(self) -> str:
@@ -204,39 +204,39 @@ class SettingsManager:
     
     def get(self, key: str, default: Any = None) -> Any:
         """
-        Általános beállítás lekérése kulcs alapján.
+        General setting retrieval by key.
         
         Args:
-            key: A beállítás neve (pl. 'data_dir', 'theme', stb.)
-            default: Alapértelmezett érték ha nem létezik
+            key: The name of the setting (e.g., 'data_dir', 'theme', etc.)
+            default: Default value if it does not exist
             
         Returns:
-            A beállítás értéke vagy az alapértelmezett
+            The value of the setting or the default
         """
-        # Speciális kezelés a data_dir-hez
+        # Special handling for data_dir
         if key == "data_dir":
             return str(self._config_dir)
         
-        # Próbáljuk meg az AppSettings-ből lekérni
+        # Try to get from AppSettings
         if hasattr(self._settings, key):
             return getattr(self._settings, key)
         
         return default
     
     def get_plugin_settings(self, plugin_id: str) -> Dict[str, Any]:
-        """Plugin beállítások lekérése."""
+        """Get plugin settings."""
         return self._settings.plugin_settings.get(plugin_id, {})
     
     def set_plugin_settings(self, plugin_id: str, settings: Dict[str, Any]) -> None:
-        """Plugin beállítások mentése."""
+        """Save plugin settings."""
         self._settings.plugin_settings[plugin_id] = settings
     
     def get_plugin_panel_visible(self, plugin_id: str) -> bool:
-        """Plugin panel indulási láthatóság lekérése."""
+        """Get plugin panel visibility at startup."""
         return self._settings.plugin_panel_visibility.get(plugin_id, False)
     
     def set_plugin_panel_visible(self, plugin_id: str, visible: bool) -> None:
-        """Plugin panel indulási láthatóság beállítása."""
+        """Set plugin panel visibility at startup."""
         self._settings.plugin_panel_visibility[plugin_id] = visible
     
     @property
@@ -244,11 +244,11 @@ class SettingsManager:
         return self._settings.recent_projects
     
     def add_recent_project(self, path: str) -> None:
-        """Legutóbbi projekt hozzáadása."""
+        """Add recent project."""
         if path in self._settings.recent_projects:
             self._settings.recent_projects.remove(path)
         self._settings.recent_projects.insert(0, path)
-        # Maximum 10 legutóbbi
+        # Maximum 10 recent
         self._settings.recent_projects = self._settings.recent_projects[:10]
     
     @property
@@ -269,28 +269,28 @@ class SettingsManager:
     
     @property
     def custom_theme_colors(self) -> Dict[str, str]:
-        """Egyedi téma színek lekérése."""
+        """Get custom theme colors."""
         return self._settings.custom_theme_colors
     
     @custom_theme_colors.setter
     def custom_theme_colors(self, value: Dict[str, str]) -> None:
-        """Egyedi téma színek beállítása."""
+        """Set custom theme colors."""
         self._settings.custom_theme_colors = value
     
-    # Qt Settings mentés/betöltés ablak geometriához
+    # Qt Settings save/load for window geometry
     
     def save_geometry(self, key: str, value: bytes) -> None:
-        """Geometria mentése."""
+        """Save geometry."""
         self._qt_settings.setValue(f"geometry/{key}", value)
     
     def load_geometry(self, key: str) -> Optional[bytes]:
-        """Geometria betöltése."""
+        """Load geometry."""
         return self._qt_settings.value(f"geometry/{key}")
     
     def save_state(self, key: str, value: bytes) -> None:
-        """Állapot mentése."""
+        """Save state."""
         self._qt_settings.setValue(f"state/{key}", value)
     
     def load_state(self, key: str) -> Optional[bytes]:
-        """Állapot betöltése."""
+        """Load state."""
         return self._qt_settings.value(f"state/{key}")

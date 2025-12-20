@@ -1,7 +1,7 @@
 """
 DubSync Cue Editor Widget
 
-Cue szerkesztő panel a fordításhoz és szerkesztéshez.
+Cue editor panel for translation and editing.
 """
 
 from typing import Optional
@@ -25,7 +25,7 @@ from dubsync.i18n import t
 
 
 class TimingEditorDialog(QDialog):
-    """Időzítés szerkesztő dialógus."""
+    """Timing editor dialog."""
     
     def __init__(self, cue: Cue, parent=None):
         super().__init__(parent)
@@ -139,10 +139,10 @@ class TimingEditorDialog(QDialog):
 
 class CueEditorWidget(QWidget):
     """
-    Cue szerkesztő widget.
+    Cue editor widget.
     
-    Lehetővé teszi a fordítás, karakter, megjegyzések szerkesztését,
-    és megjeleníti a lip-sync becslést.
+    Allows editing of translation, character, comments,
+    and displays lip-sync estimation.
     """
     
     # Signals
@@ -162,7 +162,7 @@ class CueEditorWidget(QWidget):
         self._update_ui_state()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         
@@ -333,14 +333,14 @@ class CueEditorWidget(QWidget):
         button_layout.addStretch()
         
         # Quick status buttons
-        self.approve_btn = QPushButton("✓ Jóváhagy")
+        self.approve_btn = QPushButton(t("cue_editor.approve"))
         self.approve_btn.setStyleSheet(
             "QPushButton { background-color: #4CAF50; color: white; "
             "padding: 6px 12px; border: none; border-radius: 4px; }"
         )
         button_layout.addWidget(self.approve_btn)
         
-        self.revision_btn = QPushButton("⚠ Javítandó")
+        self.revision_btn = QPushButton(t("cue_editor.revision"))
         self.revision_btn.setStyleSheet(
             "QPushButton { background-color: #FF9800; color: white; "
             "padding: 6px 12px; border: none; border-radius: 4px; }"
@@ -356,7 +356,7 @@ class CueEditorWidget(QWidget):
         self._collapsed = False
     
     def _connect_signals(self):
-        """Signal kapcsolatok."""
+        """Connect signals."""
         self.translated_text.textChanged.connect(self._on_text_changed)
         self.character_edit.textChanged.connect(self._mark_dirty)
         self.notes_edit.textChanged.connect(self._mark_dirty)
@@ -384,7 +384,7 @@ class CueEditorWidget(QWidget):
     
     @Slot()
     def _on_source_lock_toggled(self):
-        """Forrásszöveg zárolás váltása."""
+        """Toggle source lock."""
         self._source_locked = self.source_lock_btn.isChecked()
         self.source_text.setReadOnly(self._source_locked)
         self._update_source_text_style()
@@ -410,10 +410,10 @@ class CueEditorWidget(QWidget):
     
     def set_source_locked(self, locked: bool):
         """
-        Forrásszöveg zárolásának beállítása.
+        Set source lock state.
         
         Args:
-            locked: True ha zárolva legyen
+            locked: True to lock
         """
         self._source_locked = locked
         self.source_lock_btn.setChecked(locked)
@@ -421,11 +421,11 @@ class CueEditorWidget(QWidget):
         self._update_source_text_style()
     
     def apply_theme(self):
-        """Téma alkalmazása - hívd meg témaváltáskor."""
+        """Apply theme - call on theme change."""
         self._update_source_text_style()
     
     def _update_ui_state(self):
-        """UI állapot frissítése."""
+        """Update UI state."""
         has_cue = self._cue is not None
         
         self.character_edit.setEnabled(has_cue)
@@ -440,10 +440,10 @@ class CueEditorWidget(QWidget):
     
     def set_cue(self, cue: Cue):
         """
-        Cue beállítása szerkesztésre.
+        Set cue for editing.
         
         Args:
-            cue: Cue objektum
+            cue: Cue object
         """
         self._cue = cue
         self._is_dirty = False
@@ -474,10 +474,10 @@ class CueEditorWidget(QWidget):
     
     def get_cue(self) -> Optional[Cue]:
         """
-        Szerkesztett cue lekérése.
+        Get edited cue.
         
         Returns:
-            Cue objektum az aktuális értékekkel
+            Cue object with current values
         """
         if self._cue is None:
             return None
@@ -498,7 +498,7 @@ class CueEditorWidget(QWidget):
         return self._cue
     
     def _update_lipsync(self):
-        """Lip-sync indikátor frissítése."""
+        """Update lip-sync indicator."""
         if self._cue is None:
             return
         
@@ -553,24 +553,24 @@ class CueEditorWidget(QWidget):
     
     @Slot()
     def _mark_dirty(self):
-        """Módosítás jelölése."""
+        """Mark as dirty."""
         self._is_dirty = True
         self._update_ui_state()
     
     @Slot()
     def _on_text_changed(self):
-        """Szöveg változott."""
+        """Text changed."""
         self._mark_dirty()
         self._update_lipsync()
     
     @Slot()
     def _on_status_changed(self):
-        """Státusz változott."""
+        """Status changed."""
         self._mark_dirty()
     
     @Slot()
     def _on_save(self):
-        """Mentés."""
+        """Save."""
         if self._cue is None:
             return
         
@@ -586,13 +586,13 @@ class CueEditorWidget(QWidget):
     
     @Slot()
     def _on_reset(self):
-        """Visszaállítás."""
+        """Reset."""
         if self._cue:
             self.set_cue(self._cue)
     
     @Slot()
     def _on_approve(self):
-        """Gyors jóváhagyás."""
+        """Quick approve."""
         if self._cue is None:
             return
         
@@ -604,7 +604,7 @@ class CueEditorWidget(QWidget):
     
     @Slot()
     def _on_revision(self):
-        """Gyors javítandó jelölés."""
+        """Quick mark as needs revision."""
         if self._cue is None:
             return
         
@@ -615,7 +615,7 @@ class CueEditorWidget(QWidget):
         self._on_save()
     
     def clear(self):
-        """Editor törlése."""
+        """Clear editor."""
         self._cue = None
         self._is_dirty = False
         
@@ -639,10 +639,10 @@ class CueEditorWidget(QWidget):
     
     def show_timing_editor(self, cue: Cue):
         """
-        Időzítés szerkesztő dialógus megnyitása.
+        Show timing editor dialog.
         
         Args:
-            cue: Szerkesztendő cue
+            cue: Cue to edit
         """
         dialog = TimingEditorDialog(cue, self)
         if dialog.exec():

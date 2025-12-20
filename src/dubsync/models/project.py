@@ -1,7 +1,7 @@
 """
 DubSync Project Model
 
-Projekt adatmodell és műveletek.
+Project data model and operations.
 """
 
 
@@ -18,13 +18,13 @@ if TYPE_CHECKING:
 @dataclass
 class Project:
     """
-    Projekt adatmodell.
+    Project data model.
     
-    A projekt tartalmazza az összes metaadatot és beállítást.
+    The project contains all metadata and settings.
     """
     
     id: int = 0
-    title: str = "Új projekt"
+    title: str = "New Project"
     series_title: str = ""
     season: str = ""
     episode: str = ""
@@ -39,7 +39,7 @@ class Project:
     @classmethod
     def from_row(cls, row) -> "Project":
         """
-        Adatbázis sorból Project objektum létrehozása.
+        Create Project object from database row.
         """
         # Handle missing episode_title column for older databases
         episode_title = ""
@@ -63,14 +63,14 @@ class Project:
     @classmethod
     def load(cls, db: "Database", project_id: int = 1) -> Optional["Project"]:
         """
-        Projekt betöltése adatbázisból.
+        Load project from database.
         
         Args:
-            db: Adatbázis kapcsolat
-            project_id: Projekt azonosító (alapértelmezett: 1)
+            db: Database connection
+            project_id: Project ID (default: 1)
             
         Returns:
-            Project objektum vagy None
+            Project object or None
         """
         row = db.fetchone(
             "SELECT * FROM project WHERE id = ?",
@@ -80,10 +80,10 @@ class Project:
     
     def save(self, db: "Database") -> None:
         """
-        Projekt mentése adatbázisba.
+        Save project to database.
         
         Args:
-            db: Adatbázis kapcsolat
+            db: Database connection
         """
         if self.id == 0:
             # Insert new project
@@ -139,10 +139,10 @@ class Project:
     
     def get_display_title(self) -> str:
         """
-        Megjelenítendő cím generálása.
+        Generate display title.
         
         Returns:
-            Formázott cím a sorozat adataival
+            Formatted title with series information
         """
         parts = []
         
@@ -160,13 +160,13 @@ class Project:
         
         if self.episode_title:
             parts.append(f'"{self.episode_title}"')
-        elif self.title and self.title != "Új projekt":
+        elif self.title and self.title != "New Project":
             parts.append(f'"{self.title}"')
         
-        return " - ".join(parts) if parts else "Új projekt"
+        return " - ".join(parts) if parts else "New Project"
     
     def has_video(self) -> bool:
         """
-        Ellenőrzi, hogy van-e beállított videó.
+        Check if a video is set.
         """
         return bool(self.video_path) and Path(self.video_path).exists()

@@ -192,11 +192,15 @@
       "dark_contrast": "🌑 Sötét kontrasztos",
       "light": "☀️ Világos",
       "custom": "🎨 Egyedi",
+      "custom_colors": "Egyedi színek",
       "primary": "Elsődleges szín:",
       "background": "Háttér:",
       "surface": "Felület:",
       "foreground": "Szöveg:",
-      "choose": "Válassz..."
+      "choose": "Válassz...",
+      "preview": "Előnézet",
+      "preview_text": "Így fog kinézni a szöveg...",
+      "color_picker_title": "{color} szín választása"
     },
     "confirm_close": {
       "title": "Mentetlen változások",
@@ -217,7 +221,9 @@
     "tabs": {
       "general": "Általános",
       "plugins": "Pluginok",
-      "download": "Plugin letöltések"
+      "download": "Plugin letöltések",
+      "theme": "Téma",
+      "about": "Névjegy"
     },
     "general": {
       "paths": "Alapértelmezett útvonalak",
@@ -250,6 +256,10 @@
       "show_on_start": "Indulásnál megjelenjen",
       "show_on_start_tooltip": "Ha bekapcsolod, a plugin panelje automatikusan megjelenik az alkalmazás indításakor",
       "plugin_settings": "Plugin beállítások"
+    },
+    "download": {
+      "wip_title": "🚧 Fejlesztés alatt 🚧",
+      "wip_message": "Ez a funkció hamarosan elérhető lesz!\n\nItt fogsz tudni pluginokat böngészni és telepíteni\negy központi GitHub repository-ból."
     }
   },
   "messages": {

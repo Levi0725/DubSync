@@ -1,7 +1,7 @@
 """
 DubSync Application
 
-Fő alkalmazás osztály.
+Primary application class for DubSync.
 """
 
 from dubsync.ui.main_window import MainWindow
@@ -12,27 +12,27 @@ from dubsync.services.settings_manager import SettingsManager
 
 class DubSyncApp(MainWindow):
     """
-    DubSync alkalmazás fő osztálya.
+    Primary application class for DubSync.
     
-    Ez a MainWindow kiterjesztése, amely az alkalmazás
-    teljes funkcionalitását biztosítja.
+    This is an extension of MainWindow that provides
+    the full functionality of the application.
     """
     
     def __init__(self):
-        # i18n inicializálása a beállított nyelvvel
+        # Initialize i18n with the set language
         self._init_i18n()
         
-        # Plugin manager létrehozása és pluginok betöltése
+        # Create plugin manager and load plugins
         plugin_manager = self._load_plugins()
         
-        # MainWindow inicializálása plugin manager-rel
+        # Initialize MainWindow with plugin manager
         super().__init__(plugin_manager)
     
     def _init_i18n(self):
         """
-        Többnyelvűség (i18n) inicializálása.
+        Initialize internationalization (i18n).
         
-        Beállítja a nyelvet a mentett beállítások alapján.
+        Sets the language based on saved settings.
         """
         try:
             from dubsync.i18n import get_locale_manager
@@ -43,26 +43,26 @@ class DubSyncApp(MainWindow):
             if saved_lang := settings.language:
                 locale_manager.set_language(saved_lang)
 
-            print(f"Nyelv beállítva: {locale_manager.current_language}")
+            print(f"Language set to: {locale_manager.current_language}")
         except Exception as e:
-            print(f"i18n inicializálási hiba: {e}")
+            print(f"i18n initialization error: {e}")
     
     def _load_plugins(self) -> PluginManager:
         """
-        Plugin rendszer inicializálása és pluginok betöltése.
+        Initialize plugin system and load plugins.
         
         Returns:
-            PluginManager a betöltött pluginokkal
+            PluginManager with loaded plugins
         """
         manager = PluginManager()
         registry = PluginRegistry(manager)
         
-        # Alapértelmezett plugin könyvtárak hozzáadása
+        # Add default plugin directories
         for path in get_default_plugin_paths():
             registry.add_plugin_path(path)
         
-        # Pluginok betöltése
+        # Load plugins
         loaded = registry.load_all_plugins()
-        print(f"Összesen {loaded} plugin betöltve.")
+        print(f"Total of {loaded} plugins loaded.")
         
         return manager

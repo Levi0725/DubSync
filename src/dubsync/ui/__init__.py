@@ -1,7 +1,7 @@
 """
 DubSync UI
 
-PySide6 alapú felhasználói felület komponensek.
+PySide6 based user interface components.
 """
 
 from dubsync.ui.main_window import MainWindow

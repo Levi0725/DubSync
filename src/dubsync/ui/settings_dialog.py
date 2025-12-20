@@ -364,15 +364,14 @@ class PluginsSettingsTab(QWidget):
             self.panel_visibility_group.setVisible(False)
 
         if settings_widget := plugin.get_settings_widget():
-            self._extracted_from__show_plugin_details_34(settings_widget)
+            self._replace_plugin_settings_widget(settings_widget)
         else:
             self.plugin_settings_group.setVisible(False)
 
         self.details_stack.setCurrentIndex(1)
 
-    # TODO Rename this here and in `_show_plugin_details`
-    def _extracted_from__show_plugin_details_34(self, settings_widget):
-        # Régi widget törlése
+    def _replace_plugin_settings_widget(self, settings_widget):
+        """Replace the plugin settings widget with a new one."""
         old_widget = self.plugin_settings_container
         self.plugin_settings_layout.removeWidget(old_widget)
         old_widget.deleteLater()
@@ -391,16 +390,16 @@ class PluginsSettingsTab(QWidget):
         if self._current_plugin:
             plugin_id = self._current_plugin.info.id
             self.plugin_manager.enable_plugin(plugin_id)
-            self._extracted_from__on_disable_plugin_5(plugin_id)
+            self._refresh_plugin_list_and_select(plugin_id)
     
     def _on_disable_plugin(self):
         if self._current_plugin:
             plugin_id = self._current_plugin.info.id
             self.plugin_manager.disable_plugin(plugin_id)
-            self._extracted_from__on_disable_plugin_5(plugin_id)
+            self._refresh_plugin_list_and_select(plugin_id)
 
-    # TODO Rename this here and in `_on_enable_plugin` and `_on_disable_plugin`
-    def _extracted_from__on_disable_plugin_5(self, plugin_id):
+    def _refresh_plugin_list_and_select(self, plugin_id):
+        """Refresh plugin list and re-select the current plugin."""
         self._plugin_just_enabled = True
         self._load_plugins()
         self.plugins_changed.emit()
@@ -423,7 +422,7 @@ class PluginsSettingsTab(QWidget):
 
 
 class PluginDownloadTab(QWidget):
-    """Plugin letöltések fül (work in progress)."""
+    """Plugin download tab (work in progress)."""
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -432,25 +431,22 @@ class PluginDownloadTab(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
 
-        self._extracted_from__setup_ui_5(
-            "🚧 Fejlesztés alatt 🚧", "font-size: 24px; color: #ff9800;", layout
+        self._add_centered_label(
+            t("settings.download.wip_title"), "font-size: 24px; color: #ff9800;", layout
         )
-        self._extracted_from__setup_ui_5(
-            "Ez a funkció hamarosan elérhető lesz!\n\n"
-            "Itt fogsz tudni pluginokat böngészni és telepíteni\n"
-            "egy központi GitHub repository-ból.",
+        self._add_centered_label(
+            t("settings.download.wip_message"),
             "color: #888;",
             layout,
         )
         layout.addStretch()
 
-    # TODO Rename this here and in `_setup_ui`
-    def _extracted_from__setup_ui_5(self, arg0, arg1, layout):
-        # Work in progress jelzés
-        wip_label = QLabel(arg0)
-        wip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        wip_label.setStyleSheet(arg1)
-        layout.addWidget(wip_label)
+    def _add_centered_label(self, text: str, style: str, layout):
+        """Add a centered label to the layout."""
+        label = QLabel(text)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        label.setStyleSheet(style)
+        layout.addWidget(label)
 
 
 class ThemeSettingsTab(QWidget):
@@ -468,33 +464,33 @@ class ThemeSettingsTab(QWidget):
         layout = QVBoxLayout(self)
         
         # Téma választó
-        theme_group = QGroupBox("Téma")
+        theme_group = QGroupBox(t("dialogs.theme_settings.theme"))
         theme_layout = QFormLayout(theme_group)
         
         self.theme_combo = QComboBox()
-        self.theme_combo.addItem("🌙 Sötét", ThemeType.DARK)
-        self.theme_combo.addItem("🌑 Sötét kontrasztos", ThemeType.DARK_CONTRAST)
-        self.theme_combo.addItem("☀️ Világos", ThemeType.LIGHT)
-        self.theme_combo.addItem("🎨 Egyedi", ThemeType.CUSTOM)
+        self.theme_combo.addItem(t("dialogs.theme_settings.dark"), ThemeType.DARK)
+        self.theme_combo.addItem(t("dialogs.theme_settings.dark_contrast"), ThemeType.DARK_CONTRAST)
+        self.theme_combo.addItem(t("dialogs.theme_settings.light"), ThemeType.LIGHT)
+        self.theme_combo.addItem(t("dialogs.theme_settings.custom"), ThemeType.CUSTOM)
         self.theme_combo.currentIndexChanged.connect(self._on_theme_changed)
-        theme_layout.addRow("Téma:", self.theme_combo)
+        theme_layout.addRow(t("dialogs.theme_settings.theme"), self.theme_combo)
         
         layout.addWidget(theme_group)
         
         # Egyedi színek
-        self.custom_group = QGroupBox("Egyedi színek")
+        self.custom_group = QGroupBox(t("dialogs.theme_settings.custom_colors"))
         custom_layout = QFormLayout(self.custom_group)
         
         self.color_buttons = {}
         color_labels = {
-            "primary": "Elsődleges szín:",
-            "background": "Háttér:",
-            "surface": "Felület:",
-            "foreground": "Szöveg:",
+            "primary": t("dialogs.theme_settings.primary"),
+            "background": t("dialogs.theme_settings.background"),
+            "surface": t("dialogs.theme_settings.surface"),
+            "foreground": t("dialogs.theme_settings.foreground"),
         }
         
         for key, label in color_labels.items():
-            btn = QPushButton("Válassz...")
+            btn = QPushButton(t("dialogs.theme_settings.choose"))
             btn.setProperty("color_key", key)
             btn.clicked.connect(self._on_color_click)
             self.color_buttons[key] = btn
@@ -504,10 +500,10 @@ class ThemeSettingsTab(QWidget):
         layout.addWidget(self.custom_group)
         
         # Előnézet
-        preview_group = QGroupBox("Előnézet")
+        preview_group = QGroupBox(t("dialogs.theme_settings.preview"))
         preview_layout = QVBoxLayout(preview_group)
         
-        self.preview_label = QLabel("Így fog kinézni a szöveg...")
+        self.preview_label = QLabel(t("dialogs.theme_settings.preview_text"))
         self.preview_label.setStyleSheet("padding: 20px;")
         preview_layout.addWidget(self.preview_label)
         
@@ -547,7 +543,7 @@ class ThemeSettingsTab(QWidget):
         key = btn.property("color_key")
         current = btn.property("color_value") or "#000000"
         
-        color = QColorDialog.getColor(QColor(current), self, f"{key} szín választása")
+        color = QColorDialog.getColor(QColor(current), self, t("dialogs.theme_settings.color_picker_title", color=key))
         if color.isValid():
             btn.setStyleSheet(f"background-color: {color.name()}; color: white;")
             btn.setProperty("color_value", color.name())
@@ -618,19 +614,17 @@ class AboutTab(QWidget):
 
         # Logo/Név
         name_label = QLabel(f"🎬 {APP_NAME}")
-        self._extracted_from__setup_ui_7(
+        self._add_styled_centered_widget(
             name_label, "font-size: 32px; font-weight: bold;", layout
         )
-        version_label = QLabel(f"Verzió {APP_VERSION}")
-        self._extracted_from__setup_ui_7(
+        version_label = QLabel(t("app.version", version=APP_VERSION))
+        self._add_styled_centered_widget(
             version_label, "font-size: 14px; color: #888;", layout
         )
         layout.addSpacing(20)
 
         desc_label = QLabel(
-            "Professzionális Szinkronfordítói Editor\n\n"
-            "Magyar szinkronfordítók és szinkronrendezők számára készült\n"
-            "professzionális eszköz szinkronszövegek készítéséhez."
+            f"{t('app.description')}\n\n{t('app.tagline')}"
         )
         desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc_label.setWordWrap(True)
@@ -652,13 +646,13 @@ class AboutTab(QWidget):
 
         # Copyright
         copyright_label = QLabel("© 2025 Levente Kulacsy - MIT License")
-        self._extracted_from__setup_ui_7(copyright_label, "color: #666;", layout)
+        self._add_styled_centered_widget(copyright_label, "color: #666;", layout)
 
-    # TODO Rename this here and in `_setup_ui`
-    def _extracted_from__setup_ui_7(self, arg0, arg1, layout):
-        arg0.setStyleSheet(arg1)
-        arg0.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(arg0)
+    def _add_styled_centered_widget(self, widget, style: str, layout):
+        """Add a styled and centered widget to the layout."""
+        widget.setStyleSheet(style)
+        widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(widget)
 
 
 class SettingsDialog(QDialog):
@@ -752,15 +746,15 @@ class SettingsDialog(QDialog):
     
     def _on_apply(self):
         """Beállítások alkalmazása."""
-        self._extracted_from__on_accept_3()
+        self._apply_and_emit_changes()
     
     def _on_accept(self):
-        """OK gomb."""
-        self._extracted_from__on_accept_3()
+        """OK button handler."""
+        self._apply_and_emit_changes()
         self.accept()
 
-    # TODO Rename this here and in `_on_apply` and `_on_accept`
-    def _extracted_from__on_accept_3(self):
+    def _apply_and_emit_changes(self):
+        """Save all settings and emit change signals."""
         self._save_all_settings()
         self.settings_saved.emit()
         self.theme_changed.emit()

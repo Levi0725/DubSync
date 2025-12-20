@@ -1,33 +1,32 @@
 """
 DubSync Internationalization (i18n) Module
 
-Ez a modul biztosítja a többnyelvű támogatást az alkalmazáshoz.
 This module provides multilingual support for the application.
 
-Használat / Usage:
+Usage:
     from dubsync.i18n import t, get_locale_manager
     
-    # Szöveg fordítása / Translate text
+    # Translate text
     translated = t("menu.file")
     
-    # Paraméterezett fordítás / Parameterized translation
+    # Parameterized translation
     translated = t("messages.items_count", count=5)
     
-    # Nyelv váltása / Change language
+    # Change language
     locale_manager = get_locale_manager()
     locale_manager.set_language("hu")
 
-Plugin használat / Plugin usage:
+Plugin usage:
     from dubsync.i18n.plugin_support import TranslatablePlugin, create_plugin_translations
     
-    # Egyszerű fordítás regisztráció
+    # Simple translation registration
     create_plugin_translations(
         "my_plugin",
         en={"title": "My Plugin"},
         hu={"title": "Az én pluginom"}
     )
     
-    # Vagy mixin osztállyal
+    # Or with a mixin class
     class MyPlugin(UIPlugin, TranslatablePlugin):
         def get_translations(self):
             return {"en": {...}, "hu": {...}}

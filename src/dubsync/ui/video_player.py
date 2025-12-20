@@ -1,7 +1,7 @@
 """
 DubSync Video Player Widget
 
-Videó lejátszó és vezérlő a lip-sync ellenőrzéshez.
+Video player and controller for lip-sync verification.
 """
 
 from pathlib import Path
@@ -21,7 +21,7 @@ from dubsync.i18n import t
 
 
 class SubtitleOverlay(QLabel):
-    """Felirat overlay widget a videó felett."""
+    """Subtitle overlay widget over the video."""
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -42,7 +42,7 @@ class SubtitleOverlay(QLabel):
 
 
 class FullscreenVideoWidget(QWidget):
-    """Teljes képernyős videó ablak feliratokkal."""
+    """Fullscreen video window with subtitles."""
     
     closed = Signal()
     
@@ -81,20 +81,20 @@ class FullscreenVideoWidget(QWidget):
         layout.addWidget(hint_label)
     
     def show_fullscreen(self):
-        """Teljes képernyő megjelenítése."""
+        """Show fullscreen."""
         self._original_video_output = self._player.videoOutput()
         self._player.setVideoOutput(self.video_widget)
         self.showFullScreen()
     
     def close_fullscreen(self):
-        """Teljes képernyő bezárása."""
+        """Close fullscreen."""
         if self._original_video_output:
             self._player.setVideoOutput(self._original_video_output)
         self.close()
         self.closed.emit()
     
     def set_subtitle(self, text: str):
-        """Felirat beállítása."""
+        """Set subtitle."""
         if text:
             self.subtitle_label.setText(text)
             self.subtitle_label.show()
@@ -102,7 +102,7 @@ class FullscreenVideoWidget(QWidget):
             self.subtitle_label.hide()
     
     def keyPressEvent(self, event):
-        """Billentyű kezelés."""
+        """Key press handling."""
         if event.key() == Qt.Key.Key_Escape:
             self.close_fullscreen()
         elif event.key() == Qt.Key.Key_Space:
@@ -116,13 +116,13 @@ class FullscreenVideoWidget(QWidget):
 
 class VideoPlayerWidget(QWidget):
     """
-    Videó lejátszó widget.
+    Video player widget.
     
-    Funkciók:
-    - Videó lejátszás/megállítás
-    - Frame-pontos keresés
-    - Szegmens lejátszás (cue időtartama)
-    - Lassított lejátszás
+    Features:
+    - Play/pause video
+    - Frame-accurate seeking
+    - Segment playback (cue duration)
+    - Slow motion playback
     """
     
     # Signals
@@ -141,7 +141,7 @@ class VideoPlayerWidget(QWidget):
         self._connect_signals()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
@@ -303,7 +303,7 @@ class VideoPlayerWidget(QWidget):
         self.no_video_label.hide()
     
     def _get_button_style(self, checkable: bool = False) -> str:
-        """Gomb stílus."""
+        """Button style."""
         base = """
             QPushButton {
                 background-color: #444;
@@ -336,7 +336,7 @@ class VideoPlayerWidget(QWidget):
         return base
     
     def _setup_player(self):
-        """Média lejátszó beállítása."""
+        """Setup media player."""
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
@@ -348,7 +348,7 @@ class VideoPlayerWidget(QWidget):
         self._position_timer.timeout.connect(self._check_segment_end)
     
     def _connect_signals(self):
-        """Signal kapcsolatok."""
+        """Connect signals."""
         # Player signals
         self.player.positionChanged.connect(self._on_position_changed)
         self.player.durationChanged.connect(self._on_duration_changed)
@@ -383,10 +383,10 @@ class VideoPlayerWidget(QWidget):
     
     def load_video(self, video_path: Path):
         """
-        Videó betöltése.
+        Load video.
         
         Args:
-            video_path: Videó fájl elérési útja
+            video_path: Path to video file
         """
         if not video_path.exists():
             self._show_no_video()
@@ -397,26 +397,26 @@ class VideoPlayerWidget(QWidget):
         self.video_widget.show()
     
     def _show_no_video(self):
-        """Nincs videó állapot megjelenítése."""
+        """Show no video state."""
         self.video_widget.hide()
         self.no_video_label.show()
     
     def seek_to(self, position_ms: int):
         """
-        Ugrás adott pozícióra.
+        Seek to a specific position.
         
         Args:
-            position_ms: Pozíció milliszekundumban
+            position_ms: Position in milliseconds
         """
         self.player.setPosition(position_ms)
     
     def play_segment(self, start_ms: int, end_ms: int):
         """
-        Szegmens lejátszása (cue).
+        Play segment (cue).
         
         Args:
-            start_ms: Kezdő pozíció
-            end_ms: Záró pozíció
+            start_ms: Start position
+            end_ms: End position
         """
         self._segment_start = start_ms
         self._segment_end = end_ms
@@ -426,7 +426,7 @@ class VideoPlayerWidget(QWidget):
         self._position_timer.start()
     
     def _check_segment_end(self):
-        """Szegmens végének ellenőrzése."""
+        """Check segment end."""
         if not self._is_segment_playing:
             self._position_timer.stop()
             return
@@ -442,7 +442,7 @@ class VideoPlayerWidget(QWidget):
     
     @Slot()
     def _toggle_playback(self):
-        """Lejátszás/megállítás váltása."""
+        """Toggle play/pause."""
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.player.pause()
         else:
@@ -451,17 +451,17 @@ class VideoPlayerWidget(QWidget):
     
     @Slot()
     def _stop(self):
-        """Megállítás."""
+        """Stop."""
         self.player.stop()
         self._is_segment_playing = False
         self._position_timer.stop()
     
     def _step_frame(self, direction: int):
         """
-        Frame lépés.
+        Frame step.
         
         Args:
-            direction: -1 hátra, +1 előre
+            direction: -1 backward, +1 forward
         """
         # Assuming 25 fps, 1 frame = 40ms
         frame_ms = 40
@@ -470,10 +470,10 @@ class VideoPlayerWidget(QWidget):
     
     def _seek_relative(self, offset_ms: int):
         """
-        Relatív ugrás.
+        Relative seek.
         
         Args:
-            offset_ms: Eltolás milliszekundumban
+            offset_ms: Offset in milliseconds
         """
         new_pos = self.player.position() + offset_ms
         new_pos = max(0, min(new_pos, self.player.duration()))
@@ -481,10 +481,10 @@ class VideoPlayerWidget(QWidget):
     
     def _set_speed(self, rate: float):
         """
-        Lejátszási sebesség beállítása.
+        Set playback speed.
         
         Args:
-            rate: Sebesség szorzó
+            rate: Speed multiplier
         """
         self.player.setPlaybackRate(rate)
         
@@ -495,7 +495,7 @@ class VideoPlayerWidget(QWidget):
     
     @Slot(int)
     def _on_position_changed(self, position: int):
-        """Pozíció változott."""
+        """Position changed."""
         self.position_label.setText(ms_to_timecode(position)[:8])
         
         if not self.progress_slider.isSliderDown():
@@ -505,14 +505,14 @@ class VideoPlayerWidget(QWidget):
     
     @Slot(int)
     def _on_duration_changed(self, duration: int):
-        """Időtartam változott."""
+        """Duration changed."""
         self.duration_label.setText(ms_to_timecode(duration)[:8])
         self.progress_slider.setRange(0, duration)
         self.duration_changed.emit(duration)
     
     @Slot(QMediaPlayer.PlaybackState)
     def _on_state_changed(self, state: QMediaPlayer.PlaybackState):
-        """Lejátszási állapot változott."""
+        """Playback state changed."""
         if state == QMediaPlayer.PlaybackState.PlayingState:
             self.play_btn.setText("⏸")
         else:
@@ -520,21 +520,21 @@ class VideoPlayerWidget(QWidget):
     
     @Slot()
     def _on_slider_pressed(self):
-        """Slider megnyomva."""
+        """Slider pressed."""
         self.player.pause()
     
     @Slot()
     def _on_slider_released(self):
-        """Slider elengedve."""
+        """Slider released."""
         self.player.setPosition(self.progress_slider.value())
     
     @Slot(int)
     def _on_slider_moved(self, position: int):
-        """Slider mozgatva."""
+        """Slider moved."""
         self.position_label.setText(ms_to_timecode(position)[:8])
     
     def keyPressEvent(self, event):
-        """Billentyűzet kezelése."""
+        """Handle keyboard input."""
         key = event.key()
         
         if key == Qt.Key.Key_Space:
@@ -551,7 +551,7 @@ class VideoPlayerWidget(QWidget):
             super().keyPressEvent(event)
     
     def _toggle_fullscreen(self):
-        """Teljes képernyő váltása."""
+        """Toggle fullscreen."""
         if self._fullscreen_widget is None:
             self._fullscreen_widget = FullscreenVideoWidget(self.player, self)
             self._fullscreen_widget.closed.connect(self._on_fullscreen_closed)
@@ -565,15 +565,15 @@ class VideoPlayerWidget(QWidget):
                 self._fullscreen_widget.set_subtitle(self._current_subtitle_text)
     
     def _on_fullscreen_closed(self):
-        """Teljes képernyő bezárva."""
+        """Fullscreen closed."""
         pass  # Video output already restored by close_fullscreen
     
     def set_subtitle(self, text: str):
         """
-        Felirat beállítása (fullscreen módhoz).
+        Set subtitle (for fullscreen mode).
         
         Args:
-            text: Felirat szöveg
+            text: Subtitle text
         """
         self._current_subtitle_text = text
         if self._fullscreen_widget and self._fullscreen_widget.isVisible():

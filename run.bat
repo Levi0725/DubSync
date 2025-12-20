@@ -1,86 +1,86 @@
 @echo off
-REM DubSync - Indító script (Windows Batch)
-REM Ez a script aktiválja a virtuális környezetet és elindítja a programot
+REM DubSync - Start script (Windows Batch)
+REM This script activates the virtual environment and starts the program
 
-REM Mentjük a megnyitandó fájl elérési útját (ha van)
+REM Save the path of the file to open (if any)
 set "OPEN_FILE=%~1"
 
-REM Váltás a script saját könyvtárába (ahol a DubSync van telepítve)
+REM Change to the script's own directory (where DubSync is installed)
 cd /d "%~dp0"
 
 echo.
 echo ========================================
-echo   DubSync - Szinkronforditoi Editor
+echo   DubSync - Professional Dubbing Translation Editor
 echo ========================================
 echo.
 
-REM Python keresése
+REM Searching for Python
 set "PYTHON_CMD="
 set "LIB_PYTHON=lib\py311-Windowsx86_64\python.exe"
 
-REM Először ellenőrizzük, hogy van-e rendszer Python
+REM First, check if system Python is available
 where python >nul 2>&1
 if %errorlevel% equ 0 (
     set "PYTHON_CMD=python"
-    echo [OK] Rendszer Python talalhato.
+    echo [OK] System Python found.
 ) else (
-    REM Ha nincs, nézzük a lib mappát
+    REM If not, check the lib folder
     if exist "%LIB_PYTHON%" (
         set "PYTHON_CMD=%LIB_PYTHON%"
-        echo [OK] Beagyazott Python hasznalata: %LIB_PYTHON%
+        echo [OK] Using embedded Python: %LIB_PYTHON%
     ) else (
-        echo [X] Python nem talalhato!
-        echo     Telepitsd a Python 3.10+-t vagy helyezd a lib mappaba.
+        echo [X] Python not found!
+        echo     Please install Python 3.10+ or place it in the lib folder.
         pause
         exit /b 1
     )
 )
 
-REM Ellenőrizzük, hogy a venv könyvtár létezik-e
+REM Check if the venv directory exists
 if not exist "venv" (
-    echo [!] Virtualis kornyezet nem talalhato.
-    echo [*] Letrehozas: %PYTHON_CMD% -m venv venv
+    echo [!] Virtual environment not found.
+    echo [*] Creating: %PYTHON_CMD% -m venv venv
     %PYTHON_CMD% -m venv venv
     if errorlevel 1 (
-        echo [X] Hiba a virtualis kornyezet letrehozasakor!
+        echo [X] Error creating virtual environment!
         pause
         exit /b 1
     )
-    echo [OK] Virtualis kornyezet letrehozva.
+    echo [OK] Virtual environment created.
 )
 
-REM Virtuális környezet aktiválása
-echo [*] Virtualis kornyezet aktivalasa...
+REM Activate virtual environment
+echo [*] Activating virtual environment...
 call venv\Scripts\activate.bat
 if errorlevel 1 (
-    echo [X] Hiba az aktivalaskor!
+    echo [X] Error activating virtual environment!
     pause
     exit /b 1
 )
 
-REM Függőségek ellenőrzése az update_checker.py-vel
-echo [*] Fuggosegek ellenorzese (fo + pluginok)...
+REM Check dependencies with update_checker.py
+echo [*] Checking dependencies (main + plugins)...
 python update_checker.py
 if errorlevel 1 (
-    echo [X] Hiba a fuggosegek ellenorzese soran!
+    echo [X] Error checking dependencies!
     pause
     exit /b 1
 )
 
-REM Alkalmazás indítása
+REM Starting application
 echo.
-echo [*] DubSync inditasa...
+echo [*] Starting DubSync...
 echo.
 cd src
 
-REM Ha kapott fájl paramétert, adjuk át az alkalmazásnak
+REM If a file parameter was received, pass it to the application
 if "%OPEN_FILE%"=="" (
     python -m dubsync
 ) else (
-    echo [*] Projekt megnyitasa: %OPEN_FILE%
+    echo [*] Opening project: %OPEN_FILE%
     python -m dubsync "%OPEN_FILE%"
 )
 
-REM Ha kilépett a program
+REM When the program exits
 echo.
-echo [*] DubSync bezarva.
+echo [*] DubSync closed.

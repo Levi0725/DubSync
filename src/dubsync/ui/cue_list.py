@@ -1,7 +1,7 @@
 """
 DubSync Cue List Widget
 
-Cue lista megjelenítése és kezelése.
+Cue list display and management.
 """
 
 from typing import List, Optional
@@ -27,9 +27,9 @@ from dubsync.i18n import t
 
 class CueListWidget(QWidget):
     """
-    Cue lista widget.
+    Cue list widget.
     
-    Táblázatos megjelenítés időkóddal, karakterrel, státusszal, lip-sync jelzővel.
+    Tabular display with timecode, character, status, lip-sync indicator.
     """
     
     # Signals
@@ -59,7 +59,7 @@ class CueListWidget(QWidget):
         self._connect_signals()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         
@@ -126,7 +126,7 @@ class CueListWidget(QWidget):
         layout.addWidget(self.info_label)
     
     def _connect_signals(self):
-        """Signal kapcsolatok."""
+        """Connect signals."""
         self.table.itemSelectionChanged.connect(self._on_selection_changed)
         self.table.itemDoubleClicked.connect(self._on_double_clicked)
         self.search_edit.textChanged.connect(self._apply_filter)
@@ -136,16 +136,16 @@ class CueListWidget(QWidget):
     
     def set_cues(self, cues: List[Cue]):
         """
-        Cue lista beállítása.
+        Set cue list.
         
         Args:
-            cues: Cue objektumok listája
+            cues: List of Cue objects
         """
         self._cues = cues
         self._refresh_table()
     
     def _refresh_table(self):
-        """Táblázat frissítése."""
+        """Refresh table."""
         self.table.setRowCount(0)
         self._cue_id_map.clear()
         
@@ -181,7 +181,7 @@ class CueListWidget(QWidget):
         )
     
     def _populate_row(self, row: int, cue: Cue):
-        """Sor feltöltése cue adatokkal."""
+        """Populate row with cue data."""
         # Index
         item = QTableWidgetItem(str(cue.cue_index))
         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -228,17 +228,17 @@ class CueListWidget(QWidget):
         self.table.setItem(row, self.COL_LIPSYNC, item)
     
     def _get_status_display(self, status: CueStatus) -> tuple:
-        """Státusz megjelenítési adatok."""
+        """Status display data."""
         status_map = {
-            CueStatus.NEW: ("Új", COLOR_STATUS_NEW),
-            CueStatus.TRANSLATED: ("Kész", COLOR_STATUS_TRANSLATED),
-            CueStatus.NEEDS_REVISION: ("Javít", COLOR_STATUS_NEEDS_REVISION),
-            CueStatus.APPROVED: ("OK", COLOR_STATUS_APPROVED),
+            CueStatus.NEW: (t("status.new"), COLOR_STATUS_NEW),
+            CueStatus.TRANSLATED: (t("status.translated"), COLOR_STATUS_TRANSLATED),
+            CueStatus.NEEDS_REVISION: (t("status.needs_revision"), COLOR_STATUS_NEEDS_REVISION),
+            CueStatus.APPROVED: (t("status.approved"), COLOR_STATUS_APPROVED),
         }
         return status_map.get(status, ("?", "#999999"))
     
     def _get_lipsync_display(self, cue: Cue) -> tuple:
-        """Lip-sync megjelenítési adatok."""
+        """Lip-sync display data."""
         if cue.lip_sync_ratio is None:
             return ("?", "#CCCCCC")
         
@@ -251,12 +251,12 @@ class CueListWidget(QWidget):
     
     @Slot()
     def _apply_filter(self):
-        """Szűrő alkalmazása."""
+        """Apply filter."""
         self._refresh_table()
     
     @Slot()
     def _on_selection_changed(self):
-        """Kijelölés változott."""
+        """Selection changed."""
         if selected := self.table.selectedItems():
             row = selected[0].row()
             if cue_id := self._cue_id_map.get(row):
@@ -264,17 +264,17 @@ class CueListWidget(QWidget):
     
     @Slot(QTableWidgetItem)
     def _on_double_clicked(self, item: QTableWidgetItem):
-        """Dupla kattintás."""
+        """Double click."""
         row = item.row()
         if cue_id := self._cue_id_map.get(row):
             self.cue_double_clicked.emit(cue_id)
     
     def get_current_index(self) -> int:
         """
-        Jelenlegi cue index lekérése.
+        Get current cue index.
         
         Returns:
-            Cue index vagy 0
+            Cue index or 0
         """
         if selected := self.table.selectedItems():
             row = selected[0].row()
@@ -286,10 +286,10 @@ class CueListWidget(QWidget):
     
     def select_cue(self, cue_id: int):
         """
-        Cue kiválasztása azonosító alapján.
+        Select cue by ID.
         
         Args:
-            cue_id: Cue azonosító
+            cue_id: Cue ID
         """
         for row, mapped_id in self._cue_id_map.items():
             if mapped_id == cue_id:
@@ -300,10 +300,10 @@ class CueListWidget(QWidget):
     
     def highlight_cue(self, cue_id: int):
         """
-        Cue kiemelése (videó pozíció alapján).
+        Highlight cue (based on video position).
         
         Args:
-            cue_id: Cue azonosító
+            cue_id: Cue ID
         """
         # Remove previous highlight
         if self._highlighted_cue_id:
@@ -328,10 +328,10 @@ class CueListWidget(QWidget):
     
     def set_delete_mode(self, enabled: bool):
         """
-        Törlés mód beállítása.
+        Set delete mode.
         
         Args:
-            enabled: Mód engedélyezve
+            enabled: Mode enabled
         """
         self._delete_mode = enabled
         
@@ -347,10 +347,10 @@ class CueListWidget(QWidget):
     
     def get_selected_cue_id(self) -> Optional[int]:
         """
-        Kijelölt cue azonosító lekérése.
+        Get selected cue ID.
         
         Returns:
-            Cue azonosító vagy None
+            Cue ID or None
         """
         if selected := self.table.selectedItems():
             row = selected[0].row()
@@ -359,7 +359,7 @@ class CueListWidget(QWidget):
     
     @Slot()
     def _on_context_menu(self, pos):
-        """Kontextus menü megjelenítése."""
+        """Show context menu."""
         item = self.table.itemAt(pos)
         if not item:
             return
@@ -378,7 +378,7 @@ class CueListWidget(QWidget):
         menu.exec(self.table.viewport().mapToGlobal(pos))
     
     def _request_insert(self, row: int):
-        """Beszúrás kérése."""
+        """Request insert."""
         if cue_id := self._cue_id_map.get(row):
             for cue in self._cues:
                 if cue.id == cue_id:
@@ -386,6 +386,6 @@ class CueListWidget(QWidget):
                     break
     
     def _request_delete(self, row: int):
-        """Törlés kérése."""
+        """Request delete."""
         if cue_id := self._cue_id_map.get(row):
             self.delete_cue_requested.emit(cue_id)

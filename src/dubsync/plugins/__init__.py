@@ -1,17 +1,17 @@
 """
 DubSync Plugin System
 
-Bővíthető plugin architektúra.
+Expandable plugin architecture.
 
-A plugin rendszer lehetővé teszi:
-- Export pluginok (DOCX, CSV, stb.)
-- QA pluginok (egyedi szabályellenőrzés)
-- Egyedi funkciók hozzáadása
+The plugin system allows:
+- Export plugins (DOCX, CSV, etc.)
+- QA plugins (custom rule checks)
+- Adding custom features
 
 Plugin interface:
-- Minden plugin egy Python modul
-- A modul definiál egy Plugin osztályt
-- A Plugin osztály implementálja a PluginInterface-t
+- Each plugin is a Python module
+- The module defines a Plugin class
+- The Plugin class implements the PluginInterface
 """
 
 from dubsync.plugins.base import PluginInterface, PluginManager

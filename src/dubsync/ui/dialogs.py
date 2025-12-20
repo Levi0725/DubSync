@@ -1,7 +1,7 @@
 """
 DubSync Dialogs
 
-Dialógus ablakok.
+Dialog windows.
 """
 
 from typing import Optional
@@ -21,7 +21,7 @@ from dubsync.i18n import t
 
 class ProjectSettingsDialog(QDialog):
     """
-    Projekt beállítások dialógus.
+    Project settings dialog.
     """
     
     def __init__(self, project: Project, parent=None):
@@ -35,7 +35,7 @@ class ProjectSettingsDialog(QDialog):
         self._load_values()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         layout = QVBoxLayout(self)
 
         # Form
@@ -124,7 +124,7 @@ class ProjectSettingsDialog(QDialog):
         return result
     
     def _load_values(self):
-        """Értékek betöltése a projektből."""
+        """Load values from the project."""
         self.title_edit.setText(self.project.title)
         self.series_edit.setText(self.project.series_title)
         self.season_edit.setText(self.project.season)
@@ -137,7 +137,7 @@ class ProjectSettingsDialog(QDialog):
 
 class AboutDialog(QDialog):
     """
-    Névjegy dialógus.
+    About dialog.
     """
     
     def __init__(self, parent=None):
@@ -149,7 +149,7 @@ class AboutDialog(QDialog):
         self._setup_ui()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
@@ -198,7 +198,7 @@ class AboutDialog(QDialog):
 
 class ProgressDialog(QDialog):
     """
-    Folyamat dialógus hosszú műveletekhéz.
+    Progress dialog for long operations.
     """
     
     def __init__(self, title: str, message: str, parent=None):
@@ -220,17 +220,17 @@ class ProgressDialog(QDialog):
         layout.addWidget(self.progress_label)
     
     def set_progress(self, current: int, total: int):
-        """Folyamat frissítése."""
+        """Update progress."""
         self.progress_label.setText(t("dialogs.progress.progress_format", current=current, total=total))
     
     def set_message(self, message: str):
-        """Üzenet frissítése."""
+        """Update message."""
         self.message_label.setText(message)
 
 
 class TutorialDialog(QDialog):
     """
-    Tutorial dialógus - Alkalmazás bemutatása.
+    Tutorial dialog - Application introduction.
     """
     
     def __init__(self, parent=None):
@@ -242,7 +242,7 @@ class TutorialDialog(QDialog):
         self._setup_ui()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         layout = QVBoxLayout(self)
         
         # Title
@@ -261,7 +261,7 @@ class TutorialDialog(QDialog):
         layout.addWidget(close_btn)
     
     def _get_tutorial_content(self) -> str:
-        """Tutorial tartalom generálása."""
+        """Generate tutorial content."""
         return """
         <style>
             h3 { color: #4CAF50; margin-top: 15px; }

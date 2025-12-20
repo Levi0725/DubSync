@@ -1,7 +1,6 @@
 """
 DubSync i18n UI Support
 
-UI komponensekhez készült helper osztályok és függvények.
 Helper classes and functions for UI components.
 """
 
@@ -15,11 +14,11 @@ from PySide6.QtCore import QObject, Signal
 
 class TranslatableUI(QObject):
     """
-    Mixin osztály fordítható UI komponensekhez.
+    Mixin class for translatable UI components.
     
-    Automatikusan frissíti az UI elemeket nyelvváltáskor.
+    Automatically updates UI elements on language change.
     
-    Használat:
+    Usage:
         class MyWidget(QWidget, TranslatableUI):
             def __init__(self):
                 super().__init__()
@@ -33,7 +32,7 @@ class TranslatableUI(QObject):
     language_changed = Signal(str)
     
     def setup_i18n(self):
-        """i18n inicializálása - hívd meg a __init__-ben."""
+        """Initialize i18n - call in __init__."""
         with contextlib.suppress(Exception):
             from dubsync.i18n import get_locale_manager
 
@@ -41,7 +40,7 @@ class TranslatableUI(QObject):
             locale_manager.register_language_changed_callback(self._on_language_changed)
     
     def cleanup_i18n(self):
-        """i18n cleanup - hívd meg a destruktorban ha szükséges."""
+        """i18n cleanup - call in destructor if needed."""
         with contextlib.suppress(Exception):
             from dubsync.i18n import get_locale_manager
 
@@ -49,13 +48,13 @@ class TranslatableUI(QObject):
             locale_manager.unregister_language_changed_callback(self._on_language_changed)
     
     def _on_language_changed(self, new_lang: str):
-        """Nyelv változás kezelése."""
+        """Language change handler."""
         self.language_changed.emit(new_lang)
         self.retranslate_ui()
     
     def retranslate_ui(self):
         """
-        UI elemek újrafordítása.
+        Retranslate UI elements.
         
         Override this method in subclasses.
         """
@@ -64,14 +63,14 @@ class TranslatableUI(QObject):
 
 class UITextBinder:
     """
-    UI szövegek automatikus kötése fordítási kulcsokhoz.
+    Automatic binding of UI texts to translation keys.
     
-    Használat:
+    Usage:
         binder = UITextBinder()
         binder.bind(button, "setText", "buttons.ok")
         binder.bind(label, "setText", "labels.name", name="John")
         
-        # Nyelvváltáskor
+        # On language change
         binder.update_all()
     """
     
@@ -86,20 +85,20 @@ class UITextBinder:
         **kwargs
     ):
         """
-        Widget szöveg kötése fordítási kulcshoz.
+        Bind widget text to a translation key.
         
         Args:
             widget: Qt widget
-            method_name: Metódus neve (pl. "setText", "setWindowTitle")
-            translation_key: Fordítási kulcs
-            **kwargs: Fordítás paraméterek
+            method_name: Method name (e.g., "setText", "setWindowTitle")
+            translation_key: Translation key
+            **kwargs: Translation parameters
         """
         self._bindings.append((widget, method_name, translation_key, kwargs))
-        # Kezdeti érték beállítása
+        # Initial value setting
         self._apply_binding(widget, method_name, translation_key, kwargs)
     
     def _apply_binding(self, widget, method_name: str, key: str, kwargs: dict):
-        """Kötés alkalmazása."""
+        """Apply binding."""
         with contextlib.suppress(Exception):
             from dubsync.i18n import t
 
@@ -108,12 +107,12 @@ class UITextBinder:
                 method(text)
     
     def update_all(self):
-        """Összes kötés frissítése."""
+        """Update all bindings."""
         for widget, method_name, key, kwargs in self._bindings:
             self._apply_binding(widget, method_name, key, kwargs)
     
     def clear(self):
-        """Kötések törlése."""
+        """Clear all bindings."""
         self._bindings.clear()
 
 
@@ -127,19 +126,19 @@ def create_action_with_i18n(
     **text_kwargs
 ):
     """
-    QAction létrehozása i18n támogatással.
+    Create QAction with i18n support.
     
     Args:
         parent: Parent widget
-        text_key: Fordítási kulcs
-        icon: Ikon szöveg/emoji (opcionális)
-        shortcut: Gyorsbillentyű (opcionális)
-        triggered: Callback függvény (opcionális)
-        checkable: Checkable-e
-        **text_kwargs: Fordítás paraméterek
+        text_key: Translation key
+        icon: Icon text/emoji (optional)
+        shortcut: Shortcut (optional)
+        triggered: Callback function (optional)
+        checkable: Whether checkable
+        **text_kwargs: Translation parameters
     
     Returns:
-        QAction objektum
+        QAction object
     """
     from PySide6.QtGui import QAction, QKeySequence
     from dubsync.i18n import t
@@ -159,7 +158,7 @@ def create_action_with_i18n(
     if checkable:
         action.setCheckable(True)
     
-    # Fordítási kulcs tárolása az action-ben (későbbi frissítéshez)
+    # Store translation key in the action (for later updates)
     action.setProperty("i18n_key", text_key)
     action.setProperty("i18n_icon", icon)
     action.setProperty("i18n_kwargs", text_kwargs)
@@ -169,10 +168,10 @@ def create_action_with_i18n(
 
 def update_action_text(action):
     """
-    QAction szövegének frissítése a tárolt fordítási kulcs alapján.
+    Update QAction text based on stored translation key.
     
     Args:
-        action: QAction objektum
+        action: QAction object
     """
     from dubsync.i18n import t
     

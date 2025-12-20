@@ -1,15 +1,15 @@
 """
 DubSync Lip-Sync Estimator
 
-Lip-sync becslő rendszer a szinkronfordításhoz.
+Lip-sync estimation system for dubbing translation.
 
-A rendszer időalapú becslést használ, nem fonetikai elemzést:
-- Magyar átlagos beszédsebesség: 12-15 karakter/másodperc
-- Angol átlagos beszédsebesség: 14-17 karakter/másodperc (gyorsabb)
-- Figyelembe veszi az eredeti szöveg hosszát is
-- Szögletes zárójelben lévő instrukciók kihagyása
-- Szóközöket és írásjeleket is számolja (természetes ritmus)
-- Három kategória: jó, határeset, túl hosszú
+The system uses time-based estimation, not phonetic analysis:
+- Hungarian average speech rate: 12-15 characters/second
+- English average speech rate: 14-17 characters/second (faster)
+- Takes into account the length of the original text as well
+- Ignores instructions in square brackets
+- Counts spaces and punctuation (natural rhythm)
+- Three categories: good, borderline, too long
 """
 
 import re
@@ -26,60 +26,59 @@ from dubsync.utils.constants import (
     LipSyncStatus,
 )
 
-# Angol beszédsebesség (általában gyorsabb mint a magyar)
+# English speech rate (generally faster than Hungarian)
 CHARS_PER_SECOND_ENGLISH: float = 15.0
 
 
 @dataclass
 class LipSyncResult:
     """
-    Lip-sync becslés eredménye.
+    Lip-sync estimation result.
     """
-    text_length: int            # Szöveg hossza (karakterek)
-    available_time_ms: int      # Rendelkezésre álló idő (ms)
-    estimated_time_ms: int      # Becsült beszédidő (ms)
-    ratio: float                # Arány (becsült / rendelkezésre álló)
-    status: LipSyncStatus       # Státusz (jó, figyelmeztetés, túl hosszú)
+    text_length: int            # Text length (characters)
+    available_time_ms: int      # Available time (ms)
+    estimated_time_ms: int      # Estimated speaking time (ms)
+    ratio: float                # Ratio (estimated / available)
+    status: LipSyncStatus       # Status (good, warning, too long)
     
     @property
     def is_ok(self) -> bool:
-        """Elfogadható-e a lip-sync."""
+        """Is the lip-sync acceptable?"""
         return self.status in (LipSyncStatus.GOOD, LipSyncStatus.WARNING)
     
     @property
     def overflow_ms(self) -> int:
-        """Túlcsordulás milliszekundumban (ha negatív, van hely)."""
+        """Overflow in milliseconds (negative means there is room)."""
         return self.estimated_time_ms - self.available_time_ms
     
     @property
     def overflow_chars(self) -> int:
-        """Hány karakterrel hosszabb a kelleténél."""
+        """How many characters longer than allowed."""
         if self.overflow_ms <= 0:
             return 0
         return int(self.overflow_ms * CHARS_PER_SECOND_NORMAL / 1000)
     
     def get_status_text(self) -> str:
-        """Státusz szöveges leírása."""
+        """Status text description."""
         if self.status == LipSyncStatus.GOOD:
-            return "Megfelelő"
+            return "Good"
         elif self.status == LipSyncStatus.WARNING:
-            return "Határeset"
+            return "Borderline"
         elif self.status == LipSyncStatus.TOO_LONG:
-            return f"Túl hosszú (~{self.overflow_chars} karakterrel)"
+            return f"Too long (~{self.overflow_chars} characters over)"
         else:
-            return "Nincs adat"
+            return "No data"
 
 
 class LipSyncEstimator:
     """
-    Lip-sync becslő osztály.
+    Lip-sync estimator class.
     
-    A becslés a szöveg hossza és a rendelkezésre álló idő
-    alapján történik. Figyelembe veszi az eredeti (angol) szöveg
-    hosszát is a reális becsléshez.
+    The estimation is based on the length of the text and the available time.
+    It also takes into account the original (English) text length for a more realistic estimate.
     """
     
-    # Regex pattern a szögletes zárójelben lévő instrukciók eltávolításához
+    # Regex pattern to remove instructions in square brackets
     BRACKET_PATTERN = re.compile(r'\[.*?\]')
     
     def __init__(
@@ -88,11 +87,11 @@ class LipSyncEstimator:
         source_chars_per_second: float = CHARS_PER_SECOND_ENGLISH
     ):
         """
-        Inicializálás.
+        Initialization.
         
         Args:
-            chars_per_second: Karakterek másodpercenként célnyelvhez (alapértelmezett: 13 - magyar)
-            source_chars_per_second: Karakterek másodpercenként forrásnyelvhez (alapértelmezett: 15 - angol)
+            chars_per_second: Characters per second for target language (default: 13 - Hungarian)
+            source_chars_per_second: Characters per second for source language (default: 15 - English)
         """
         self.chars_per_second = chars_per_second
         self.source_chars_per_second = source_chars_per_second
@@ -104,19 +103,19 @@ class LipSyncEstimator:
         source_text: str = ""
     ) -> LipSyncResult:
         """
-        Lip-sync becslés egy szövegre.
+        Lip-sync estimation for a text.
         
-        Ha van forrásszöveg, akkor a becslés figyelembe veszi
-        az eredeti szöveg hosszát is - ha az eredeti rövid volt,
-        akkor a fordítás is lehet rövidebb időre tervezve.
+        If there is source text, the estimation takes into account
+        the length of the original text - if the original was short,
+        the translation may also be planned for a shorter time.
         
         Args:
-            text: Szöveg (fordítás)
-            duration_ms: Rendelkezésre álló idő milliszekundumban
-            source_text: Eredeti (angol) szöveg a reálisabb becsléshez
+            text: Text (translation)
+            duration_ms: Available time in milliseconds
+            source_text: Original (English) text for more realistic estimation
             
         Returns:
-            LipSyncResult a becslés eredményével
+            LipSyncResult with the estimation result
         """
         # Clean and measure text
         cleaned_text = self._prepare_text(text)
@@ -165,16 +164,16 @@ class LipSyncEstimator:
     
     def estimate_cue(self, cue: Cue) -> LipSyncResult:
         """
-        Lip-sync becslés egy cue-ra.
+        Lip-sync estimation for a cue.
         
-        A fordított szöveget használja, ha van, egyébként a forrást.
-        Figyelembe veszi az eredeti szöveg hosszát is.
+        Uses the translated text if available, otherwise the source.
+        Takes into account the length of the original text as well.
         
         Args:
-            cue: Cue objektum
+            cue: Cue object
             
         Returns:
-            LipSyncResult a becslés eredményével
+            LipSyncResult with the estimation result
         """
         text = cue.translated_text or cue.source_text
         source = cue.source_text if cue.translated_text else ""
@@ -182,13 +181,13 @@ class LipSyncEstimator:
     
     def update_cue_ratio(self, cue: Cue) -> float:
         """
-        Cue lip_sync_ratio frissítése.
+        Update cue lip_sync_ratio.
         
         Args:
-            cue: Cue objektum (módosítva lesz)
+            cue: Cue object (will be modified)
             
         Returns:
-            Új arány érték
+            New ratio value
         """
         result = self.estimate_cue(cue)
         cue.lip_sync_ratio = result.ratio
@@ -196,11 +195,11 @@ class LipSyncEstimator:
     
     def _prepare_text(self, text: str) -> str:
         """
-        Szöveg előkészítése a becsléshez.
+        Prepare text for estimation.
         
-        - Szögletes zárójelben lévő instrukciók eltávolítása [pl. sóhajt]
-        - Sortörések szóközre cserélése
-        - Többszörös szóközök normalizálása
+        - Remove instructions in square brackets [e.g., sighs]
+        - Replace newlines with spaces
+        - Normalize multiple spaces
         """
         if not text:
             return ""
@@ -218,7 +217,7 @@ class LipSyncEstimator:
     
     def _get_status(self, ratio: float) -> LipSyncStatus:
         """
-        Státusz meghatározása az arány alapján.
+        Determine status based on ratio.
         """
         if ratio <= LIPSYNC_THRESHOLD_GOOD:
             return LipSyncStatus.GOOD
@@ -229,26 +228,26 @@ class LipSyncEstimator:
     
     def calculate_max_chars(self, duration_ms: int) -> int:
         """
-        Maximum karakterszám kiszámítása adott időtartamra.
+        Calculate maximum number of characters for a given duration.
         
         Args:
-            duration_ms: Időtartam milliszekundumban
+            duration_ms: Duration in milliseconds
             
         Returns:
-            Maximum karakterszám
+            Maximum number of characters
         """
         seconds = duration_ms / 1000.0
         return int(seconds * self.chars_per_second)
     
     def calculate_min_duration(self, text: str) -> int:
         """
-        Minimum szükséges idő kiszámítása adott szövegre.
+        Calculate minimum required duration for a given text.
         
         Args:
-            text: Szöveg
+            text: Text
             
         Returns:
-            Minimum idő milliszekundumban
+            Minimum duration in milliseconds
         """
         cleaned = self._prepare_text(text)
         if not cleaned:
@@ -260,13 +259,13 @@ class LipSyncEstimator:
 
 def get_lipsync_color(status: LipSyncStatus) -> str:
     """
-    Lip-sync státuszhoz tartozó szín lekérése.
+    Get color associated with lip-sync status.
     
     Args:
-        status: LipSyncStatus enum érték
+        status: LipSyncStatus enum value
         
     Returns:
-        Hex szín string
+        Hex color string
     """
     from dubsync.utils.constants import (
         COLOR_LIPSYNC_GOOD,
@@ -288,7 +287,7 @@ def get_lipsync_color(status: LipSyncStatus) -> str:
 # Convenience functions
 def estimate_lipsync(text: str, duration_ms: int) -> LipSyncResult:
     """
-    Quick lip-sync becslés.
+    Quick lip-sync estimation.
     """
     estimator = LipSyncEstimator()
     return estimator.estimate(text, duration_ms)
@@ -296,10 +295,10 @@ def estimate_lipsync(text: str, duration_ms: int) -> LipSyncResult:
 
 def check_cue_lipsync(cue: Cue) -> Tuple[LipSyncStatus, float]:
     """
-    Cue lip-sync ellenőrzése.
+    Check cue lip-sync.
     
     Returns:
-        Tuple (státusz, arány)
+        Tuple (status, ratio)
     """
     estimator = LipSyncEstimator()
     result = estimator.estimate_cue(cue)

@@ -1,7 +1,6 @@
 """
 DubSync Locale Manager
 
-Központi nyelvkezelő a többnyelvű támogatáshoz.
 Central language manager for multilingual support.
 """
 
@@ -15,12 +14,12 @@ from dataclasses import dataclass, field
 
 @dataclass
 class LanguageInfo:
-    """Nyelv metaadatok / Language metadata."""
-    code: str           # ISO 639-1 kód (pl. "en", "hu")
-    name: str           # Natív név (pl. "English", "Magyar")
-    name_en: str        # Angol név (pl. "English", "Hungarian")
-    flag: str = ""      # Emoji zászló (pl. "🇬🇧", "🇭🇺")
-    rtl: bool = False   # Jobbról balra írás
+    """Language metadata."""
+    code: str           # ISO 639-1 code (e.g., "en", "hu")
+    name: str           # Native name (e.g., "English", "Magyar")
+    name_en: str        # English name (e.g., "English", "Hungarian")
+    flag: str = ""      # Emoji flag (e.g., "🇬🇧", "🇭🇺")
+    rtl: bool = False   # Right-to-left writing
     
     def __str__(self) -> str:
         return f"{self.flag} {self.name}" if self.flag else self.name
@@ -28,15 +27,15 @@ class LanguageInfo:
 
 class LocaleManager:
     """
-    Központi nyelvkezelő singleton.
+    Central language manager singleton.
     
-    Kezeli a nyelvi fájlokat, fordításokat és nyelvi beállításokat.
-    Támogatja a plugin-ek saját fordításait is.
+    Manages language files, translations, and language settings.
+    Supports plugin-specific translations as well.
     """
     
     _instance: Optional['LocaleManager'] = None
     
-    # Elérhető nyelvek (bővíthető plugin-ekkel)
+    # Available languages (extendable with plugins)
     BUILTIN_LANGUAGES: Dict[str, LanguageInfo] = {
         "en": LanguageInfo(
             code="en",
@@ -66,30 +65,30 @@ class LocaleManager:
         
         self._initialized = True
         
-        # Jelenlegi nyelv
+        # Current language
         self._current_language: str = self.FALLBACK_LANGUAGE
         
-        # Betöltött fordítások: {language_code: {key: value}}
+        # Loaded translations: {language_code: {key: value}}
         self._translations: Dict[str, Dict[str, Any]] = {}
         
-        # Plugin fordítások: {plugin_id: {language_code: {key: value}}}
+        # Plugin translations: {plugin_id: {language_code: {key: value}}}
         self._plugin_translations: Dict[str, Dict[str, Dict[str, Any]]] = {}
         
-        # Regisztrált nyelvek (beépített + plugin)
+        # Registered languages (built-in + plugins)
         self._languages: Dict[str, LanguageInfo] = dict(self.BUILTIN_LANGUAGES)
         
-        # Nyelv változás callback-ek
+        # Language change callbacks
         self._language_changed_callbacks: List[Callable[[str], None]] = []
         
-        # Alap nyelvek betöltése
+        # Load built-in languages
         self._load_builtin_languages()
     
     def _get_locales_dir(self) -> Path:
-        """Nyelvi fájlok könyvtára."""
+        """Directory of language files."""
         return Path(__file__).parent / "locales"
     
     def _load_builtin_languages(self):
-        """Beépített nyelvek betöltése."""
+        """Load built-in languages."""
         locales_dir = self._get_locales_dir()
         
         for lang_code in self.BUILTIN_LANGUAGES.keys():
@@ -97,14 +96,14 @@ class LocaleManager:
     
     def _load_language_file(self, lang_code: str, file_path: Path) -> bool:
         """
-        Nyelvi fájl betöltése.
+        Load language file.
         
         Args:
-            lang_code: Nyelv kód (pl. "en")
-            file_path: JSON fájl útvonala
+            lang_code: Language code (e.g., "en")
+            file_path: Path to JSON file
             
         Returns:
-            True ha sikeres
+            True if successful
         """
         try:
             if file_path.exists():
@@ -121,10 +120,10 @@ class LocaleManager:
     
     def _flatten_dict(self, d: Dict[str, Any], parent_key: str = '') -> Dict[str, str]:
         """
-        Beágyazott szótár lapítása pontozott kulcsokká.
+        Flatten nested dictionary into dotted keys.
         
-        Példa:
-            {"menu": {"file": "Fájl"}} -> {"menu.file": "Fájl"}
+        Example:
+            {"menu": {"file": "File"}} -> {"menu.file": "File"}
         """
         items: Dict[str, str] = {}
         for k, v in d.items():
@@ -137,30 +136,30 @@ class LocaleManager:
     
     @property
     def current_language(self) -> str:
-        """Jelenlegi nyelv kódja."""
+        """Current language code."""
         return self._current_language
     
     @property
     def current_language_info(self) -> LanguageInfo:
-        """Jelenlegi nyelv információi."""
+        """Current language information."""
         return self._languages.get(
             self._current_language,
             self.BUILTIN_LANGUAGES[self.FALLBACK_LANGUAGE]
         )
     
     def get_available_languages(self) -> List[LanguageInfo]:
-        """Elérhető nyelvek listája."""
+        """List of available languages."""
         return list(self._languages.values())
     
     def set_language(self, language_code: str) -> bool:
         """
-        Nyelv beállítása.
+        Set language.
         
         Args:
-            language_code: Új nyelv kódja
+            language_code: New language code
             
         Returns:
-            True ha sikeres
+            True if successful
         """
         if language_code not in self._languages:
             print(f"Language not available: {language_code}")
@@ -169,7 +168,7 @@ class LocaleManager:
         if language_code != self._current_language:
             self._current_language = language_code
             
-            # Callback-ek meghívása
+            # Call language change callbacks
             for callback in self._language_changed_callbacks:
                 try:
                     callback(language_code)
@@ -179,40 +178,40 @@ class LocaleManager:
         return True
     
     def register_language_changed_callback(self, callback: Callable[[str], None]):
-        """Nyelv változás callback regisztrálása."""
+        """Register language change callback."""
         if callback not in self._language_changed_callbacks:
             self._language_changed_callbacks.append(callback)
     
     def unregister_language_changed_callback(self, callback: Callable[[str], None]):
-        """Nyelv változás callback eltávolítása."""
+        """Unregister language change callback."""
         if callback in self._language_changed_callbacks:
             self._language_changed_callbacks.remove(callback)
     
     def translate(self, key: str, **kwargs) -> str:
         """
-        Szöveg fordítása.
+        Translate text.
         
         Args:
-            key: Fordítási kulcs (pl. "menu.file.save")
-            **kwargs: Helyettesítő paraméterek
+            key: Translation key (e.g., "menu.file.save")
+            **kwargs: Replacement parameters
             
         Returns:
-            Fordított szöveg, vagy a kulcs ha nincs fordítás
+            Translated text, or the key if no translation is found
         """
-        # Jelenlegi nyelv fordítása
+        # Translate current language
         translations = self._translations.get(self._current_language, {})
         text = translations.get(key)
 
-        # Fallback az angol nyelvre
+        # Fallback to English
         if text is None and self._current_language != self.FALLBACK_LANGUAGE:
             fallback_translations = self._translations.get(self.FALLBACK_LANGUAGE, {})
             text = fallback_translations.get(key)
 
-        # Ha nincs fordítás, visszaadjuk a kulcsot
+        # If no translation, return the key
         if text is None:
             return key
 
-        # Paraméterek helyettesítése
+        # Replace parameters
         if kwargs:
             with contextlib.suppress(KeyError, ValueError):
                 text = text.format(**kwargs)
@@ -220,31 +219,31 @@ class LocaleManager:
     
     def translate_plugin(self, plugin_id: str, key: str, **kwargs) -> str:
         """
-        Plugin szöveg fordítása.
+        Translate plugin text.
         
         Args:
-            plugin_id: Plugin azonosító
-            key: Fordítási kulcs
-            **kwargs: Helyettesítő paraméterek
+            plugin_id: Plugin identifier
+            key: Translation key
+            **kwargs: Replacement parameters
             
         Returns:
-            Fordított szöveg
+            Translated text
         """
-        # Plugin fordítások keresése
+        # Search plugin translations
         plugin_trans = self._plugin_translations.get(plugin_id, {})
         translations = plugin_trans.get(self._current_language, {})
         text = translations.get(key)
 
-        # Fallback az angol nyelvre
+        # Fallback to English
         if text is None and self._current_language != self.FALLBACK_LANGUAGE:
             fallback_trans = plugin_trans.get(self.FALLBACK_LANGUAGE, {})
             text = fallback_trans.get(key)
 
-        # Fallback az alap fordításokra
+        # Fallback to base translations
         if text is None:
             return self.translate(key, **kwargs)
 
-        # Paraméterek helyettesítése
+        # Replace parameters
         if kwargs:
             with contextlib.suppress(KeyError, ValueError):
                 text = text.format(**kwargs)
@@ -252,14 +251,14 @@ class LocaleManager:
     
     def register_language(self, lang_info: LanguageInfo, translations_file: Optional[Path] = None) -> bool:
         """
-        Új nyelv regisztrálása (plugin-ek számára).
+        Register a new language (for plugins).
         
         Args:
-            lang_info: Nyelv információi
-            translations_file: Fordítások JSON fájlja (opcionális)
+            lang_info: Language information
+            translations_file: Translations JSON file (optional)
             
         Returns:
-            True ha sikeres
+            True if successful
         """
         code = lang_info.code
         
@@ -280,10 +279,10 @@ class LocaleManager:
         translations: Dict[str, Dict[str, Any]]
     ):
         """
-        Plugin fordítások regisztrálása.
+        Register plugin translations.
         
         Args:
-            plugin_id: Plugin azonosító
+            plugin_id: Plugin identifier
             translations: {language_code: {key: value}}
         """
         if plugin_id not in self._plugin_translations:
@@ -299,15 +298,15 @@ class LocaleManager:
         file_path: Path
     ) -> bool:
         """
-        Plugin fordítások betöltése fájlból.
+        Load plugin translations from file.
         
         Args:
-            plugin_id: Plugin azonosító
-            lang_code: Nyelv kód
-            file_path: JSON fájl útvonala
+            plugin_id: Plugin identifier
+            lang_code: Language code
+            file_path: JSON file path
             
         Returns:
-            True ha sikeres
+            True if successful
         """
         try:
             if file_path.exists():
@@ -324,7 +323,7 @@ class LocaleManager:
         return False
     
     def has_translation(self, key: str) -> bool:
-        """Ellenőrzi, hogy létezik-e fordítás a kulcshoz."""
+        """Check if a translation exists for the key."""
         translations = self._translations.get(self._current_language, {})
         if key in translations:
             return True
@@ -333,39 +332,39 @@ class LocaleManager:
         return key in fallback
 
 
-# === Kényelmi függvények / Convenience functions ===
+# === Convenience functions ===
 
 def get_locale_manager() -> LocaleManager:
-    """LocaleManager singleton lekérése."""
+    """Get the LocaleManager singleton."""
     return LocaleManager()
 
 
 def t(key: str, **kwargs) -> str:
     """
-    Szöveg fordítása (rövidítés).
+    Translate text (shortcut).
     
     Args:
-        key: Fordítási kulcs
-        **kwargs: Helyettesítő paraméterek
+        key: Translation key
+        **kwargs: Replacement parameters
         
     Returns:
-        Fordított szöveg
+        Translated text
         
-    Példa:
+    Example:
         t("menu.file")
         t("messages.items_count", count=5)
-        t("plugins.my_plugin.title")  # Plugin saját locale-jából
+        t("plugins.my_plugin.title")  # From the plugin's own locale
     """
     manager = get_locale_manager()
     
-    # Ha plugins.{plugin_id}.* kulcs, akkor plugin fordításból
+    # If key starts with plugins.{plugin_id}.*, then from plugin translations
     if key.startswith("plugins."):
         parts = key.split(".", 2)  # ["plugins", "plugin_id", "rest.of.key"]
         if len(parts) >= 3:
             plugin_id = parts[1]
             plugin_key = parts[2]
             result = manager.translate_plugin(plugin_id, plugin_key, **kwargs)
-            # Ha nem plugin_key-t adja vissza, akkor találtunk fordítást
+            # If result is not plugin_key, then a translation was found
             if result != plugin_key:
                 return result
     
@@ -375,37 +374,37 @@ def t(key: str, **kwargs) -> str:
 
 def t_plugin(plugin_id: str, key: str, **kwargs) -> str:
     """
-    Plugin szöveg fordítása.
+    Translate plugin text.
     
     Args:
-        plugin_id: Plugin azonosító
-        key: Fordítási kulcs
-        **kwargs: Helyettesítő paraméterek
+        plugin_id: Plugin identifier
+        key: Translation key
+        **kwargs: Replacement parameters
         
     Returns:
-        Fordított szöveg
+        Translated text
     """
     return get_locale_manager().translate_plugin(plugin_id, key, **kwargs)
 
 
 def get_available_languages() -> List[LanguageInfo]:
-    """Elérhető nyelvek listája."""
+    """List of available languages."""
     return get_locale_manager().get_available_languages()
 
 
 def get_current_language() -> str:
-    """Jelenlegi nyelv kódja."""
+    """Current language code."""
     return get_locale_manager().current_language
 
 
 def set_language(language_code: str) -> bool:
     """
-    Nyelv beállítása.
+    Set language.
     
     Args:
-        language_code: Nyelv kód (pl. "en", "hu")
+        language_code: Language code (e.g. "en", "hu")
         
     Returns:
-        True ha sikeres
+        True if successful
     """
     return get_locale_manager().set_language(language_code)

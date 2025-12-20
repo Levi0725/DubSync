@@ -1,14 +1,14 @@
 """
 DubSync PDF Export
 
-Professzionális szinkronszövegkönyv PDF generálás.
+Professional dubbing script PDF generation.
 
-A generált PDF a klasszikus magyar szinkronszövegkönyv formátumot követi:
-- Fejléc projekt információkkal
-- Táblázatos elrendezés
-- Időkód, karakter, szöveg, megjegyzések, SFX
-- Oldaltörések cue-k szerint
-- Nyomtatásbarát formátum
+The generated PDF follows the classic Hungarian dubbing script format:
+- Header with project information
+- Tabular layout
+- Timecode, character, text, notes, SFX
+- Page breaks according to cues
+- Print-friendly format
 """
 
 from pathlib import Path
@@ -37,10 +37,10 @@ if TYPE_CHECKING:
 
 class PDFExporter:
     """
-    Szinkronszövegkönyv PDF exportáló.
+    Dubbing script PDF exporter.
     
-    A generált PDF nem tartalmaz technikai adatokat (lip-sync, státusz),
-    csak a felvételhez szükséges szöveget.
+    The generated PDF does not contain technical data (lip-sync, status),
+    only the text necessary for recording.
     """
     
     # Page settings
@@ -57,10 +57,10 @@ class PDFExporter:
     
     def __init__(self, db: Optional["Database"] = None):
         """
-        Inicializálás.
+        Initialization.
         
         Args:
-            db: Adatbázis kapcsolat (opcionális)
+            db: Database connection (optional)
         """
         self.db = db
         self.styles = self._create_styles()
@@ -68,9 +68,9 @@ class PDFExporter:
     
     def _register_fonts(self):
         """
-        Font regisztráció magyar karakterekhez.
+        Font registration for Hungarian characters.
         
-        Próbálja a Windows rendszer fontjait használni.
+        Tries to use Windows system fonts.
         """
         try:
             # Try to use Arial for better Hungarian support
@@ -85,7 +85,7 @@ class PDFExporter:
     
     def _create_styles(self) -> dict:
         """
-        Stílusok létrehozása.
+        Create styles.
         """
         styles = getSampleStyleSheet()
 
@@ -159,13 +159,13 @@ class PDFExporter:
         include_source: bool = False,
     ) -> None:
         """
-        PDF exportálás.
+        PDF export.
         
         Args:
-            output_path: Kimeneti fájl elérési útja
-            project: Projekt objektum
-            cues: Cue lista
-            include_source: Forrásszöveg is legyen benne
+            output_path: Output file path
+            project: Project object
+            cues: Cue list
+            include_source: Include source text as well
         """
         doc = SimpleDocTemplate(
             str(output_path),
@@ -195,15 +195,15 @@ class PDFExporter:
     
     def _create_header(self, project: Project) -> List[Flowable]:
         """
-        Fejléc létrehozása projekt adatokkal.
+        Create header with project information.
         """
         # Main title
         if project.series_title:
             title = project.series_title
-            if project.title and project.title != "Új projekt":
+            if project.title and project.title != "New Project":
                 title += f" - {project.title}"
         else:
-            title = project.title or "Szinkronszövegkönyv"
+            title = project.title or "Dubbing Script"
 
         elements: List[Flowable] = [Paragraph(title, self.styles['Title'])]
         # Season/Episode
@@ -221,9 +221,9 @@ class PDFExporter:
         # Credits
         credits = []
         if project.translator:
-            credits.append(f"Fordította: {project.translator}")
+            credits.append(f"Translated by: {project.translator}")
         if project.editor:
-            credits.append(f"Lektor: {project.editor}")
+            credits.append(f"Editor: {project.editor}")
 
         if credits:
             elements.append(Paragraph(
@@ -256,7 +256,7 @@ class PDFExporter:
     
     def _create_cue_table(self, cues: List[Cue], include_source: bool) -> List:
         """
-        Cue táblázat létrehozása.
+        Create cue table.
         """
         elements = []
         
@@ -268,7 +268,7 @@ class PDFExporter:
     
     def _create_cue_row(self, cue: Cue, include_source: bool) -> Table:
         """
-        Egyetlen cue sor létrehozása.
+        Create a single cue row.
         """
         # Time column
         time_text = f"{cue.time_in_timecode[:8]}\n{cue.time_out_timecode[:8]}"
@@ -344,7 +344,7 @@ class PDFExporter:
     
     def _add_page_header(self, canvas, doc):
         """
-        Oldalszámozás és élőfej.
+        Page numbering and header.
         """
         canvas.saveState()
         
@@ -378,13 +378,13 @@ def export_to_pdf(
     include_source: bool = False,
 ) -> None:
     """
-    Convenience function PDF exportáláshoz.
+    Convenience function for PDF export.
     
     Args:
-        output_path: Kimeneti fájl elérési útja
-        project: Projekt objektum
-        cues: Cue lista
-        include_source: Forrásszöveg is legyen benne
+        output_path: Output file path
+        project: Project object
+        cues: Cue list
+        include_source: Include source text as well
     """
     exporter = PDFExporter()
     exporter.export(output_path, project, cues, include_source)

@@ -1,7 +1,7 @@
 """
 DubSync Database
 
-SQLite adatbázis kezelő és inicializáló.
+SQLite database handler and initializer.
 """
 
 import sqlite3
@@ -15,17 +15,17 @@ from dubsync.utils.constants import DB_VERSION
 
 class Database:
     """
-    SQLite adatbázis kezelő osztály.
+    SQLite database handler class.
     
-    A projekt egyetlen fájlban tárolja az összes adatot.
+    The project stores all data in a single file.
     """
     
     def __init__(self, db_path: Optional[Path] = None):
         """
-        Adatbázis inicializálása.
+        Initialize the database.
         
         Args:
-            db_path: Adatbázis fájl elérési útja. Ha None, memória-alapú.
+            db_path: Path to the database file. If None, in-memory.
         """
         self.db_path = db_path
         self._connection: Optional[sqlite3.Connection] = None
@@ -33,7 +33,7 @@ class Database:
     @property
     def connection(self) -> sqlite3.Connection:
         """
-        Kapcsolat lekérése vagy létrehozása.
+        Get or create the database connection.
         """
         if self._connection is None:
             db_str = str(self.db_path) if self.db_path else ":memory:"
@@ -46,7 +46,7 @@ class Database:
     @contextmanager
     def cursor(self):
         """
-        Context manager kurzor kezeléshez.
+        Context manager for cursor handling.
         """
         cur = self.connection.cursor()
         try:
@@ -60,31 +60,31 @@ class Database:
     
     def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:
         """
-        SQL parancs végrehajtása.
+        Execute an SQL command.
         """
         return self.connection.execute(sql, params)
     
     def executemany(self, sql: str, params_list: List[tuple]) -> sqlite3.Cursor:
         """
-        SQL parancs végrehajtása több paramétersorral.
+        Execute an SQL command with multiple parameter sets.
         """
         return self.connection.executemany(sql, params_list)
     
     def commit(self):
         """
-        Változások mentése.
+        Commit changes.
         """
         self.connection.commit()
     
     def rollback(self):
         """
-        Változások visszavonása.
+        Rollback changes.
         """
         self.connection.rollback()
     
     def close(self):
         """
-        Kapcsolat lezárása.
+        Close the connection.
         """
         if self._connection:
             self._connection.close()
@@ -92,19 +92,19 @@ class Database:
     
     def fetchone(self, sql: str, params: tuple = ()) -> Optional[sqlite3.Row]:
         """
-        Egyetlen sor lekérése.
+        Fetch a single row.
         """
         return self.execute(sql, params).fetchone()
     
     def fetchall(self, sql: str, params: tuple = ()) -> List[sqlite3.Row]:
         """
-        Összes sor lekérése.
+        Fetch all rows.
         """
         return self.execute(sql, params).fetchall()
     
     def get_version(self) -> int:
         """
-        Adatbázis verzió lekérése.
+        Get database version.
         """
         try:
             row = self.fetchone("SELECT value FROM metadata WHERE key = 'db_version'")
@@ -115,21 +115,21 @@ class Database:
 
 def init_database(db: Database) -> None:
     """
-    Adatbázis séma inicializálása.
+    Initialize the database schema.
     
-    Létrehozza az összes szükséges táblát és indexet.
+    Creates all necessary tables and indexes.
     """
     schema = """
-    -- Metadata tábla verziókövetéshez és projekt beállításokhoz
+    -- Metadata table for version tracking and project settings
     CREATE TABLE IF NOT EXISTS metadata (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
     );
     
-    -- Projekt információk
+    -- Project information
     CREATE TABLE IF NOT EXISTS project (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL DEFAULT 'Új projekt',
+        title TEXT NOT NULL DEFAULT 'New Project',
         series_title TEXT DEFAULT '',
         season TEXT DEFAULT '',
         episode TEXT DEFAULT '',
@@ -142,7 +142,7 @@ def init_database(db: Database) -> None:
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     
-    -- Cue-k (feliratok/szinkronszövegek)
+    -- Cues (subtitles/dubbing texts)
     CREATE TABLE IF NOT EXISTS cues (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         project_id INTEGER NOT NULL DEFAULT 1,
@@ -161,24 +161,24 @@ def init_database(db: Database) -> None:
         FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE
     );
     
-    -- Megjegyzések (kommentek)
+    -- Comments
     CREATE TABLE IF NOT EXISTS comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cue_id INTEGER NOT NULL,
-        author TEXT NOT NULL DEFAULT 'Felhasználó',
+        author TEXT NOT NULL DEFAULT 'User',
         content TEXT NOT NULL,
         status INTEGER NOT NULL DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (cue_id) REFERENCES cues(id) ON DELETE CASCADE
     );
     
-    -- Indexek a gyorsabb kereséshez
+    -- Indexes for faster searching
     CREATE INDEX IF NOT EXISTS idx_cues_project ON cues(project_id);
     CREATE INDEX IF NOT EXISTS idx_cues_time ON cues(time_in_ms);
     CREATE INDEX IF NOT EXISTS idx_cues_status ON cues(status);
     CREATE INDEX IF NOT EXISTS idx_comments_cue ON comments(cue_id);
     
-    -- Triggerek az updated_at frissítéséhez
+    -- Triggers for updating updated_at
     CREATE TRIGGER IF NOT EXISTS update_project_timestamp 
     AFTER UPDATE ON project
     BEGIN
@@ -206,7 +206,7 @@ def init_database(db: Database) -> None:
     if row is None or row["count"] == 0:
         db.execute(
             "INSERT INTO project (title) VALUES (?)",
-            ("Új projekt",)
+            ("New Project",)
         )
     
     db.commit()
@@ -214,7 +214,7 @@ def init_database(db: Database) -> None:
 
 def migrate_database(db: Database) -> None:
     """
-    Adatbázis migrációk végrehajtása, ha szükséges.
+    Execute database migrations if necessary.
     """
     current_version = db.get_version()
     

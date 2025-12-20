@@ -1,7 +1,7 @@
 """
 DubSync Main Window
 
-Fő alkalmazás ablak a szinkronfordító editorhoz.
+Main application window for the dubbing editor.
 """
 
 from pathlib import Path
@@ -33,7 +33,7 @@ from dubsync.plugins.base import PluginManager
 
 
 class DeleteCueCommand(QUndoCommand):
-    """Undo command cue törléshez."""
+    """Undo command for deleting a cue."""
     
     def __init__(self, main_window, cue_data: dict, parent=None):
         super().__init__(t("dialogs.confirm_delete.title"), parent)
@@ -42,7 +42,7 @@ class DeleteCueCommand(QUndoCommand):
         self._cue_id = cue_data.get('id')
     
     def redo(self):
-        """Törlés végrehajtása."""
+        """Perform deletion."""
         if self._cue_id:
             self._main_window.project_manager.delete_cue(self._cue_id)
             self._main_window._refresh_cue_list()
@@ -50,7 +50,7 @@ class DeleteCueCommand(QUndoCommand):
             self._main_window._update_statistics()
     
     def undo(self):
-        """Törlés visszavonása - cue visszaállítása."""
+        """Undo deletion - restore cue."""
         from dubsync.models.cue import Cue, CueBatch
         from dubsync.utils.constants import CueStatus
         
@@ -93,7 +93,7 @@ class DeleteCueCommand(QUndoCommand):
 
 
 class ThemeSettingsDialog(QDialog):
-    """Téma beállítások dialógus."""
+    """Theme settings dialog."""
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -152,7 +152,7 @@ class ThemeSettingsDialog(QDialog):
                 self.theme_combo.setCurrentIndex(i)
                 break
         
-        # Ha egyedi téma, töltsük be a mentett színeket
+        # If custom theme, load saved colors
         if theme_mgr.current_theme == ThemeType.CUSTOM:
             if custom_colors_dict := settings_mgr.custom_theme_colors:
                 for key, btn in self.color_buttons.items():
@@ -185,7 +185,7 @@ class ThemeSettingsDialog(QDialog):
         current = btn.property("color_value") or "#000000"
         
         from PySide6.QtGui import QColor
-        color = QColorDialog.getColor(QColor(current), self, f"{key} szín választása")
+        color = QColorDialog.getColor(QColor(current), self, f"Choose {key} color")
         if color.isValid():
             btn.setStyleSheet(f"background-color: {color.name()}; color: white;")
             btn.setProperty("color_value", color.name())
@@ -225,7 +225,7 @@ class ThemeSettingsDialog(QDialog):
 
 
 class MainWindow(QMainWindow):
-    """Fő ablak a DubSync alkalmazáshoz."""
+    """Main window for the DubSync application."""
     
     project_changed = Signal()
     cue_selected = Signal(int)
@@ -257,7 +257,7 @@ class MainWindow(QMainWindow):
         self._update_ui_state()
     
     def _setup_ui(self):
-        """UI felépítése."""
+        """Setup UI."""
         self.setWindowTitle(f"{APP_NAME} {APP_VERSION}")
         self.setMinimumSize(1200, 800)
 
@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
         return result
     
     def _setup_menus(self):
-        """Menük beállítása."""
+        """Setup menus."""
         menubar = self.menuBar()
         
         # === File menu ===
@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
         self.action_export_srt.triggered.connect(self._on_export_srt)
         self.export_menu.addAction(self.action_export_srt)
         
-        # Plugin export formátumok később lesznek hozzáadva a _setup_plugins()-ban
+        # Plugin export formats will be added later in _setup_plugins()
         
         file_menu.addSeparator()
         
@@ -455,14 +455,14 @@ class MainWindow(QMainWindow):
         # === View menu ===
         self.view_menu = menubar.addMenu(t("menu.view._title"))
         
-        # Panelek közvetlenül a menüben (jobb UX)
+        # Panels directly in the menu (better UX)
         self.view_menu.addSection(t("menu.view.panels"))
         
         self.action_toggle_comments = self.comments_dock.toggleViewAction()
         self.action_toggle_comments.setText(t("menu.view.comments_panel"))
         self.view_menu.addAction(self.action_toggle_comments)
         
-        # Plugin panelek itt lesznek hozzáadva a _setup_plugins()-ban
+        # Plugin panels will be added later in _setup_plugins()
         
         self.view_menu.addSeparator()
         
@@ -487,7 +487,7 @@ class MainWindow(QMainWindow):
         help_menu.addAction(self.action_about)
     
     def _setup_toolbar(self):
-        """Eszköztár beállítása."""
+        """Setup toolbar."""
         toolbar = QToolBar(t("toolbar.main"))
         toolbar.setObjectName("mainToolbar")
         toolbar.setMovable(False)
@@ -509,7 +509,7 @@ class MainWindow(QMainWindow):
         toolbar.addAction(self.action_next_lipsync)
     
     def _setup_statusbar(self):
-        """Állapotsor beállítása."""
+        """Setup status bar."""
         statusbar = self.statusBar()
         
         self.delete_mode_label = QLabel("")
@@ -523,7 +523,7 @@ class MainWindow(QMainWindow):
         statusbar.addPermanentWidget(self.stats_label)
     
     def _connect_signals(self):
-        """Signal-slot kapcsolatok."""
+        """Connect signal-slot."""
         self.cue_list.cue_selected.connect(self._on_cue_selected)
         self.cue_list.cue_double_clicked.connect(self._on_cue_double_clicked)
         self.cue_list.insert_cue_requested.connect(self._on_insert_cue_at)
@@ -538,7 +538,7 @@ class MainWindow(QMainWindow):
         self.comments_panel.comment_added.connect(self._on_comment_added)
     
     def _load_settings(self):
-        """Beállítások betöltése."""
+        """Load settings."""
         if geometry := self.settings.value("geometry"):
             self.restoreGeometry(geometry)
         
@@ -585,21 +585,21 @@ class MainWindow(QMainWindow):
             self.theme_manager.set_theme(ThemeType.DARK)
     
     def _save_settings(self):
-        """Beállítások mentése."""
+        """Save settings."""
         self.settings.setValue("geometry", self.saveGeometry())
         self.settings.setValue("windowState", self.saveState())
         self.settings.setValue("theme", self.theme_manager.current_theme.value)
     
     def _apply_theme(self):
-        """Téma alkalmazása."""
+        """Apply theme."""
         stylesheet = self.theme_manager.get_stylesheet()
         app = QApplication.instance()
         if app is not None:
             cast(QApplication, app).setStyleSheet(stylesheet)
     
     def _setup_plugins(self):
-        """Plugin UI elemek beállítása."""
-        # Export pluginok hozzáadása a Fájl->Export menühöz
+        """Setup plugin UI elements."""
+        # Add export plugins to File->Export menu
         for export_plugin in self.plugin_manager.get_export_plugins(enabled_only=True):
             try:
                 action = QAction(f"{export_plugin.info.icon} {export_plugin.info.name}...", self)
@@ -607,9 +607,9 @@ class MainWindow(QMainWindow):
                 action.triggered.connect(lambda checked, p=export_plugin: self._on_plugin_export(p))
                 self.export_menu.addAction(action)
             except Exception as e:
-                print(f"Export plugin hiba ({export_plugin.info.name}): {e}")
+                print(f"Export plugin error ({export_plugin.info.name}): {e}")
         
-        # UI pluginok
+        # UI plugins
         for plugin in self.plugin_manager.get_ui_plugins(enabled_only=True):
             try:
                 plugin.set_main_window(self)
@@ -618,12 +618,12 @@ class MainWindow(QMainWindow):
                     self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
                     self._plugin_docks.append(dock)
                     
-                    # Induláskor elrejtés, hacsak nincs beállítva másképp
+                    # Hide on start unless otherwise set
                     show_on_start = self.settings_manager.get_plugin_panel_visible(plugin.info.id)
                     if not show_on_start:
                         dock.hide()
                     
-                    # Panel toggle hozzáadása a Nézet menühöz közvetlenül
+                    # Add panel toggle directly to the View menu
                     toggle_action = dock.toggleViewAction()
                     toggle_action.setText(f"{plugin.info.icon} {plugin.info.name}")
                     self.view_menu.insertAction(self.action_fullscreen, toggle_action)
@@ -634,47 +634,47 @@ class MainWindow(QMainWindow):
                         plugins_menu.addAction(action)
                 
             except Exception as e:
-                print(f"Plugin UI hiba ({plugin.info.name}): {e}")
+                print(f"Plugin UI error ({plugin.info.name}): {e}")
     
     def _get_or_create_plugins_menu(self) -> QMenu:
-        """Pluginok menü lekérése vagy létrehozása."""
+        """Get or create plugins menu."""
         if not hasattr(self, '_plugins_menu'):
             menubar = self.menuBar()
             self._plugins_menu = menubar.addMenu(t("menu.plugins"))
         return self._plugins_menu
     
     def _notify_plugins_cue_selected(self, cue):
-        """Plugin értesítése cue kiválasztásról."""
+        """Notify plugins of cue selection."""
         for plugin in self.plugin_manager.get_ui_plugins(enabled_only=True):
             try:
                 plugin.on_cue_selected(cue)
             except Exception as e:
-                print(f"Plugin cue_selected hiba ({plugin.info.name}): {e}")
+                print(f"Plugin cue_selected error ({plugin.info.name}): {e}")
     
     def _notify_plugins_project_opened(self, project):
-        """Plugin értesítése projekt megnyitásról."""
+        """Notify plugins of project opened."""
         for plugin in self.plugin_manager.get_ui_plugins(enabled_only=True):
             try:
                 plugin.on_project_opened(project)
             except Exception as e:
-                print(f"Plugin project_opened hiba ({plugin.info.name}): {e}")
+                print(f"Plugin project_opened error ({plugin.info.name}): {e}")
     
     def _notify_plugins_project_closed(self):
-        """Plugin értesítése projekt bezárásról."""
+        """Notify plugins of project closed."""
         for plugin in self.plugin_manager.get_ui_plugins(enabled_only=True):
             try:
                 plugin.on_project_closed()
             except Exception as e:
-                print(f"Plugin project_closed hiba ({plugin.info.name}): {e}")
+                print(f"Plugin project_closed error ({plugin.info.name}): {e}")
     
     def _set_theme(self, theme_type: ThemeType):
-        """Téma beállítása."""
+        """Set theme."""
         self.theme_manager.set_theme(theme_type)
         self._apply_theme()
         self.settings.setValue("theme", theme_type.value)
     
     def _update_title(self):
-        """Ablak címének frissítése."""
+        """Update window title."""
         title = f"{APP_NAME} {APP_VERSION}"
         
         if self.project_manager.is_open and self.project_manager.project is not None:
@@ -687,7 +687,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(title)
     
     def _update_ui_state(self):
-        """UI állapot frissítése."""
+        """Update UI state."""
         has_project = self.project_manager.is_open
         
         self.action_save.setEnabled(has_project)
@@ -717,11 +717,11 @@ class MainWindow(QMainWindow):
         self._update_statistics()
     
     def _update_delete_mode_ui(self):
-        """Törlés mód UI frissítése."""
+        """Update delete mode UI."""
         if self._delete_mode:
-            self._extracted_from__update_delete_mode_ui_4("🗑️ TÖRLÉS MÓD AKTÍV", True)
+            self._extracted_from__update_delete_mode_ui_4(t("message.delete_mode_on"), True)
         else:
-            self._extracted_from__update_delete_mode_ui_4("", False)
+            self._extracted_from__update_delete_mode_ui_4(t("message.delete_mode_off"), False)
 
     # TODO Rename this here and in `_update_delete_mode_ui`
     def _extracted_from__update_delete_mode_ui_4(self, arg0, arg1):
@@ -730,34 +730,34 @@ class MainWindow(QMainWindow):
         self.cue_list.set_delete_mode(arg1)
     
     def _update_statistics(self):
-        """Statisztikák frissítése."""
+        """Update statistics."""
         if not self.project_manager.is_open:
             self.stats_label.setText("")
             return
         
         stats = self.project_manager.get_statistics()
         text = (
-            f"Összesen: {stats['total_cues']} │ "
-            f"Fordítva: {stats['translated_cues']} │ "
-            f"Lip-sync hibák: {stats['lipsync_issues']} │ "
+            f"Total: {stats['total_cues']} │ "
+            f"Translated: {stats['translated_cues']} │ "
+            f"Lip-sync issues: {stats['lipsync_issues']} │ "
             f"{stats['completion_percent']:.0f}%"
         )
         self.stats_label.setText(text)
     
     def _refresh_cue_list(self):
-        """Cue lista frissítése."""
+        """Refresh cue list."""
         if self.project_manager.is_open:
             cues = self.project_manager.get_cues()
             self.cue_list.set_cues(cues)
     
     def _check_save_changes(self) -> bool:
-        """Mentetlen változások ellenőrzése."""
+        """Check for unsaved changes."""
         if not self.project_manager.is_dirty:
             return True
         
         reply = QMessageBox.question(
-            self, "Mentetlen változások",
-            "Vannak mentetlen változások. Menteni szeretné?",
+            self, "Unsaved Changes",
+            "There are unsaved changes. Do you want to save them?",
             QMessageBox.StandardButton.Save |
             QMessageBox.StandardButton.Discard |
             QMessageBox.StandardButton.Cancel,
@@ -771,7 +771,7 @@ class MainWindow(QMainWindow):
         return False
     
     def closeEvent(self, event: QCloseEvent):
-        """Ablak bezárása."""
+        """Close window."""
         if self._check_save_changes():
             self._save_settings()
             self.project_manager.close()
@@ -789,7 +789,7 @@ class MainWindow(QMainWindow):
         self._refresh_cue_list()
         self._update_title()
         self._update_ui_state()
-        self.statusBar().showMessage("Új projekt létrehozva", 3000)
+        self.statusBar().showMessage("New project created", 3000)
     
     @Slot()
     def _on_open_project(self):
@@ -800,7 +800,7 @@ class MainWindow(QMainWindow):
         start_dir = self.settings_manager.default_save_path or ""
         
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Projekt megnyitása", start_dir, get_project_filter()
+            self, "Open Project", start_dir, get_project_filter()
         )
         
         if file_path:
@@ -808,10 +808,10 @@ class MainWindow(QMainWindow):
     
     def _do_open_project(self, file_path: str):
         """
-        Projekt megnyitása.
+        Open project.
         
         Args:
-            file_path: Projekt fájl elérési útja
+            file_path: Project file path
         """
         try:
             # sourcery skip: merge-nested-ifs
@@ -824,33 +824,33 @@ class MainWindow(QMainWindow):
                 if video_path.exists():
                     self.video_player.load_video(video_path)
                 else:
-                    # Videó nem található - lecsatoljuk és figyelmeztetünk
+                    # Video not found - detach and warn
                     self.project_manager.update_project(video_path="")
                     self.video_player._show_no_video()
                     QMessageBox.warning(
-                        self, "Videó nem található",
-                        f"A projekthez csatolt videó nem található:\n\n{video_path}\n\n"
-                        "A videó lecsatolva. A Fájl → Import → Videó menüből újra csatolhatod."
+                        self, "Video not found",
+                        f"The video attached to the project was not found:\n\n{video_path}\n\n"
+                        "The video has been detached. You can reattach it from File → Import → Video."
                     )
             
             self._update_title()
             self._update_ui_state()
-            self.statusBar().showMessage("Projekt megnyitva", 3000)
+            self.statusBar().showMessage("Project opened", 3000)
             
-            # Plugin esemény
+            # Plugin event
             if project is not None:
                 for plugin in self.plugin_manager.get_ui_plugins():
                     plugin.on_project_opened(project)
                 
         except Exception as e:
-            QMessageBox.critical(self, "Hiba", f"Nem sikerült megnyitni: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to open: {e}")
     
     def open_project_file(self, file_path: str):
         """
-        Projekt megnyitása fájl elérési úttal (pl. parancssorból).
+        Open project from file path (e.g., from command line).
         
         Args:
-            file_path: Projekt fájl elérési útja
+            file_path: Project file path
         """
         if not self._check_save_changes():
             return
@@ -858,7 +858,7 @@ class MainWindow(QMainWindow):
         if Path(file_path).exists():
             self._do_open_project(file_path)
         else:
-            QMessageBox.critical(self, "Hiba", f"A fájl nem található:\n{file_path}")
+            QMessageBox.critical(self, "Error", f"File not found:\n{file_path}")
     
     @Slot()
     def _on_save_project(self) -> bool:
@@ -871,10 +871,10 @@ class MainWindow(QMainWindow):
         try:
             self.project_manager.save_project()
             self._update_title()
-            self.statusBar().showMessage("Projekt mentve", 3000)
+            self.statusBar().showMessage("Project saved", 3000)
             return True
         except Exception as e:
-            QMessageBox.critical(self, "Hiba", f"Mentési hiba: {e}")
+            QMessageBox.critical(self, "Error", f"Save error: {e}")
             return False
     
     @Slot()
@@ -882,12 +882,12 @@ class MainWindow(QMainWindow):
         if not self.project_manager.is_open:
             return False
         
-        # Kezdőmappa a beállításokból
+        # Starting directory from settings
         start_dir = self.settings_manager.default_save_path or ""
-        default_file = Path(start_dir) / f"projekt{PROJECT_EXTENSION}" if start_dir else f"projekt{PROJECT_EXTENSION}"
+        default_file = Path(start_dir) / f"project{PROJECT_EXTENSION}" if start_dir else f"project{PROJECT_EXTENSION}"
         
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Projekt mentése", str(default_file), get_project_filter()
+            self, "Save Project", str(default_file), get_project_filter()
         )
         
         if file_path:
@@ -898,10 +898,10 @@ class MainWindow(QMainWindow):
                 # Pass the path to save_project which handles the file creation
                 self.project_manager.save_project(Path(file_path))
                 self._update_title()
-                self.statusBar().showMessage("Projekt mentve", 3000)
+                self.statusBar().showMessage("Project saved", 3000)
                 return True
             except Exception as e:
-                QMessageBox.critical(self, "Hiba", f"Mentési hiba: {e}")
+                QMessageBox.critical(self, "Error", f"Save error: {e}")
         return False
     
     @Slot()
@@ -909,7 +909,7 @@ class MainWindow(QMainWindow):
         if not self.project_manager.is_open:
             return
         
-        # Kezdőmappa a beállításokból
+        # Starting directory from settings
         start_dir = self.settings_manager.default_save_path or ""
         
         file_path, _ = QFileDialog.getOpenFileName(self, t("menu.file.import_srt").replace("...", ""), start_dir, get_srt_filter())
@@ -937,7 +937,7 @@ class MainWindow(QMainWindow):
         if not self.project_manager.is_open:
             return
         
-        # Kezdőmappa a beállításokból
+        # Starting directory from settings
         start_dir = self.settings_manager.default_save_path or ""
         
         file_path, _ = QFileDialog.getOpenFileName(self, t("menu.file.import_video").replace("...", ""), start_dir, get_video_filter())
@@ -982,9 +982,9 @@ class MainWindow(QMainWindow):
         if not self.project_manager.is_open:
             return
         
-        # Kezdőmappa a beállításokból
+        # Starting directory from settings
         start_dir = self.settings_manager.default_save_path or ""
-        default_file = Path(start_dir) / "forditas.srt" if start_dir else "forditas.srt"
+        default_file = Path(start_dir) / "translation.srt" if start_dir else "translation.srt"
         
         file_path, _ = QFileDialog.getSaveFileName(self, t("menu.file.export_srt").replace("...", ""), str(default_file), get_srt_filter())
         
@@ -999,7 +999,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, t("messages.error"), t("messages.export_error", error=str(e)))
     
     def _on_plugin_export(self, plugin):
-        """Plugin export végrehajtása."""
+        """Execute plugin export."""
         if not self.project_manager.is_open or self.project_manager.project is None:
             return
         
@@ -1007,7 +1007,7 @@ class MainWindow(QMainWindow):
         default_name = project.get_display_title()
         default_name = "".join(c for c in default_name if c.isalnum() or c in " -_")
         
-        # Kezdőmappa a beállításokból
+        # Starting directory from settings
         start_dir = self.settings_manager.default_save_path or ""
         default_file = Path(start_dir) / f"{default_name}{plugin.file_extension}" if start_dir else f"{default_name}{plugin.file_extension}"
         
@@ -1071,14 +1071,14 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_app_settings(self):
-        """Alkalmazás beállítások dialógus."""
+        """Application settings dialog."""
         from dubsync.ui.settings_dialog import SettingsDialog
         
         dialog = SettingsDialog(parent=self, plugin_manager=self.plugin_manager)
         dialog.theme_changed.connect(self._apply_theme)
         
         if dialog.exec():
-            # Beállítások mentve
+            # Settings saved
             self.statusBar().showMessage(t("messages.settings_saved"), 3000)
     
     @Slot()
@@ -1114,7 +1114,7 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_insert_cue_before(self):
-        """Sor beszúrása az aktuális elé."""
+        """Insert cue before the current one."""
         if not self.project_manager.is_open:
             return
         
@@ -1133,7 +1133,7 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_insert_cue_after(self):
-        """Sor beszúrása az aktuális mögé."""
+        """Insert cue after the current one."""
         if not self.project_manager.is_open:
             return
         
@@ -1273,21 +1273,21 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_about(self):
-        """Névjegy - Beállítások Névjegy fülét nyitja meg."""
+        """About - Opens the About tab in Settings."""
         from dubsync.ui.settings_dialog import SettingsDialog
         dialog = SettingsDialog(self, initial_tab="about")
         dialog.exec()
     
     @Slot()
     def _on_tutorial(self):
-        """Tutorial ablak megnyitása."""
+        """Open tutorial window."""
         from dubsync.ui.dialogs import TutorialDialog
         dialog = TutorialDialog(self)
         dialog.exec()
     
     @Slot()
     def _toggle_fullscreen(self):
-        """Teljes képernyő váltás."""
+        """Toggle fullscreen mode."""
         if self.isFullScreen():
             self.showNormal()
             self.action_fullscreen.setChecked(False)
@@ -1306,7 +1306,7 @@ class MainWindow(QMainWindow):
             subtitle_text = cue.translated_text or cue.source_text
             self.video_player.set_subtitle(subtitle_text)
             
-            # Plugin értesítés
+            # Plugin notification
             self._notify_plugins_cue_selected(cue)
     
     @Slot(int)
@@ -1348,7 +1348,7 @@ class MainWindow(QMainWindow):
         self._update_title()
     
     def _goto_next_cue(self):
-        """Ugrás a következő sorra."""
+        """Navigate to the next cue."""
         if not self.project_manager.is_open:
             return
         
@@ -1357,40 +1357,40 @@ class MainWindow(QMainWindow):
     
     def _goto_next_cue_from_index(self, current_index: int):
         """
-        Ugrás a következő sorra adott index alapján.
+        Navigate to the next cue based on the given index.
         
         Args:
-            current_index: Jelenlegi cue index
+            current_index: Current cue index
         """
         if not self.project_manager.is_open:
             return
         
         cues = self.project_manager.get_cues()
         
-        # Keressük a következő cue-t
+        # Search for the next cue
         for cue in cues:
             if cue.cue_index > current_index:
                 self.cue_list.select_cue(cue.id)
                 return
         
-        # Ha nincs több, maradunk az utolsón
+        # If there are no more, stay on the last one
         self.statusBar().showMessage(t("messages.last_cue"), 2000)
     
     @Slot()
     def _on_goto_next_cue(self):
-        """Navigáció a következő sorra (Ctrl+Down)."""
+        """Navigate to the next cue (Ctrl+Down)."""
         self._goto_next_cue()
     
     @Slot()
     def _on_goto_prev_cue(self):
-        """Navigáció az előző sorra (Ctrl+Up)."""
+        """Navigate to the previous cue (Ctrl+Up)."""
         if not self.project_manager.is_open:
             return
         
         current_index = self.cue_list.get_current_index()
         cues = self.project_manager.get_cues()
         
-        # Keressük az előző cue-t (visszafelé)
+        # Search for the previous cue (backwards)
         prev_cue = None
         for cue in cues:
             if cue.cue_index < current_index:

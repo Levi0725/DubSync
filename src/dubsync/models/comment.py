@@ -1,7 +1,7 @@
 """
 DubSync Comment Model
 
-Megjegyzések (kommentek) adatmodell és műveletek.
+Comment data model and operations.
 """
 
 from dataclasses import dataclass
@@ -17,14 +17,14 @@ if TYPE_CHECKING:
 @dataclass
 class Comment:
     """
-    Megjegyzés adatmodell.
+    Comment data model.
     
-    A megjegyzések cue-khoz kapcsolódnak és thread-ként működnek.
+    Comments are associated with cues and function as threads.
     """
     
     id: int = 0
     cue_id: int = 0
-    author: str = "Felhasználó"
+    author: str = "User"
     content: str = ""
     status: CommentStatus = CommentStatus.OPEN
     created_at: Optional[datetime] = None
@@ -32,12 +32,12 @@ class Comment:
     @classmethod
     def from_row(cls, row) -> "Comment":
         """
-        Adatbázis sorból Comment objektum létrehozása.
+        Create a Comment object from a database row.
         """
         return cls(
             id=row["id"],
             cue_id=row["cue_id"],
-            author=row["author"] or "Felhasználó",
+            author=row["author"] or "User",
             content=row["content"] or "",
             status=CommentStatus(row["status"]),
             created_at=row["created_at"],
@@ -46,14 +46,14 @@ class Comment:
     @classmethod
     def load_for_cue(cls, db: "Database", cue_id: int) -> List["Comment"]:
         """
-        Megjegyzések betöltése egy cue-hoz.
+        Load comments for a cue.
         
         Args:
-            db: Adatbázis kapcsolat
-            cue_id: Cue azonosító
+            db: Database connection
+            cue_id: Cue identifier
             
         Returns:
-            Megjegyzések listája időrendben
+            List of comments in chronological order
         """
         rows = db.fetchall(
             "SELECT * FROM comments WHERE cue_id = ? ORDER BY created_at",
@@ -64,7 +64,7 @@ class Comment:
     @classmethod
     def load_open_comments(cls, db: "Database", cue_id: int) -> List["Comment"]:
         """
-        Nyitott megjegyzések betöltése.
+        Load open comments.
         """
         rows = db.fetchall(
             "SELECT * FROM comments WHERE cue_id = ? AND status = ? ORDER BY created_at",
@@ -75,7 +75,7 @@ class Comment:
     @classmethod
     def count_open_for_cue(cls, db: "Database", cue_id: int) -> int:
         """
-        Nyitott megjegyzések száma egy cue-hoz.
+        Count of open comments for a cue.
         """
         row = db.fetchone(
             "SELECT COUNT(*) as count FROM comments WHERE cue_id = ? AND status = ?",
@@ -86,7 +86,7 @@ class Comment:
     @classmethod
     def count_all_open(cls, db: "Database", project_id: int = 1) -> int:
         """
-        Összes nyitott megjegyzés száma a projektben.
+        Count of all open comments in the project.
         """
         row = db.fetchone(
             """
@@ -101,7 +101,7 @@ class Comment:
     @classmethod
     def get_cue_ids_with_comments(cls, db: "Database", project_id: int = 1) -> List[int]:
         """
-        Azon cue-k azonosítói, amelyekhez van nyitott megjegyzés.
+        Cue IDs that have open comments.
         """
         rows = db.fetchall(
             """
@@ -115,7 +115,7 @@ class Comment:
     
     def save(self, db: "Database") -> None:
         """
-        Megjegyzés mentése adatbázisba.
+        Save comment to the database.
         """
         if self.id == 0:
             cursor = db.execute(
@@ -151,7 +151,7 @@ class Comment:
     
     def delete(self, db: "Database") -> None:
         """
-        Megjegyzés törlése.
+        Delete comment.
         """
         if self.id > 0:
             db.execute("DELETE FROM comments WHERE id = ?", (self.id,))
@@ -159,14 +159,14 @@ class Comment:
     
     def resolve(self, db: "Database") -> None:
         """
-        Megjegyzés lezárása.
+        Resolve comment.
         """
         self.status = CommentStatus.RESOLVED
         self.save(db)
     
     def reopen(self, db: "Database") -> None:
         """
-        Megjegyzés újranyitása.
+        Reopen comment.
         """
         self.status = CommentStatus.OPEN
         self.save(db)
@@ -174,13 +174,13 @@ class Comment:
     @property
     def is_open(self) -> bool:
         """
-        Nyitott-e a megjegyzés.
+        Is the comment open?
         """
         return self.status == CommentStatus.OPEN
     
     @property
     def is_resolved(self) -> bool:
         """
-        Lezárt-e a megjegyzés.
+        Is the comment resolved?
         """
         return self.status == CommentStatus.RESOLVED

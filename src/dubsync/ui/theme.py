@@ -1,7 +1,7 @@
 """
 DubSync Theme System
 
-Téma kezelés a felhasználói felülethez.
+Theme management for the user interface.
 """
 
 from typing import Dict, Optional
@@ -10,7 +10,7 @@ from enum import Enum
 
 
 class ThemeType(Enum):
-    """Beépített téma típusok."""
+    """Built-in theme types."""
     DARK = "dark"
     DARK_CONTRAST = "dark_contrast"
     LIGHT = "light"
@@ -19,43 +19,43 @@ class ThemeType(Enum):
 
 @dataclass
 class ThemeColors:
-    """Téma színek."""
-    # Alap színek
+    """Theme colors."""
+    # Basic colors
     background: str
     background_alt: str
     foreground: str
     foreground_muted: str
     
-    # Felületi elemek
+    # Surface elements
     surface: str
     surface_hover: str
     surface_selected: str
     border: str
     
-    # Akcentus színek
+    # Accent colors
     primary: str
     primary_hover: str
     secondary: str
     
-    # Státusz színek
+    # Status colors
     success: str
     warning: str
     error: str
     info: str
     
-    # Lip-sync színek
+    # Lip-sync colors
     lipsync_good: str
     lipsync_warning: str
     lipsync_error: str
     
-    # Egyéb
+    # Other
     input_background: str
     input_border: str
     scrollbar: str
     scrollbar_hover: str
 
 
-# Beépített témák
+# Built-in themes
 THEMES: Dict[ThemeType, ThemeColors] = {
     ThemeType.DARK: ThemeColors(
         background="#1e1e1e",
@@ -130,7 +130,7 @@ THEMES: Dict[ThemeType, ThemeColors] = {
         scrollbar_hover="#a0a0a0",
     ),
     ThemeType.CUSTOM: ThemeColors(
-        # Alapból dark téma, de a felhasználó módosíthatja
+        # Default to dark theme, but user can modify
         background="#1e1e1e",
         background_alt="#252526",
         foreground="#d4d4d4",
@@ -159,23 +159,23 @@ THEMES: Dict[ThemeType, ThemeColors] = {
 
 def get_theme(theme_type: ThemeType) -> ThemeColors:
     """
-    Téma színek lekérése.
+    Get theme colors.
     
     Args:
-        theme_type: Téma típus
+        theme_type: Theme type
     
     Returns:
-        ThemeColors objektum
+        ThemeColors object
     """
     return THEMES.get(theme_type, THEMES[ThemeType.DARK])
 
 
 def generate_stylesheet(colors: ThemeColors) -> str:
     """
-    Qt stylesheet generálása téma színekből.
+    Generate Qt stylesheet from theme colors.
     
     Args:
-        colors: ThemeColors objektum
+        colors: ThemeColors object
     
     Returns:
         Qt stylesheet string
@@ -637,7 +637,7 @@ QSlider::handle:horizontal:hover {{
 
 class ThemeManager:
     """
-    Téma kezelő singleton.
+    Theme manager singleton.
     """
     _instance: Optional["ThemeManager"] = None
     
@@ -666,14 +666,14 @@ class ThemeManager:
         return get_theme(self._current_theme)
     
     def set_theme(self, theme_type: ThemeType):
-        """Téma beállítása."""
+        """Set theme."""
         self._current_theme = theme_type
     
     def set_custom_colors(self, colors: ThemeColors):
-        """Egyedi színek beállítása."""
+        """Set custom colors."""
         self._custom_colors = colors
         self._current_theme = ThemeType.CUSTOM
     
     def get_stylesheet(self) -> str:
-        """Aktuális stylesheet lekérése."""
+        """Get current stylesheet."""
         return generate_stylesheet(self.colors)

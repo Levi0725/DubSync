@@ -1,8 +1,8 @@
 """
 DubSync Project Manager
 
-Projekt kezelő szolgáltatás.
-Projekt létrehozás, megnyitás, mentés, import műveletek.
+Project management service.
+Project creation, opening, saving, import operations.
 """
 
 from pathlib import Path
@@ -20,14 +20,14 @@ from dubsync.utils.constants import PROJECT_EXTENSION
 
 class ProjectManager:
     """
-    Projekt kezelő osztály.
+    Project manager class.
     
-    Kezeli a projekt fájlokat és az adatbázis kapcsolatot.
+    Manages project files and database connection.
     """
     
     def __init__(self):
         """
-        Inicializálás.
+        Initialization.
         """
         self.db: Optional[Database] = None
         self.project_path: Optional[Path] = None
@@ -36,43 +36,43 @@ class ProjectManager:
     
     @property
     def is_open(self) -> bool:
-        """Van-e megnyitott projekt."""
+        """Is there an open project."""
         return self.db is not None and self.project is not None
     
     @property
     def is_dirty(self) -> bool:
-        """Vannak-e mentetlen változások."""
+        """Are there unsaved changes."""
         return self._dirty
     
     def mark_dirty(self):
-        """Projekt megjelölése módosítottként."""
+        """Mark project as modified."""
         self._dirty = True
     
     def mark_clean(self):
-        """Projekt megjelölése mentettként."""
+        """Mark project as saved."""
         self._dirty = False
     
     def _get_db(self) -> Database:
         """Get database, raising if not open."""
         if self.db is None:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         return self.db
     
     def _get_project(self) -> Project:
         """Get project, raising if not open."""
         if self.project is None:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         return self.project
     
     def new_project(self, project_path: Optional[Path] = None) -> Project:
         """
-        Új projekt létrehozása.
+        Create a new project.
         
         Args:
-            project_path: Projekt fájl elérési útja (opcionális)
+            project_path: Project file path (optional)
             
         Returns:
-            Új Project objektum
+            New Project object
         """
         # Close existing project
         self.close()
@@ -86,9 +86,9 @@ class ProjectManager:
         self.project = Project.load(self.db, 1)
         
         if self.project is None:
-            raise ValueError("Nem sikerült létrehozni a projektet")
+            raise ValueError("Failed to create project")
         
-        # Alapértelmezett fordító név beállítása a beállításokból
+        # Set default translator name from settings
         settings = SettingsManager()
         default_name = settings.default_author_name
         if default_name and not self.project.translator:
@@ -101,19 +101,19 @@ class ProjectManager:
     
     def open_project(self, project_path: Path) -> Project:
         """
-        Meglévő projekt megnyitása.
+        Open existing project.
         
         Args:
-            project_path: Projekt fájl elérési útja
+            project_path: Project file path
             
         Returns:
-            Project objektum
+            Project object
             
         Raises:
-            FileNotFoundError: Ha a fájl nem létezik
+            FileNotFoundError: If the file does not exist
         """
         if not project_path.exists():
-            raise FileNotFoundError(f"A projekt nem található: {project_path}")
+            raise FileNotFoundError(f"Project not found: {project_path}")
         
         # Close existing project
         self.close()
@@ -125,26 +125,26 @@ class ProjectManager:
         # Load project
         self.project = Project.load(self.db, 1)
         if self.project is None:
-            raise ValueError("Érvénytelen projekt fájl")
+            raise ValueError("Invalid project file")
         
         self._dirty = False
         return self.project
     
     def save_project(self, project_path: Optional[Path] = None) -> Path:
         """
-        Projekt mentése.
+        Save project.
         
         Args:
-            project_path: Új elérési út (Save As)
+            project_path: New file path (Save As)
             
         Returns:
-            Mentett fájl elérési útja
+            Saved file path
             
         Raises:
-            ValueError: Ha nincs megnyitott projekt
+            ValueError: If there is no open project
         """
         if not self.is_open:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
 
         db = self._get_db()
         proj = self._get_project()
@@ -153,7 +153,7 @@ class ProjectManager:
         target_path = project_path or self.project_path
 
         if target_path is None:
-            raise ValueError("Nincs megadva mentési útvonal")
+            raise ValueError("No save path specified")
 
         # Save project data first
         proj.save(db)
@@ -182,7 +182,7 @@ class ProjectManager:
     
     def close(self):
         """
-        Projekt bezárása.
+        Close project.
         """
         if self.db:
             self.db.close()
@@ -199,21 +199,21 @@ class ProjectManager:
         calculate_lipsync: bool = True,
     ) -> Tuple[int, List[str]]:
         """
-        SRT fájl importálása a projektbe.
+        Import SRT file into project.
         
         Args:
-            srt_path: SRT fájl elérési útja
-            clear_existing: Meglévő cue-k törlése
-            calculate_lipsync: Lip-sync számítás
+            srt_path: SRT file path
+            clear_existing: Clear existing cues
+            calculate_lipsync: Lip-sync calculation
             
         Returns:
-            Tuple (importált cue-k száma, hibák listája)
+            Tuple (number of imported cues, list of errors)
             
         Raises:
-            ValueError: Ha nincs megnyitott projekt
+            ValueError: If there is no open project
         """
         if not self.is_open:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         
         db = self._get_db()
         proj = self._get_project()
@@ -222,7 +222,7 @@ class ProjectManager:
         cues, errors = parse_srt_file(srt_path, proj.id)
         
         if not cues:
-            return 0, errors or ["Nem található felirat a fájlban"]
+            return 0, errors or ["No subtitles found in the file"]
         
         # Clear existing cues if requested
         if clear_existing:
@@ -242,38 +242,38 @@ class ProjectManager:
     
     def get_cues(self) -> List[Cue]:
         """
-        Összes cue lekérése a projektből.
+        Get all cues from the project.
         
         Returns:
-            Cue lista
+            List of cues
         """
         return Cue.load_all(self._get_db(), self._get_project().id) if self.is_open else []
     
     def get_cue(self, cue_id: int) -> Optional[Cue]:
         """
-        Egyetlen cue lekérése.
+        Get a single cue by ID.
         """
         return Cue.load_by_id(self._get_db(), cue_id) if self.is_open else None
     
     def save_cue(self, cue: Cue) -> None:
         """
-        Cue mentése.
+        Save a cue.
         """
         if not self.is_open:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         
         cue.save(self._get_db())
         self.mark_dirty()
     
     def delete_cue(self, cue_id: int) -> None:
         """
-        Cue törlése azonosító alapján.
+        Delete a cue by ID.
         
         Args:
-            cue_id: Cue azonosító
+            cue_id: Cue ID
         """
         if not self.is_open:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         
         db = self._get_db()
         proj = self._get_project()
@@ -285,16 +285,16 @@ class ProjectManager:
     
     def add_new_cue(self, time_in_ms: Optional[int] = None) -> Cue:
         """
-        Új cue hozzáadása a lista végére.
+        Add a new cue to the end of the list.
         
         Args:
-            time_in_ms: Opcionális kezdési idő (pl. videó pozícióból)
+            time_in_ms: Optional start time (e.g., from video position)
         
         Returns:
-            Új Cue objektum
+            New Cue object
         """
         if not self.is_open:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         
         db = self._get_db()
         proj = self._get_project()
@@ -354,16 +354,16 @@ class ProjectManager:
 
     def insert_cue_at(self, index: int) -> Cue:
         """
-        Cue beszúrása adott pozícióba.
+        Insert a cue at a given position.
         
         Args:
-            index: Pozíció (1-től)
+            index: Position (1-based)
             
         Returns:
-            Új Cue objektum
+            New Cue object
         """
         if not self.is_open:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         
         db = self._get_db()
         proj = self._get_project()
@@ -407,13 +407,13 @@ class ProjectManager:
     
     def update_project(self, **kwargs) -> None:
         """
-        Projekt adatok frissítése.
+        Update project data.
         
         Args:
-            **kwargs: Frissítendő mezők
+            **kwargs: Fields to update
         """
         if not self.is_open:
-            raise ValueError("Nincs megnyitott projekt")
+            raise ValueError("No open project")
         
         db = self._get_db()
         proj = self._get_project()
@@ -427,10 +427,10 @@ class ProjectManager:
     
     def recalculate_all_lipsync(self) -> int:
         """
-        Összes cue lip-sync újraszámítása.
+        Recalculate lip-sync for all cues.
         
         Returns:
-            Frissített cue-k száma
+            Number of updated cues
         """
         if not self.is_open:
             return 0
@@ -448,10 +448,10 @@ class ProjectManager:
     
     def get_statistics(self) -> dict:
         """
-        Projekt statisztikák lekérése.
+        Get project statistics.
         
         Returns:
-            Dict a statisztikákkal
+            Dict with statistics
         """
         if not self.is_open:
             return {}
@@ -481,20 +481,20 @@ class ProjectManager:
 
 def get_project_filter() -> str:
     """
-    Projekt fájl szűrő dialógusokhoz.
+    Project file filter for dialogs.
     """
-    return f"DubSync projekt (*{PROJECT_EXTENSION});;Minden fájl (*.*)"
+    return f"DubSync project (*{PROJECT_EXTENSION});;All files (*.*)"
 
 
 def get_srt_filter() -> str:
     """
-    SRT fájl szűrő dialógusokhoz.
+    SRT file filter for dialogs.
     """
-    return "SRT felirat (*.srt);;Minden fájl (*.*)"
+    return "SRT subtitle (*.srt);;All files (*.*)"
 
 
 def get_video_filter() -> str:
     """
-    Videó fájl szűrő dialógusokhoz.
+    Video file filter for dialogs.
     """
-    return "Videó fájlok (*.mp4 *.mkv *.avi *.mov *.webm);;Minden fájl (*.*)"
+    return "Video files (*.mp4 *.mkv *.avi *.mov *.webm);;All files (*.*)"

@@ -1,7 +1,7 @@
 """
 DubSync SRT Parser
 
-SRT fájlok beolvasása és feldolgozása.
+SRT files reading and processing.
 """
 
 import re
@@ -16,7 +16,7 @@ from dubsync.utils.time_utils import timecode_to_ms
 @dataclass
 class SRTEntry:
     """
-    Nyers SRT bejegyzés a parse-olás után.
+    Raw SRT entry after parsing.
     """
     index: int
     time_in_ms: int
@@ -25,7 +25,7 @@ class SRTEntry:
     
     def to_cue(self, project_id: int = 1) -> Cue:
         """
-        SRT bejegyzés konvertálása Cue objektummá.
+        Convert SRT entry to Cue object.
         """
         return Cue(
             project_id=project_id,
@@ -38,13 +38,13 @@ class SRTEntry:
 
 class SRTParser:
     """
-    SRT fájl parser.
+    SRT file parser.
     
-    Támogatja:
-    - Standard SRT formátum
-    - UTF-8 kódolás (BOM-mal és anélkül)
-    - Többsoros szövegblokkok
-    - Különböző sortörés formátumok (\\n, \\r\\n)
+    Supports:
+    - Standard SRT format
+    - UTF-8 encoding (with and without BOM)
+    - Multi-line text blocks
+    - Various line ending formats (\n, \r\n)
     """
     
     # SRT index pattern (number line)
@@ -61,17 +61,17 @@ class SRTParser:
     
     def parse_file(self, file_path: Path) -> List[SRTEntry]:
         """
-        SRT fájl beolvasása és feldolgozása.
+        Read and process SRT file.
         
         Args:
-            file_path: SRT fájl elérési útja
+            file_path: Path to the SRT file
             
         Returns:
-            SRTEntry objektumok listája
+            List of SRTEntry objects
             
         Raises:
-            FileNotFoundError: Ha a fájl nem található
-            UnicodeDecodeError: Ha a kódolás nem megfelelő
+            FileNotFoundError: If the file is not found
+            UnicodeDecodeError: If the encoding is incorrect
         """
         self.entries = []
         self.errors = []
@@ -90,20 +90,20 @@ class SRTParser:
         if content is None:
             raise UnicodeDecodeError(
                 "utf-8", b"", 0, 1, 
-                f"Nem sikerült beolvasni a fájlt: {file_path}"
+                f"Failed to read the file: {file_path}"
             )
         
         return self.parse_content(content)
     
     def parse_content(self, content: str) -> List[SRTEntry]:
         """
-        SRT tartalom feldolgozása stringből.
+        Process SRT content from a string.
         
         Args:
-            content: SRT tartalom string
+            content: SRT content string
             
         Returns:
-            SRTEntry objektumok listája
+            List of SRTEntry objects
         """
         self.entries = []
         self.errors = []
@@ -122,14 +122,14 @@ class SRTParser:
     
     def _parse_block(self, block: str, block_num: int) -> Optional[SRTEntry]:
         """
-        Egyetlen SRT blokk feldolgozása.
+        Process a single SRT block.
         
         Args:
-            block: SRT blokk string
-            block_num: Blokk sorszáma (hibakezeléshez)
+            block: SRT block string
+            block_num: Block number (for error handling)
             
         Returns:
-            SRTEntry vagy None, ha hiba történt
+            SRTEntry or None if an error occurred
         """
         lines = block.strip().split("\n")
         
@@ -182,12 +182,12 @@ class SRTParser:
     
     def _clean_text(self, text: str) -> str:
         """
-        SRT szöveg tisztítása.
+        Clean SRT text.
         
-        Eltávolít:
-        - HTML tag-eket (<i>, <b>, stb.)
-        - ASS stílus kódokat ({\\an8}, stb.)
-        - Felesleges whitespace-t
+        Removes:
+        - HTML tags (<i>, <b>, etc.)
+        - ASS style codes ({\\an8}, etc.)
+        - Excessive whitespace
         """
         # Remove HTML tags
         text = re.sub(r"<[^>]+>", "", text)
@@ -202,33 +202,33 @@ class SRTParser:
     
     def get_cues(self, project_id: int = 1) -> List[Cue]:
         """
-        Parse-olt bejegyzések konvertálása Cue objektumokká.
+        Convert parsed entries to Cue objects.
         
         Args:
-            project_id: Projekt azonosító
+            project_id: Project identifier
             
         Returns:
-            Cue objektumok listája
+            List of Cue objects
         """
         return [entry.to_cue(project_id) for entry in self.entries]
     
     def has_errors(self) -> bool:
         """
-        Voltak-e hibák a parse-olás során.
+        Were there any errors during parsing.
         """
         return len(self.errors) > 0
 
 
 def parse_srt_file(file_path: Path, project_id: int = 1) -> Tuple[List[Cue], List[str]]:
     """
-    Convenience function SRT fájl parse-olásához.
+    Convenience function for parsing an SRT file.
     
     Args:
-        file_path: SRT fájl elérési útja
-        project_id: Projekt azonosító
+        file_path: Path to the SRT file
+        project_id: Project identifier
         
     Returns:
-        Tuple (Cue lista, hibalista)
+        Tuple (List of Cue objects, List of errors)
     """
     parser = SRTParser()
     parser.parse_file(file_path)
@@ -237,14 +237,14 @@ def parse_srt_file(file_path: Path, project_id: int = 1) -> Tuple[List[Cue], Lis
 
 def export_to_srt(cues: List[Cue], use_translated: bool = True) -> str:
     """
-    Cue-k exportálása SRT formátumba.
+    Export cues to SRT format.
     
     Args:
-        cues: Cue objektumok listája
-        use_translated: Ha True, fordított szöveget használ
+        cues: List of Cue objects
+        use_translated: If True, use translated text
         
     Returns:
-        SRT tartalom string
+        SRT content string
     """
     from dubsync.utils.time_utils import ms_to_timecode
 

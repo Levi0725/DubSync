@@ -192,11 +192,15 @@
       "dark_contrast": "🌑 Dark contrast",
       "light": "☀️ Light",
       "custom": "🎨 Custom",
+      "custom_colors": "Custom colors",
       "primary": "Primary color:",
       "background": "Background:",
       "surface": "Surface:",
       "foreground": "Text:",
-      "choose": "Choose..."
+      "choose": "Choose...",
+      "preview": "Preview",
+      "preview_text": "This is how the text will look...",
+      "color_picker_title": "Choose {color} color"
     },
     "confirm_close": {
       "title": "Unsaved changes",
@@ -217,7 +221,9 @@
     "tabs": {
       "general": "General",
       "plugins": "Plugins",
-      "download": "Download plugins"
+      "download": "Download plugins",
+      "theme": "Theme",
+      "about": "About"
     },
     "general": {
       "paths": "Default paths",
@@ -250,6 +256,10 @@
       "show_on_start": "Show on startup",
       "show_on_start_tooltip": "If enabled, plugin panel appears automatically on application start",
       "plugin_settings": "Plugin settings"
+    },
+    "download": {
+      "wip_title": "🚧 Under Development 🚧",
+      "wip_message": "This feature will be available soon!\n\nHere you will be able to browse and install plugins\nfrom a central GitHub repository."
     }
   },
   "messages": {

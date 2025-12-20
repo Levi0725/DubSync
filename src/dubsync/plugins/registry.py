@@ -1,7 +1,7 @@
 """
 DubSync Plugin Registry
 
-Plugin felfedezés és regisztrálás.
+Plugin discovery and registration.
 """
 
 import importlib
@@ -16,17 +16,17 @@ from dubsync.services.settings_manager import SettingsManager
 
 class PluginRegistry:
     """
-    Plugin registry és loader.
+    Plugin registry and loader.
     
-    Pluginok felfedezése és betöltése a plugins könyvtárból.
+    Plugin discovery and loading from the plugins directory.
     """
     
     def __init__(self, manager: PluginManager):
         """
-        Inicializálás.
+        Initialization.
         
         Args:
-            manager: PluginManager objektum
+            manager: PluginManager object
         """
         self.manager = manager
         self.settings = SettingsManager()
@@ -34,20 +34,20 @@ class PluginRegistry:
     
     def add_plugin_path(self, path: Path) -> None:
         """
-        Plugin keresési útvonal hozzáadása.
+        Add plugin search path.
         
         Args:
-            path: Könyvtár útvonal
+            path: Directory path
         """
         if path.is_dir() and path not in self._plugin_paths:
             self._plugin_paths.append(path)
     
     def discover_plugins(self) -> List[str]:
         """
-        Pluginok felfedezése az összes keresési útvonalon.
+        Discover plugins in all search paths.
         
         Returns:
-            Talált plugin fájlok listája
+            List of found plugin files and packages
         """
         discovered = []
 
@@ -72,13 +72,13 @@ class PluginRegistry:
     
     def load_plugin_from_file(self, file_path: Path) -> Optional[PluginInterface]:
         """
-        Plugin betöltése fájlból.
+        Load plugin from file.
         
         Args:
-            file_path: Python fájl elérési útja
+            file_path: Path to the Python file
             
         Returns:
-            Plugin objektum vagy None
+            Plugin object or None
         """
         try:
             # Generate unique module name
@@ -105,7 +105,7 @@ class PluginRegistry:
             # Instantiate plugin
             plugin = plugin_class()
             
-            # Plugin könyvtár beállítása
+            # Set plugin directory
             plugin._plugin_dir = file_path.parent
             
             return plugin
@@ -116,13 +116,13 @@ class PluginRegistry:
     
     def _find_plugin_class(self, module) -> Optional[Type[PluginInterface]]:
         """
-        Plugin osztály keresése a modulban.
+        Find plugin class in the module.
         
         Args:
-            module: Python modul
+            module: Python module
             
         Returns:
-            Plugin osztály vagy None
+            Plugin class or None
         """
         # Look for class named "Plugin"
         if hasattr(module, "Plugin"):
@@ -145,15 +145,15 @@ class PluginRegistry:
     
     def load_all_plugins(self) -> int:
         """
-        Összes felfedezett plugin betöltése.
+        Load all discovered plugins.
         
         Returns:
-            Sikeresen betöltött pluginok száma
+            Number of successfully loaded plugins
         """
         loaded = 0
         discovered = self.discover_plugins()
         
-        # Beállításokból engedélyezett pluginok
+        # Plugins enabled in settings
         enabled_plugins = self.settings.enabled_plugins
         
         for plugin_path in discovered:
@@ -168,7 +168,7 @@ class PluginRegistry:
                 continue
             
             if plugin:
-                # Plugin engedélyezett-e?
+                # Is the plugin enabled?
                 is_enabled = plugin.info.id in enabled_plugins
                 
                 if self.manager.register(plugin, enabled=is_enabled):

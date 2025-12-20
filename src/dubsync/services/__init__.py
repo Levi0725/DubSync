@@ -1,7 +1,7 @@
 """
 DubSync Services
 
-Szolgáltatások és üzleti logika.
+Service and business logic.
 """
 
 from dubsync.services.srt_parser import SRTParser, parse_srt_file

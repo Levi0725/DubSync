@@ -1,7 +1,7 @@
 """
 DubSync Cue Model
 
-Cue (felirat/szinkronszöveg) adatmodell és műveletek.
+Cue (subtitle/dubbing text) data model and operations.
 """
 
 from dataclasses import dataclass, field
@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 @dataclass
 class Cue:
     """
-    Cue (felirat/szinkronszöveg) adatmodell.
+    Cue (subtitle/dubbing text) data model.
     
-    Egy cue egy szinkronszöveg egység a time_in és time_out között.
+    A cue is a unit of dubbing text between time_in and time_out.
     """
     
     id: int = 0
@@ -32,7 +32,7 @@ class Cue:
     translated_text: str = ""
     character_name: str = ""
     notes: str = ""
-    sfx_notes: str = ""  # Háttérhangok, SFX
+    sfx_notes: str = ""  # Background sounds, SFX
     status: CueStatus = CueStatus.NEW
     lip_sync_ratio: Optional[float] = None
     created_at: Optional[datetime] = None
@@ -41,7 +41,7 @@ class Cue:
     @classmethod
     def from_row(cls, row) -> "Cue":
         """
-        Adatbázis sorból Cue objektum létrehozása.
+        Create a Cue object from a database row.
         """
         return cls(
             id=row["id"],
@@ -63,14 +63,14 @@ class Cue:
     @classmethod
     def load_all(cls, db: "Database", project_id: int = 1) -> List["Cue"]:
         """
-        Összes cue betöltése egy projektből.
+        Load all cues from a project.
         
         Args:
-            db: Adatbázis kapcsolat
-            project_id: Projekt azonosító
+            db: Database connection
+            project_id: Project identifier
             
         Returns:
-            Cue-k listája időrendben
+            List of cues in chronological order
         """
         rows = db.fetchall(
             "SELECT * FROM cues WHERE project_id = ? ORDER BY cue_index",
@@ -81,7 +81,7 @@ class Cue:
     @classmethod
     def load_by_id(cls, db: "Database", cue_id: int) -> Optional["Cue"]:
         """
-        Egyetlen cue betöltése azonosító alapján.
+        Load a single cue by its identifier.
         """
         row = db.fetchone("SELECT * FROM cues WHERE id = ?", (cue_id,))
         return cls.from_row(row) if row else None
@@ -89,15 +89,15 @@ class Cue:
     @classmethod
     def find_at_time(cls, db: "Database", time_ms: int, project_id: int = 1) -> Optional["Cue"]:
         """
-        Cue keresése adott időpontban.
+        Search for a cue at a given time.
         
         Args:
-            db: Adatbázis kapcsolat
-            time_ms: Időpont milliszekundumban
-            project_id: Projekt azonosító
+            db: Database connection
+            time_ms: Time in milliseconds
+            project_id: Project identifier
             
         Returns:
-            A cue, amely tartalmazza az időpontot, vagy None
+            A cue that contains the time, or None
         """
         row = db.fetchone(
             """
@@ -113,7 +113,7 @@ class Cue:
     @classmethod
     def find_next_empty(cls, db: "Database", from_index: int = 0, project_id: int = 1) -> Optional["Cue"]:
         """
-        Következő fordítatlan cue keresése.
+        Find the next untranslated cue.
         """
         row = db.fetchone(
             """
@@ -131,7 +131,7 @@ class Cue:
     def find_next_lipsync_issue(cls, db: "Database", from_index: int = 0, 
                                  project_id: int = 1, threshold: float = 1.05) -> Optional["Cue"]:
         """
-        Következő lip-sync problémás cue keresése.
+        Find the next lip-sync issue cue.
         """
         row = db.fetchone(
             """
@@ -148,10 +148,10 @@ class Cue:
     @classmethod
     def count_by_status(cls, db: "Database", project_id: int = 1) -> dict:
         """
-        Cue-k számlálása státusz szerint.
+        Count cues by status.
         
         Returns:
-            Dict a státuszokkal és számokkal
+            Dict with statuses and counts
         """
         rows = db.fetchall(
             """
@@ -164,7 +164,7 @@ class Cue:
     
     def save(self, db: "Database") -> None:
         """
-        Cue mentése adatbázisba.
+        Save cue to the database.
         """
         if self.id == 0:
             cursor = db.execute(
@@ -223,7 +223,7 @@ class Cue:
     
     def delete(self, db: "Database") -> None:
         """
-        Cue törlése adatbázisból.
+        Delete cue from the database.
         """
         if self.id > 0:
             db.execute("DELETE FROM cues WHERE id = ?", (self.id,))
@@ -232,41 +232,41 @@ class Cue:
     @property
     def duration_ms(self) -> int:
         """
-        Cue időtartama milliszekundumban.
+        Cue duration in milliseconds.
         """
         return get_duration_ms(self.time_in_ms, self.time_out_ms)
     
     @property
     def duration_seconds(self) -> float:
         """
-        Cue időtartama másodpercben.
+        Cue duration in seconds.
         """
         return self.duration_ms / 1000.0
     
     @property
     def time_in_timecode(self) -> str:
         """
-        Kezdő időkód SRT formátumban.
+        Start timecode in SRT format.
         """
         return ms_to_timecode(self.time_in_ms)
     
     @property
     def time_out_timecode(self) -> str:
         """
-        Záró időkód SRT formátumban.
+        End timecode in SRT format.
         """
         return ms_to_timecode(self.time_out_ms)
     
     @property
     def display_text(self) -> str:
         """
-        Megjelenítendő szöveg (fordítás vagy forrás).
+        Display text (translation or source).
         """
         return self.translated_text or self.source_text
     
     def get_lip_sync_status(self) -> LipSyncStatus:
         """
-        Lip-sync állapot lekérése.
+        Get lip-sync status.
         """
         from dubsync.utils.constants import LIPSYNC_THRESHOLD_GOOD, LIPSYNC_THRESHOLD_WARNING
         
@@ -281,13 +281,13 @@ class Cue:
     
     def has_translation(self) -> bool:
         """
-        Van-e fordítás a cue-hoz.
+        Check if the cue has a translation.
         """
         return bool(self.translated_text and self.translated_text.strip())
     
     def is_complete(self) -> bool:
         """
-        Teljes-e a cue (van fordítás és jóváhagyva).
+        Check if the cue is complete (has translation and is approved).
         """
         return self.has_translation() and self.status == CueStatus.APPROVED
 
@@ -295,14 +295,14 @@ class Cue:
 @dataclass 
 class CueBatch:
     """
-    Több cue batch műveleteihez.
+    For batch operations on multiple cues.
     """
     cues: List[Cue] = field(default_factory=list)
     
     @classmethod
     def save_all(cls, db: "Database", cues: List[Cue]) -> None:
         """
-        Több cue mentése egyszerre (batch insert).
+        Save multiple cues at once (batch insert).
         """
         for cue in cues:
             cue.save(db)
@@ -310,7 +310,7 @@ class CueBatch:
     @classmethod
     def delete_all(cls, db: "Database", project_id: int = 1) -> None:
         """
-        Összes cue törlése egy projektből.
+        Delete all cues from a project.
         """
         db.execute("DELETE FROM cues WHERE project_id = ?", (project_id,))
         db.commit()
@@ -318,7 +318,7 @@ class CueBatch:
     @classmethod
     def reindex(cls, db: "Database", project_id: int = 1) -> None:
         """
-        Cue indexek újraszámozása.
+        Reindex cue indices.
         """
         cues = Cue.load_all(db, project_id)
         for i, cue in enumerate(cues, 1):

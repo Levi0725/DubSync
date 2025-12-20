@@ -1,7 +1,6 @@
 """
 DubSync i18n Plugin Support
 
-Segédfüggvények a pluginok i18n támogatásához.
 Helper functions for plugin i18n support.
 """
 
@@ -16,15 +15,15 @@ def create_plugin_translations(
     **other_languages: Dict[str, Any]
 ) -> None:
     """
-    Plugin fordítások regisztrálása.
+    Register plugin translations.
     
     Args:
-        plugin_id: Plugin azonosító
-        en: Angol fordítások (kötelező, ez a fallback)
-        hu: Magyar fordítások (opcionális)
-        **other_languages: További nyelvek (pl. de={...}, es={...})
+        plugin_id: Plugin identifier
+        en: English translations (required, this is the fallback)
+        hu: Hungarian translations (optional)
+        **other_languages: Additional languages (e.g., de={...}, es={...})
     
-    Példa:
+    Example:
         create_plugin_translations(
             "my_plugin",
             en={
@@ -61,14 +60,14 @@ def load_plugin_translations_from_locales_dir(
     locales_dir: Path
 ) -> None:
     """
-    Plugin fordítások betöltése a locales könyvtárból.
+    Load plugin translations from the locales directory.
     
     Args:
-        plugin_id: Plugin azonosító
-        locales_dir: Nyelvi fájlok könyvtára
+        plugin_id: Plugin identifier
+        locales_dir: Directory of language files
     
-    Példa:
-        Könyvtár struktúra:
+    Example:
+        Directory structure:
             my_plugin/
                 locales/
                     en.json
@@ -95,9 +94,9 @@ def load_plugin_translations_from_locales_dir(
 
 class TranslatablePlugin:
     """
-    Mixin osztály fordítható pluginokhoz.
+    Mixin class for translatable plugins.
     
-    Példa használat:
+    Example usage:
         class MyPlugin(UIPlugin, TranslatablePlugin):
             def initialize(self):
                 self.register_translations()
@@ -112,7 +111,7 @@ class TranslatablePlugin:
     
     def get_translations(self) -> Dict[str, Dict[str, Any]]:
         """
-        Plugin fordítások lekérése.
+        Get plugin translations.
         
         Override this method to provide translations.
         
@@ -122,7 +121,7 @@ class TranslatablePlugin:
         return {}
     
     def register_translations(self) -> None:
-        """Plugin fordítások regisztrálása."""
+        """Register plugin translations."""
         from dubsync.plugins.base import PluginInterface
 
         if not isinstance(self, PluginInterface):
@@ -141,14 +140,14 @@ class TranslatablePlugin:
     
     def t(self, key: str, **kwargs) -> str:
         """
-        Plugin szöveg fordítása.
+        Translate plugin text.
         
         Args:
-            key: Fordítási kulcs
-            **kwargs: Helyettesítő paraméterek
+            key: Translation key
+            **kwargs: Replacement parameters
             
         Returns:
-            Fordított szöveg
+            Translated text
         """
         from dubsync.plugins.base import PluginInterface
         
