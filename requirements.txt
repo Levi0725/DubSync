@@ -16,6 +16,9 @@ argostranslate>=1.9.0
 # Video Processing (optional, for advanced features)
 # ffmpeg-python>=0.2.0
 
+# Crash Reporting
+psutil>=5.9.0
+
 # Testing
 pytest>=7.4.0
 pytest-qt>=4.2.0

@@ -23,6 +23,7 @@ from dubsync.services.project_manager import (
 )
 from dubsync.services.pdf_export import PDFExporter
 from dubsync.services.settings_manager import SettingsManager
+from dubsync.services.crash_handler import log_activity, get_crash_handler
 from dubsync.ui.cue_list import CueListWidget
 from dubsync.ui.cue_editor import CueEditorWidget
 from dubsync.ui.video_player import VideoPlayerWidget
@@ -719,9 +720,9 @@ class MainWindow(QMainWindow):
     def _update_delete_mode_ui(self):
         """Update delete mode UI."""
         if self._delete_mode:
-            self._extracted_from__update_delete_mode_ui_4(t("message.delete_mode_on"), True)
+            self._extracted_from__update_delete_mode_ui_4(t("messages.delete_mode_on"), True)
         else:
-            self._extracted_from__update_delete_mode_ui_4(t("message.delete_mode_off"), False)
+            self._extracted_from__update_delete_mode_ui_4(t("messages.delete_mode_off"), False)
 
     # TODO Rename this here and in `_update_delete_mode_ui`
     def _extracted_from__update_delete_mode_ui_4(self, arg0, arg1):
@@ -783,16 +784,19 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_new_project(self):
+        log_activity("New project requested")
         if not self._check_save_changes():
             return
         self.project_manager.new_project()
         self._refresh_cue_list()
         self._update_title()
         self._update_ui_state()
+        log_activity("New project created")
         self.statusBar().showMessage(t("messages.project_created"), 3000)
     
     @Slot()
     def _on_open_project(self):
+        log_activity("Open project dialog requested")
         if not self._check_save_changes():
             return
         
@@ -813,9 +817,11 @@ class MainWindow(QMainWindow):
         Args:
             file_path: Project file path
         """
+        log_activity("Opening project", file_path)
         try:
             # sourcery skip: merge-nested-ifs
             self.project_manager.open_project(Path(file_path))
+            get_crash_handler().set_current_project(file_path)
             self._refresh_cue_list()
             
             project = self.project_manager.project
@@ -868,16 +874,20 @@ class MainWindow(QMainWindow):
             return self._on_save_project_as()
         
         try:
+            log_activity("Saving project")
             self.project_manager.save_project()
             self._update_title()
+            log_activity("Project saved successfully")
             self.statusBar().showMessage(t("messages.project_saved"), 3000)
             return True
         except Exception as e:
+            log_activity("Project save failed", str(e))
             QMessageBox.critical(self, t("messages.error"), t("messages.error_saving", error=str(e)))
             return False
     
     @Slot()
     def _on_save_project_as(self) -> bool:
+        log_activity("Save As dialog requested")
         if not self.project_manager.is_open:
             return False
         
@@ -894,17 +904,22 @@ class MainWindow(QMainWindow):
                 if not file_path.endswith(PROJECT_EXTENSION):
                     file_path += PROJECT_EXTENSION
                 
+                log_activity("Saving project as", file_path)
                 # Pass the path to save_project which handles the file creation
                 self.project_manager.save_project(Path(file_path))
+                get_crash_handler().set_current_project(file_path)
                 self._update_title()
+                log_activity("Project saved successfully", file_path)
                 self.statusBar().showMessage(t("messages.project_saved"), 3000)
                 return True
             except Exception as e:
+                log_activity("Save As failed", str(e))
                 QMessageBox.critical(self, t("messages.error"), t("messages.error_saving", error=str(e)))
         return False
     
     @Slot()
     def _on_import_srt(self):
+        log_activity("Import SRT dialog requested")
         if not self.project_manager.is_open:
             return
         
@@ -915,6 +930,7 @@ class MainWindow(QMainWindow):
         
         if file_path:
             try:
+                log_activity("Importing SRT", file_path)
                 count, errors = self.project_manager.import_srt(Path(file_path))
                 self._refresh_cue_list()
                 self._update_statistics()
@@ -922,6 +938,7 @@ class MainWindow(QMainWindow):
                 # Lock source text after import
                 self.cue_editor.set_source_locked(True)
                 
+                log_activity("SRT imported", f"{count} cues")
                 msg = t("messages.srt_imported", count=count)
                 if errors:
                     msg += f"\n\n{t('messages.warnings')}:\n" + "\n".join(errors[:5])
@@ -929,10 +946,12 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(self, t("menu.file.import"), msg)
                 self._update_title()
             except Exception as e:
+                log_activity("SRT import failed", str(e))
                 QMessageBox.critical(self, t("messages.error"), t("messages.error_loading", error=str(e)))
     
     @Slot()
     def _on_import_video(self):
+        log_activity("Import video dialog requested")
         if not self.project_manager.is_open:
             return
         
@@ -943,15 +962,19 @@ class MainWindow(QMainWindow):
         
         if file_path:
             try:
+                log_activity("Loading video", file_path)
                 self.video_player.load_video(Path(file_path))
                 self.project_manager.update_project(video_path=file_path)
                 self._update_title()
+                log_activity("Video loaded successfully")
                 self.statusBar().showMessage(t("messages.video_loaded", name=Path(file_path).name), 3000)
             except Exception as e:
+                log_activity("Video load failed", str(e))
                 QMessageBox.critical(self, t("messages.error"), t("messages.error_loading", error=str(e)))
     
     @Slot()
     def _on_export_pdf(self):
+        log_activity("Export PDF dialog requested")
         if not self.project_manager.is_open or self.project_manager.project is None:
             return
         
@@ -969,15 +992,19 @@ class MainWindow(QMainWindow):
         
         if file_path:
             try:
+                log_activity("Exporting PDF", file_path)
                 cues = self.project_manager.get_cues()
                 exporter = PDFExporter()
                 exporter.export(Path(file_path), project, cues)
+                log_activity("PDF exported successfully")
                 QMessageBox.information(self, t("menu.file.export"), t("messages.export_success", path=file_path))
             except Exception as e:
+                log_activity("PDF export failed", str(e))
                 QMessageBox.critical(self, t("messages.error"), t("messages.export_error", error=str(e)))
     
     @Slot()
     def _on_export_srt(self):
+        log_activity("Export SRT dialog requested")
         if not self.project_manager.is_open:
             return
         
@@ -989,12 +1016,15 @@ class MainWindow(QMainWindow):
         
         if file_path:
             try:
+                log_activity("Exporting SRT", file_path)
                 from dubsync.services.srt_parser import export_to_srt
                 cues = self.project_manager.get_cues()
                 content = export_to_srt(cues, use_translated=True)
                 Path(file_path).write_text(content, encoding="utf-8")
+                log_activity("SRT exported successfully")
                 QMessageBox.information(self, t("menu.file.export"), t("messages.export_success", path=file_path))
             except Exception as e:
+                log_activity("SRT export failed", str(e))
                 QMessageBox.critical(self, t("messages.error"), t("messages.export_error", error=str(e)))
     
     def _on_plugin_export(self, plugin):
