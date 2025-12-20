@@ -85,6 +85,8 @@
     "sfx_placeholder": "Háttérzajok, zene, effektek...",
     "save": "Mentés",
     "reset": "Visszaállítás",
+    "approve": "✓ Jóváhagyás",
+    "revision": "⚠ Javítandó",
     "prev": "◀ Előző",
     "next": "Következő ▶",
     "no_cue_selected": "Válasszon ki egy sort a listából a szerkesztéshez",
@@ -121,7 +123,8 @@
     "fullscreen_tooltip": "Teljes képernyő (F)",
     "prev_frame_tooltip": "Előző frame (←)",
     "next_frame_tooltip": "Következő frame (→)",
-    "fullscreen_hint": "ESC - Kilépés | Szóköz - Lejátszás/Megállítás"
+    "fullscreen_hint": "ESC - Kilépés | Szóköz - Lejátszás/Megállítás",
+    "fullscreen_title": "Videó"
   },
   "comments_panel": {
     "title": "Megjegyzések",
@@ -153,7 +156,8 @@
       "editor": "Lektor:",
       "editor_placeholder": "Lektor neve...",
       "technical": "Technikai beállítások",
-      "framerate": "Frame rate:"
+      "framerate": "Frame rate:",
+      "select_folder": "Mappa kiválasztása"
     },
     "about": {
       "title": "{app_name} - Névjegy",
@@ -214,6 +218,12 @@
       "message": "Biztosan törölni szeretné a(z) #{index}. sort?\nEzt a műveletet nem lehet visszavonni.",
       "delete": "Törlés",
       "cancel": "Mégse"
+    },
+    "open_project": {
+      "title": "Projekt megnyitása"
+    },
+    "save_project": {
+      "title": "Projekt mentése"
     }
   },
   "settings": {
@@ -292,7 +302,9 @@
     "first_cue": "Első sor",
     "last_cue": "Utolsó sor",
     "warnings": "Figyelmeztetések",
-    "error": "Hiba"
+    "error": "Hiba",
+    "video_not_found": "A projekthez csatolt videó nem található:\n\n{path}\n\nA videó leválasztva. Újra csatolhatod a Fájl → Import → Videó menüből.",
+    "file_not_found": "Fájl nem található:\n{path}"
   },
   "statistics": {
     "format": "{total} sor | {translated} lefordítva ({percent}%)",
@@ -311,6 +323,14 @@
     "no": "Nem",
     "browse": "..."
   },
+  "services": {
+    "srt": {
+      "failed_to_read": "A fájl nem olvasható: {path}",
+      "missing_time_line": "Blokk {block}: Hiányzó idősor",
+      "invalid_time_format": "Blokk {block}: Érvénytelen időformátum",
+      "block_error": "Blokk {block}: {error}"
+    }
+  },
   "plugins": {
     "types": {
       "export": "Export",
@@ -320,6 +340,21 @@
       "ui": "UI",
       "service": "Szolgáltatás",
       "language": "Nyelv"
+    },
+    "spellchecker": {
+      "name": "Helyesírás-ellenőrző",
+      "description": "Magyar helyesírás-ellenőrzés a fordított szövegekhez",
+      "import_title": "Szavak importálása",
+      "export_title": "Szavak exportálása",
+      "json_filter": "JSON fájlok (*.json)",
+      "import_success_title": "Import sikeres",
+      "import_success_message": "Szavak importálva.",
+      "import_error_title": "Import hiba",
+      "import_error_message": "Hiba: {error}",
+      "export_success_title": "Export sikeres",
+      "export_success_message": "Szavak exportálva.",
+      "export_error_title": "Export hiba",
+      "export_error_message": "Hiba: {error}"
     }
   }
 }

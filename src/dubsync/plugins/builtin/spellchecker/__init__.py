@@ -493,10 +493,10 @@ class SpellcheckerWidget(QWidget):
     
     @Slot()
     def _import_words(self):
-        """Szavak importálása."""
+        """Import words."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Szavak importálása",
-            "", "JSON fájlok (*.json)"
+            self, t("plugins.spellchecker.import_title"),
+            "", t("plugins.spellchecker.json_filter")
         )
         if not file_path:
             return
@@ -505,25 +505,25 @@ class SpellcheckerWidget(QWidget):
             self.engine.load_words(Path(file_path))
             self._update_ignored_list()
             self._save_words()
-            QMessageBox.information(self, "Import sikeres", "Szavak importálva.")
+            QMessageBox.information(self, t("plugins.spellchecker.import_success_title"), t("plugins.spellchecker.import_success_message"))
         except Exception as e:
-            QMessageBox.critical(self, "Import hiba", f"Hiba: {e}")
+            QMessageBox.critical(self, t("plugins.spellchecker.import_error_title"), t("plugins.spellchecker.import_error_message", error=str(e)))
     
     @Slot()
     def _export_words(self):
-        """Szavak exportálása."""
+        """Export words."""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Szavak exportálása",
-            "spellcheck_words.json", "JSON fájlok (*.json)"
+            self, t("plugins.spellchecker.export_title"),
+            "spellcheck_words.json", t("plugins.spellchecker.json_filter")
         )
         if not file_path:
             return
         
         try:
             self.engine.save_words(Path(file_path))
-            QMessageBox.information(self, "Export sikeres", "Szavak exportálva.")
+            QMessageBox.information(self, t("plugins.spellchecker.export_success_title"), t("plugins.spellchecker.export_success_message"))
         except Exception as e:
-            QMessageBox.critical(self, "Export hiba", f"Hiba: {e}")
+            QMessageBox.critical(self, t("plugins.spellchecker.export_error_title"), t("plugins.spellchecker.export_error_message", error=str(e)))
 
 
 class SpellcheckerPlugin(UIPlugin):

@@ -108,6 +108,10 @@ class PluginRegistry:
             # Set plugin directory
             plugin._plugin_dir = file_path.parent
             
+            # Pre-load plugin locales before accessing plugin.info
+            # This ensures translations are available when info property is accessed
+            plugin._load_plugin_locales()
+            
             return plugin
             
         except Exception as e:

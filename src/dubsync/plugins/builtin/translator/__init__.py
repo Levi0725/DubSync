@@ -301,7 +301,7 @@ class ArgosTranslatorPlugin(UIPlugin, TranslationPlugin):
     @property
     def info(self) -> PluginInfo:
         return PluginInfo(
-            id="argos_translator",
+            id="translator",
             name=t("plugins.translator.name"),
             version="1.0.0",
             author="Levente Kulacsy - Argos Translate Team",

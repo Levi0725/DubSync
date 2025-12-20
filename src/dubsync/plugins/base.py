@@ -99,19 +99,28 @@ class PluginInterface(ABC):
         Plugin locale file loading.
         
         Loads all JSON files from the plugin's locales/ folder.
+        Uses the plugin directory name as the plugin_id to avoid
+        accessing self.info before translations are loaded.
         """
         try:
             # Determine plugin directory
-            import inspect
-            plugin_file = inspect.getfile(self.__class__)
-            plugin_dir = Path(plugin_file).parent
+            if hasattr(self, '_plugin_dir') and self._plugin_dir:
+                plugin_dir = self._plugin_dir
+            else:
+                import inspect
+                plugin_file = inspect.getfile(self.__class__)
+                plugin_dir = Path(plugin_file).parent
+            
             locales_dir = plugin_dir / "locales"
             
             if locales_dir.exists() and locales_dir.is_dir():
+                # Use directory name as plugin_id to avoid circular dependency
+                # The actual plugin.info.id should match the directory name
+                plugin_id = plugin_dir.name
                 from dubsync.i18n.plugin_support import load_plugin_translations_from_locales_dir
-                load_plugin_translations_from_locales_dir(self.info.id, locales_dir)
+                load_plugin_translations_from_locales_dir(plugin_id, locales_dir)
         except Exception as e:
-            print(f"Error loading plugin locales for {self.info.id}: {e}")
+            print(f"Error loading plugin locales: {e}")
     
     def shutdown(self) -> None:
         """

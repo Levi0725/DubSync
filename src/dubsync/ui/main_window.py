@@ -756,8 +756,8 @@ class MainWindow(QMainWindow):
             return True
         
         reply = QMessageBox.question(
-            self, "Unsaved Changes",
-            "There are unsaved changes. Do you want to save them?",
+            self, t("dialogs.confirm_close.title"),
+            t("dialogs.confirm_close.message"),
             QMessageBox.StandardButton.Save |
             QMessageBox.StandardButton.Discard |
             QMessageBox.StandardButton.Cancel,
@@ -789,7 +789,7 @@ class MainWindow(QMainWindow):
         self._refresh_cue_list()
         self._update_title()
         self._update_ui_state()
-        self.statusBar().showMessage("New project created", 3000)
+        self.statusBar().showMessage(t("messages.project_created"), 3000)
     
     @Slot()
     def _on_open_project(self):
@@ -800,7 +800,7 @@ class MainWindow(QMainWindow):
         start_dir = self.settings_manager.default_save_path or ""
         
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Project", start_dir, get_project_filter()
+            self, t("dialogs.open_project.title"), start_dir, get_project_filter()
         )
         
         if file_path:
@@ -828,14 +828,13 @@ class MainWindow(QMainWindow):
                     self.project_manager.update_project(video_path="")
                     self.video_player._show_no_video()
                     QMessageBox.warning(
-                        self, "Video not found",
-                        f"The video attached to the project was not found:\n\n{video_path}\n\n"
-                        "The video has been detached. You can reattach it from File → Import → Video."
+                        self, t("messages.warnings"),
+                        t("messages.video_not_found", path=video_path)
                     )
             
             self._update_title()
             self._update_ui_state()
-            self.statusBar().showMessage("Project opened", 3000)
+            self.statusBar().showMessage(t("messages.project_opened", name=""), 3000)
             
             # Plugin event
             if project is not None:
@@ -843,7 +842,7 @@ class MainWindow(QMainWindow):
                     plugin.on_project_opened(project)
                 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to open: {e}")
+            QMessageBox.critical(self, t("messages.error"), t("messages.error_loading", error=str(e)))
     
     def open_project_file(self, file_path: str):
         """
@@ -858,7 +857,7 @@ class MainWindow(QMainWindow):
         if Path(file_path).exists():
             self._do_open_project(file_path)
         else:
-            QMessageBox.critical(self, "Error", f"File not found:\n{file_path}")
+            QMessageBox.critical(self, t("messages.error"), t("messages.file_not_found", path=file_path))
     
     @Slot()
     def _on_save_project(self) -> bool:
@@ -871,10 +870,10 @@ class MainWindow(QMainWindow):
         try:
             self.project_manager.save_project()
             self._update_title()
-            self.statusBar().showMessage("Project saved", 3000)
+            self.statusBar().showMessage(t("messages.project_saved"), 3000)
             return True
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Save error: {e}")
+            QMessageBox.critical(self, t("messages.error"), t("messages.error_saving", error=str(e)))
             return False
     
     @Slot()
@@ -887,7 +886,7 @@ class MainWindow(QMainWindow):
         default_file = Path(start_dir) / f"project{PROJECT_EXTENSION}" if start_dir else f"project{PROJECT_EXTENSION}"
         
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Project", str(default_file), get_project_filter()
+            self, t("dialogs.save_project.title"), str(default_file), get_project_filter()
         )
         
         if file_path:
@@ -898,10 +897,10 @@ class MainWindow(QMainWindow):
                 # Pass the path to save_project which handles the file creation
                 self.project_manager.save_project(Path(file_path))
                 self._update_title()
-                self.statusBar().showMessage("Project saved", 3000)
+                self.statusBar().showMessage(t("messages.project_saved"), 3000)
                 return True
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Save error: {e}")
+                QMessageBox.critical(self, t("messages.error"), t("messages.error_saving", error=str(e)))
         return False
     
     @Slot()

@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from dubsync.models.cue import Cue
 from dubsync.utils.time_utils import timecode_to_ms
+from dubsync.i18n import t
 
 
 @dataclass
@@ -90,7 +91,7 @@ class SRTParser:
         if content is None:
             raise UnicodeDecodeError(
                 "utf-8", b"", 0, 1, 
-                f"Failed to read the file: {file_path}"
+                t("services.srt.failed_to_read", path=str(file_path))
             )
         
         return self.parse_content(content)
@@ -146,20 +147,20 @@ class SRTParser:
             time_line_idx = 1
         
         if time_line_idx >= len(lines):
-            self.errors.append(f"Blokk {block_num}: Hiányzó idősor")
+            self.errors.append(t("services.srt.missing_time_line", block=block_num))
             return None
         
         # Parse time line
         time_match = self.TIME_PATTERN.match(lines[time_line_idx].strip())
         if not time_match:
-            self.errors.append(f"Blokk {block_num}: Érvénytelen időformátum")
+            self.errors.append(t("services.srt.invalid_time_format", block=block_num))
             return None
         
         try:
             time_in_ms = timecode_to_ms(time_match.group(1))
             time_out_ms = timecode_to_ms(time_match.group(2))
         except ValueError as e:
-            self.errors.append(f"Blokk {block_num}: {str(e)}")
+            self.errors.append(t("services.srt.block_error", block=block_num, error=str(e)))
             return None
         
         # Remaining lines are text

@@ -183,7 +183,7 @@ class TestLipSyncResult:
         assert result.overflow_ms == 3000
     
     def test_get_status_text(self):
-        """Státusz szöveg."""
+        """Status text test."""
         result = LipSyncResult(
             text_length=10,
             available_time_ms=5000,
@@ -191,7 +191,7 @@ class TestLipSyncResult:
             ratio=0.2,
             status=LipSyncStatus.GOOD
         )
-        assert result.get_status_text() == "Megfelelő"
+        assert result.get_status_text() == "Good"
 
 
 class TestConvenienceFunctions:

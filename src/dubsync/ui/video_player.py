@@ -17,6 +17,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
 
 from dubsync.utils.time_utils import ms_to_timecode
+from dubsync.utils.constants import APP_NAME
 from dubsync.i18n import t
 
 
@@ -48,7 +49,7 @@ class FullscreenVideoWidget(QWidget):
     
     def __init__(self, player: QMediaPlayer, parent=None):
         super().__init__(parent, Qt.WindowType.Window)
-        self.setWindowTitle("DubSync - Videó")
+        self.setWindowTitle(f"{APP_NAME} - {t('video_player.fullscreen_title')}")
         self.setStyleSheet("background-color: black;")
         
         self._player = player

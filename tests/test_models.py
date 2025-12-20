@@ -57,7 +57,7 @@ class TestProjectModel:
         """Projekt alapértékek."""
         project = Project()
         
-        assert project.title == "Új projekt"
+        assert project.title == "New Project"
         assert project.series_title == ""
         assert project.video_path == ""
         assert project.frame_rate == 25.0
@@ -336,7 +336,7 @@ class TestCommentModel:
         comment = Comment(cue_id=1, content="Test")
         
         assert comment.id == 0
-        assert comment.author == "Felhasználó"
+        assert comment.author == "User"
         assert comment.status == CommentStatus.OPEN
     
     def test_save_comment(self, memory_db, sample_project):

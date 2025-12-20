@@ -85,6 +85,8 @@
     "sfx_placeholder": "Background noise, music, effects...",
     "save": "Save",
     "reset": "Reset",
+    "approve": "✓ Approve",
+    "revision": "⚠ Needs revision",
     "prev": "◀ Previous",
     "next": "Next ▶",
     "no_cue_selected": "Select a row from the list to edit",
@@ -121,7 +123,8 @@
     "fullscreen_tooltip": "Fullscreen (F)",
     "prev_frame_tooltip": "Previous frame (←)",
     "next_frame_tooltip": "Next frame (→)",
-    "fullscreen_hint": "ESC - Exit | Space - Play/Pause"
+    "fullscreen_hint": "ESC - Exit | Space - Play/Pause",
+    "fullscreen_title": "Video"
   },
   "comments_panel": {
     "title": "Comments",
@@ -153,7 +156,8 @@
       "editor": "Editor:",
       "editor_placeholder": "Editor name...",
       "technical": "Technical settings",
-      "framerate": "Frame rate:"
+      "framerate": "Frame rate:",
+      "select_folder": "Select folder"
     },
     "about": {
       "title": "{app_name} - About",
@@ -214,6 +218,12 @@
       "message": "Are you sure you want to delete row #{index}?\nThis action cannot be undone.",
       "delete": "Delete",
       "cancel": "Cancel"
+    },
+    "open_project": {
+      "title": "Open Project"
+    },
+    "save_project": {
+      "title": "Save Project"
     }
   },
   "settings": {
@@ -292,7 +302,9 @@
     "first_cue": "First row",
     "last_cue": "Last row",
     "warnings": "Warnings",
-    "error": "Error"
+    "error": "Error",
+    "video_not_found": "The video attached to the project was not found:\n\n{path}\n\nThe video has been detached. You can reattach it from File → Import → Video.",
+    "file_not_found": "File not found:\n{path}"
   },
   "statistics": {
     "format": "{total} rows | {translated} translated ({percent}%)",
@@ -311,6 +323,14 @@
     "no": "No",
     "browse": "..."
   },
+  "services": {
+    "srt": {
+      "failed_to_read": "Failed to read the file: {path}",
+      "missing_time_line": "Block {block}: Missing time line",
+      "invalid_time_format": "Block {block}: Invalid time format",
+      "block_error": "Block {block}: {error}"
+    }
+  },
   "plugins": {
     "types": {
       "export": "Export",
@@ -320,6 +340,21 @@
       "ui": "UI",
       "service": "Service",
       "language": "Language"
+    },
+    "spellchecker": {
+      "name": "Spell Checker",
+      "description": "Hungarian spell checking for translated text",
+      "import_title": "Import Words",
+      "export_title": "Export Words",
+      "json_filter": "JSON files (*.json)",
+      "import_success_title": "Import Successful",
+      "import_success_message": "Words imported.",
+      "import_error_title": "Import Error",
+      "import_error_message": "Error: {error}",
+      "export_success_title": "Export Successful",
+      "export_success_message": "Words exported.",
+      "export_error_title": "Export Error",
+      "export_error_message": "Error: {error}"
     }
   }
 }
