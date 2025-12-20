@@ -22,8 +22,9 @@ from reportlab.lib.units import mm, cm
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, KeepTogether
+    PageBreak, KeepTogether, Flowable
 )
+
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
@@ -87,9 +88,8 @@ class PDFExporter:
         Stílusok létrehozása.
         """
         styles = getSampleStyleSheet()
-        
-        # Custom styles
-        custom_styles = {
+
+        return {
             'Title': ParagraphStyle(
                 'CustomTitle',
                 parent=styles['Title'],
@@ -150,8 +150,6 @@ class PDFExporter:
                 alignment=TA_CENTER,
             ),
         }
-        
-        return custom_styles
     
     def export(
         self,
@@ -195,12 +193,10 @@ class PDFExporter:
             onLaterPages=self._add_page_header,
         )
     
-    def _create_header(self, project: Project) -> List:
+    def _create_header(self, project: Project) -> List[Flowable]:
         """
         Fejléc létrehozása projekt adatokkal.
         """
-        elements = []
-        
         # Main title
         if project.series_title:
             title = project.series_title
@@ -208,9 +204,8 @@ class PDFExporter:
                 title += f" - {project.title}"
         else:
             title = project.title or "Szinkronszövegkönyv"
-        
-        elements.append(Paragraph(title, self.styles['Title']))
-        
+
+        elements: List[Flowable] = [Paragraph(title, self.styles['Title'])]
         # Season/Episode
         if project.season or project.episode:
             season_ep = []
@@ -222,23 +217,23 @@ class PDFExporter:
                 " / ".join(season_ep),
                 self.styles['Subtitle']
             ))
-        
+
         # Credits
         credits = []
         if project.translator:
             credits.append(f"Fordította: {project.translator}")
         if project.editor:
             credits.append(f"Lektor: {project.editor}")
-        
+
         if credits:
             elements.append(Paragraph(
                 " | ".join(credits),
                 self.styles['Subtitle']
             ))
-        
+
         # Separator line
         elements.append(Spacer(1, 5 * mm))
-        
+
         # Table header
         header_data = [["IDŐ", "SZÖVEG", "EGYÉB"]]
         header_table = Table(
@@ -256,7 +251,7 @@ class PDFExporter:
             ('TOPPADDING', (0, 0), (-1, -1), 4),
         ]))
         elements.append(header_table)
-        
+
         return elements
     
     def _create_cue_table(self, cues: List[Cue], include_source: bool) -> List:
@@ -281,32 +276,30 @@ class PDFExporter:
             time_text.replace('\n', '<br/>'),
             self.styles['TimeCode']
         )
-        
+
         # Main text column
         main_parts = []
-        
+
         # Character name
         if cue.character_name:
             main_parts.append(Paragraph(
                 f"[{cue.character_name}]:",
                 self.styles['Character']
             ))
-        
-        # Translated text (or source if no translation)
-        text = cue.translated_text if cue.translated_text else cue.source_text
-        if text:
+
+        if text := cue.translated_text or cue.source_text:
             # Replace newlines with <br/>
             text = text.replace('\n', '<br/>')
             main_parts.append(Paragraph(text, self.styles['DialogText']))
-        
-        # Source text (if requested and different)
+
+        # Source text
         if include_source and cue.translated_text and cue.source_text:
             source = cue.source_text.replace('\n', '<br/>')
             main_parts.append(Paragraph(
                 f"<i>[Eredeti: {source}]</i>",
                 self.styles['Notes']
             ))
-        
+
         # Notes (non-technical)
         if cue.notes:
             notes = cue.notes.replace('\n', '<br/>')
@@ -314,27 +307,27 @@ class PDFExporter:
                 f"({notes})",
                 self.styles['Notes']
             ))
-        
+
         # Notes/SFX column
         sfx_parts = []
-        
+
         if cue.sfx_notes:
             sfx = cue.sfx_notes.replace('\n', '<br/>')
             sfx_parts.append(Paragraph(sfx, self.styles['SFX']))
-        
+
         # Build row data
         data = [[
             time_para,
-            main_parts if main_parts else '',
-            sfx_parts if sfx_parts else '',
+            main_parts or '',
+            sfx_parts or '',
         ]]
-        
+
         # Create table
         table = Table(
             data,
             colWidths=[self.COL_TIME, self.COL_MAIN, self.COL_NOTES]
         )
-        
+
         table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
@@ -346,7 +339,7 @@ class PDFExporter:
             ('RIGHTPADDING', (0, 0), (-1, -1), 4),
             ('LINEBELOW', (0, 0), (-1, -1), 0.5, colors.lightgrey),
         ]))
-        
+
         return table
     
     def _add_page_header(self, canvas, doc):

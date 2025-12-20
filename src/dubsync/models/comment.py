@@ -130,7 +130,7 @@ class Comment:
                     self.status.value,
                 )
             )
-            self.id = cursor.lastrowid
+            self.id = cursor.lastrowid or 0
         else:
             db.execute(
                 """

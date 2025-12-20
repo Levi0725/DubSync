@@ -72,13 +72,11 @@ class MockQAPlugin(QAPlugin):
         cues: List[Cue]
     ) -> List[QAIssue]:
         issues = []
-        for cue in cues:
-            if not cue.translated_text:
-                issues.append(QAIssue(
-                    cue_id=cue.id,
-                    severity="warning",
-                    message="Empty translation"
-                ))
+        issues.extend(
+            QAIssue(cue_id=cue.id, severity="warning", message="Empty translation")
+            for cue in cues
+            if not cue.translated_text
+        )
         return issues
 
 
@@ -411,33 +409,30 @@ class TestQAPluginExecution:
     
     def test_check_finds_issues(self):
         """QA ellenőrzés talál problémákat."""
-        plugin = MockQAPlugin()
-        
-        project = Project(title="Test")
-        cues = [
-            Cue(id=1, cue_index=0, source_text="Hello", translated_text=""),
-            Cue(id=2, cue_index=1, source_text="World", translated_text="Világ")
-        ]
-        
-        issues = plugin.check(project, cues)
-        
-        assert len(issues) == 1
+        issues = self._extracted_from_test_check_no_issues_3("", 1)
         assert issues[0].cue_id == 1
         assert issues[0].severity == "warning"
     
     def test_check_no_issues(self):
         """QA ellenőrzés nem talál problémát."""
+        issues = self._extracted_from_test_check_no_issues_3("Helló", 0)
+
+    # TODO Rename this here and in `test_check_finds_issues` and `test_check_no_issues`
+    def _extracted_from_test_check_no_issues_3(self, translated_text, arg1):
         plugin = MockQAPlugin()
-        
         project = Project(title="Test")
         cues = [
-            Cue(id=1, cue_index=0, source_text="Hello", translated_text="Helló"),
-            Cue(id=2, cue_index=1, source_text="World", translated_text="Világ")
+            Cue(
+                id=1,
+                cue_index=0,
+                source_text="Hello",
+                translated_text=translated_text,
+            ),
+            Cue(id=2, cue_index=1, source_text="World", translated_text="Világ"),
         ]
-        
-        issues = plugin.check(project, cues)
-        
-        assert len(issues) == 0
+        result = plugin.check(project, cues)
+        assert len(result) == arg1
+        return result
 
 
 class TestTranslationPluginExecution:

@@ -143,15 +143,12 @@ Just working on a project.
     
     def test_import_srt_clears_existing(self, manager, temp_dir, sample_srt_file):
         """SRT importálás törli a meglévő cue-kat."""
-        project_path = temp_dir / "srt_clear.dubsync"
-        manager.new_project(project_path)
-        
-        # First import
-        manager.import_srt(sample_srt_file)
-        
+        self._extracted_from_test_get_statistics_3(
+            temp_dir, "srt_clear.dubsync", manager, sample_srt_file
+        )
         # Second import with clear
         count, _ = manager.import_srt(sample_srt_file, clear_existing=True)
-        
+
         # Should still be 4, not 8
         cues = manager.get_cues()
         assert len(cues) == 4
@@ -163,27 +160,25 @@ Just working on a project.
     
     def test_get_cues(self, manager, temp_dir, sample_srt_file):
         """Cue-k lekérése."""
-        project_path = temp_dir / "get_cues.dubsync"
-        manager.new_project(project_path)
-        manager.import_srt(sample_srt_file)
-        
+        self._extracted_from_test_get_statistics_3(
+            temp_dir, "get_cues.dubsync", manager, sample_srt_file
+        )
         cues = manager.get_cues()
-        
+
         assert len(cues) == 4
         assert cues[0].source_text == "Hello, how are you?"
     
     def test_update_cue(self, manager, temp_dir, sample_srt_file):
         """Cue frissítése."""
-        project_path = temp_dir / "update_cue.dubsync"
-        manager.new_project(project_path)
-        manager.import_srt(sample_srt_file)
-        
+        self._extracted_from_test_get_statistics_3(
+            temp_dir, "update_cue.dubsync", manager, sample_srt_file
+        )
         cues = manager.get_cues()
         cue = cues[0]
         cue.translated_text = "Szia, hogy vagy?"
-        
+
         manager.save_cue(cue)  # Use save_cue instead of update_cue
-        
+
         # Reload and verify
         reloaded_cues = manager.get_cues()
         assert reloaded_cues[0].translated_text == "Szia, hogy vagy?"
@@ -214,24 +209,23 @@ Just working on a project.
     def test_export_srt(self, manager, temp_dir, sample_srt_file):
         """SRT exportálás."""
         from dubsync.services.srt_parser import export_to_srt
-        
-        project_path = temp_dir / "export_srt.dubsync"
-        manager.new_project(project_path)
-        manager.import_srt(sample_srt_file)
-        
+
+        self._extracted_from_test_get_statistics_3(
+            temp_dir, "export_srt.dubsync", manager, sample_srt_file
+        )
         # Add translations
         cues = manager.get_cues()
         for i, cue in enumerate(cues):
             cue.translated_text = f"Fordítás {i+1}"
             manager.save_cue(cue)
-        
+
         # Export using the export_to_srt helper function
         cues = manager.get_cues()
         srt_content = export_to_srt(cues, use_translated=True)
-        
+
         export_path = temp_dir / "exported.srt"
         export_path.write_text(srt_content, encoding='utf-8')
-        
+
         assert export_path.exists()
         content = export_path.read_text(encoding='utf-8')
         assert "Fordítás 1" in content
@@ -251,15 +245,20 @@ Just working on a project.
     
     def test_get_statistics(self, manager, temp_dir, sample_srt_file):
         """Statisztikák lekérése."""
-        project_path = temp_dir / "stats.dubsync"
-        manager.new_project(project_path)
-        manager.import_srt(sample_srt_file)
-        
+        self._extracted_from_test_get_statistics_3(
+            temp_dir, "stats.dubsync", manager, sample_srt_file
+        )
         stats = manager.get_statistics()
-        
+
         assert stats is not None
         assert "total_cues" in stats
         assert stats["total_cues"] == 4
+
+    # TODO Rename this here and in `test_import_srt_clears_existing`, `test_get_cues`, `test_update_cue`, `test_export_srt` and `test_get_statistics`
+    def _extracted_from_test_get_statistics_3(self, temp_dir, arg1, manager, sample_srt_file):
+        project_path = temp_dir / arg1
+        manager.new_project(project_path)
+        manager.import_srt(sample_srt_file)
 
 
 class TestProjectManagerAutoSave:

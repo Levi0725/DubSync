@@ -5,6 +5,8 @@ Plugin alap osztályok és interfészek.
 Támogatja az export, QA, import, tool, UI és service pluginokat.
 """
 
+
+import contextlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -154,12 +156,10 @@ class PluginInterface(ABC):
             Markdown formátumú leírás
         """
         if self._plugin_dir and self.info.readme_path:
-            try:
+            with contextlib.suppress(Exception):
                 readme_path = self._plugin_dir / self.info.readme_path
                 if readme_path.exists():
                     return readme_path.read_text(encoding='utf-8')
-            except Exception:
-                pass
         return self.info.description
 
 

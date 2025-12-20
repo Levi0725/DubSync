@@ -41,7 +41,7 @@ class CommentWidget(QFrame):
         from dubsync.ui.theme import ThemeManager
         theme = ThemeManager()
         colors = theme.colors
-        
+
         self.setFrameStyle(QFrame.Shape.StyledPanel)
         self.setStyleSheet(f"""
             CommentWidget {{
@@ -51,38 +51,42 @@ class CommentWidget(QFrame):
                 margin: 2px;
             }}
         """)
-        
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 6, 8, 6)
-        
+
         # Header
         header_layout = QHBoxLayout()
-        
+
         self.author_label = QLabel(f"<b>{self.comment.author}</b>")
         header_layout.addWidget(self.author_label)
-        
+
         header_layout.addStretch()
-        
+
         if self.comment.is_resolved:
             resolved_label = QLabel(t("comments_panel.resolved"))
             resolved_label.setStyleSheet(f"color: {colors.success};")
             header_layout.addWidget(resolved_label)
-        
+
         layout.addLayout(header_layout)
-        
+
         # Content
         self.content_label = QLabel(self.comment.content)
         self.content_label.setWordWrap(True)
         self.content_label.setStyleSheet(f"color: {colors.foreground};")
         layout.addWidget(self.content_label)
-        
+
         # Actions
         if self.comment.is_open:
-            actions_layout = QHBoxLayout()
-            actions_layout.addStretch()
-            
-            self.resolve_btn = QPushButton(t("comments_panel.resolve"))
-            self.resolve_btn.setStyleSheet(f"""
+            self._extracted_from__setup_ui_43(colors, layout)
+
+    # TODO Rename this here and in `_setup_ui`
+    def _extracted_from__setup_ui_43(self, colors, layout):
+        actions_layout = QHBoxLayout()
+        actions_layout.addStretch()
+
+        self.resolve_btn = QPushButton(t("comments_panel.resolve"))
+        self.resolve_btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {colors.success};
                     color: white;
@@ -96,12 +100,12 @@ class CommentWidget(QFrame):
                     opacity: 0.9;
                 }}
             """)
-            self.resolve_btn.clicked.connect(
-                lambda: self.resolved.emit(self.comment.id)
-            )
-            actions_layout.addWidget(self.resolve_btn)
-            
-            layout.addLayout(actions_layout)
+        self.resolve_btn.clicked.connect(
+            lambda: self.resolved.emit(self.comment.id)
+        )
+        actions_layout.addWidget(self.resolve_btn)
+
+        layout.addLayout(actions_layout)
 
 
 class CommentsPanelWidget(QWidget):
@@ -159,7 +163,7 @@ class CommentsPanelWidget(QWidget):
         # Alapértelmezett név a beállításokból
         settings = SettingsManager()
         default_name = settings.default_author_name
-        self.author_edit.setText(default_name if default_name else t("comments_panel.default_author"))
+        self.author_edit.setText(default_name or t("comments_panel.default_author"))
         
         author_layout.addWidget(self.author_edit)
         new_comment_layout.addLayout(author_layout)
@@ -231,14 +235,15 @@ class CommentsPanelWidget(QWidget):
         # Clear existing
         while self.comments_layout.count() > 1:  # Keep stretch
             item = self.comments_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
         if self._cue is None or self._db is None:
             return
-        
+
         self._comments = Comment.load_for_cue(self._db, self._cue.id)
-        
+
         # Add comment widgets
         for comment in self._comments:
             widget = CommentWidget(comment)
@@ -247,16 +252,20 @@ class CommentsPanelWidget(QWidget):
                 self.comments_layout.count() - 1,  # Before stretch
                 widget
             )
-        
+
         if not self._comments:
-            from dubsync.ui.theme import ThemeManager
-            theme = ThemeManager()
-            colors = theme.colors
-            
-            no_comments = QLabel(t("comments_panel.no_comments"))
-            no_comments.setStyleSheet(f"color: {colors.foreground_muted}; padding: 20px;")
-            no_comments.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.comments_layout.insertWidget(0, no_comments)
+            self._extracted_from__load_comments_24()
+
+    # TODO Rename this here and in `_load_comments`
+    def _extracted_from__load_comments_24(self):
+        from dubsync.ui.theme import ThemeManager
+        theme = ThemeManager()
+        colors = theme.colors
+
+        no_comments = QLabel(t("comments_panel.no_comments"))
+        no_comments.setStyleSheet(f"color: {colors.foreground_muted}; padding: 20px;")
+        no_comments.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.comments_layout.insertWidget(0, no_comments)
     
     @Slot()
     def _on_add_comment(self):

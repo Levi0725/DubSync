@@ -124,12 +124,11 @@ class TranslatablePlugin:
     def register_translations(self) -> None:
         """Plugin fordítások regisztrálása."""
         from dubsync.plugins.base import PluginInterface
-        
+
         if not isinstance(self, PluginInterface):
             return
-        
-        translations = self.get_translations()
-        if translations:
+
+        if translations := self.get_translations():
             try:
                 from dubsync.i18n import get_locale_manager
                 locale_manager = get_locale_manager()

@@ -186,32 +186,32 @@ class CueListWidget(QWidget):
         item = QTableWidgetItem(str(cue.cue_index))
         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, self.COL_INDEX, item)
-        
+
         # Time in
         item = QTableWidgetItem(ms_to_timecode(cue.time_in_ms)[:8])
         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, self.COL_TIME_IN, item)
-        
+
         # Time out
         item = QTableWidgetItem(ms_to_timecode(cue.time_out_ms)[:8])
         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, self.COL_TIME_OUT, item)
-        
+
         # Character
         item = QTableWidgetItem(cue.character_name or "-")
         self.table.setItem(row, self.COL_CHARACTER, item)
-        
+
         # Text (show translated if available, else source)
-        text = cue.translated_text if cue.translated_text else cue.source_text
+        text = cue.translated_text or cue.source_text
         # Truncate long text
         if len(text) > 50:
-            text = text[:47] + "..."
+            text = f"{text[:47]}..."
         text = text.replace("\n", " ")
         item = QTableWidgetItem(text)
         if not cue.translated_text:
             item.setForeground(QBrush(QColor("#999999")))
         self.table.setItem(row, self.COL_TEXT, item)
-        
+
         # Status
         status_text, status_color = self._get_status_display(cue.status)
         item = QTableWidgetItem(status_text)
@@ -219,7 +219,7 @@ class CueListWidget(QWidget):
         item.setBackground(QBrush(QColor(status_color)))
         item.setForeground(QBrush(QColor("#FFFFFF")))
         self.table.setItem(row, self.COL_STATUS, item)
-        
+
         # Lip-sync indicator
         ls_text, ls_color = self._get_lipsync_display(cue)
         item = QTableWidgetItem(ls_text)
@@ -257,19 +257,16 @@ class CueListWidget(QWidget):
     @Slot()
     def _on_selection_changed(self):
         """Kijelölés változott."""
-        selected = self.table.selectedItems()
-        if selected:
+        if selected := self.table.selectedItems():
             row = selected[0].row()
-            cue_id = self._cue_id_map.get(row)
-            if cue_id:
+            if cue_id := self._cue_id_map.get(row):
                 self.cue_selected.emit(cue_id)
     
     @Slot(QTableWidgetItem)
     def _on_double_clicked(self, item: QTableWidgetItem):
         """Dupla kattintás."""
         row = item.row()
-        cue_id = self._cue_id_map.get(row)
-        if cue_id:
+        if cue_id := self._cue_id_map.get(row):
             self.cue_double_clicked.emit(cue_id)
     
     def get_current_index(self) -> int:
@@ -279,8 +276,7 @@ class CueListWidget(QWidget):
         Returns:
             Cue index vagy 0
         """
-        selected = self.table.selectedItems()
-        if selected:
+        if selected := self.table.selectedItems():
             row = selected[0].row()
             cue_id = self._cue_id_map.get(row)
             for cue in self._cues:
@@ -298,7 +294,8 @@ class CueListWidget(QWidget):
         for row, mapped_id in self._cue_id_map.items():
             if mapped_id == cue_id:
                 self.table.selectRow(row)
-                self.table.scrollToItem(self.table.item(row, 0))
+                if item := self.table.item(row, 0):
+                    self.table.scrollToItem(item)
                 break
     
     def highlight_cue(self, cue_id: int):
@@ -355,8 +352,7 @@ class CueListWidget(QWidget):
         Returns:
             Cue azonosító vagy None
         """
-        selected = self.table.selectedItems()
-        if selected:
+        if selected := self.table.selectedItems():
             row = selected[0].row()
             return self._cue_id_map.get(row)
         return None
@@ -383,8 +379,7 @@ class CueListWidget(QWidget):
     
     def _request_insert(self, row: int):
         """Beszúrás kérése."""
-        cue_id = self._cue_id_map.get(row)
-        if cue_id:
+        if cue_id := self._cue_id_map.get(row):
             for cue in self._cues:
                 if cue.id == cue_id:
                     self.insert_cue_requested.emit(cue.cue_index)
@@ -392,6 +387,5 @@ class CueListWidget(QWidget):
     
     def _request_delete(self, row: int):
         """Törlés kérése."""
-        cue_id = self._cue_id_map.get(row)
-        if cue_id:
+        if cue_id := self._cue_id_map.get(row):
             self.delete_cue_requested.emit(cue_id)

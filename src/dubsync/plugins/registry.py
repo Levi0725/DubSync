@@ -50,24 +50,24 @@ class PluginRegistry:
             Talált plugin fájlok listája
         """
         discovered = []
-        
+
         for plugin_dir in self._plugin_paths:
             if not plugin_dir.exists():
                 continue
-            
+
             # Look for Python files
-            for file_path in plugin_dir.glob("*.py"):
-                if file_path.name.startswith("_"):
-                    continue
-                discovered.append(str(file_path))
-            
+            discovered.extend(
+                str(file_path)
+                for file_path in plugin_dir.glob("*.py")
+                if not file_path.name.startswith("_")
+            )
             # Look for packages (directories with __init__.py)
             for subdir in plugin_dir.iterdir():
                 if subdir.is_dir():
                     init_file = subdir / "__init__.py"
                     if init_file.exists():
                         discovered.append(str(subdir))
-        
+
         return discovered
     
     def load_plugin_from_file(self, file_path: Path) -> Optional[PluginInterface]:
@@ -187,23 +187,22 @@ def get_default_plugin_paths() -> List[Path]:
         Könyvtár elérési utak listája
     """
     paths = []
-    
+
     # Built-in plugins
     builtin_path = Path(__file__).parent / "builtin"
     if builtin_path.exists():
         paths.append(builtin_path)
-    
+
     # External plugins (külső pluginok)
     external_path = Path(__file__).parent / "external"
     if external_path.exists():
         paths.append(external_path)
-    
+
     # User plugins (in app data)
     import os
-    appdata = os.environ.get("APPDATA", "")
-    if appdata:
+    if appdata := os.environ.get("APPDATA", ""):
         user_plugin_path = Path(appdata) / "DubSync" / "plugins"
         user_plugin_path.mkdir(parents=True, exist_ok=True)
         paths.append(user_plugin_path)
-    
+
     return paths

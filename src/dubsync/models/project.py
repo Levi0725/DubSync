@@ -4,6 +4,8 @@ DubSync Project Model
 Projekt adatmodell és műveletek.
 """
 
+
+import contextlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
@@ -41,11 +43,8 @@ class Project:
         """
         # Handle missing episode_title column for older databases
         episode_title = ""
-        try:
+        with contextlib.suppress(KeyError, IndexError):
             episode_title = row["episode_title"] or ""
-        except (KeyError, IndexError):
-            pass
-        
         return cls(
             id=row["id"],
             title=row["title"] or "",
@@ -106,7 +105,7 @@ class Project:
                     self.frame_rate,
                 )
             )
-            self.id = cursor.lastrowid
+            self.id = cursor.lastrowid or 0
         else:
             # Update existing project
             db.execute(

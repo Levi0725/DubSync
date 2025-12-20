@@ -5,6 +5,8 @@ UI komponensekhez készült helper osztályok és függvények.
 Helper classes and functions for UI components.
 """
 
+
+import contextlib
 from typing import Optional, Callable, List
 from functools import partial
 
@@ -32,23 +34,19 @@ class TranslatableUI(QObject):
     
     def setup_i18n(self):
         """i18n inicializálása - hívd meg a __init__-ben."""
-        try:
+        with contextlib.suppress(Exception):
             from dubsync.i18n import get_locale_manager
-            
+
             locale_manager = get_locale_manager()
             locale_manager.register_language_changed_callback(self._on_language_changed)
-        except Exception:
-            pass
     
     def cleanup_i18n(self):
         """i18n cleanup - hívd meg a destruktorban ha szükséges."""
-        try:
+        with contextlib.suppress(Exception):
             from dubsync.i18n import get_locale_manager
-            
+
             locale_manager = get_locale_manager()
             locale_manager.unregister_language_changed_callback(self._on_language_changed)
-        except Exception:
-            pass
     
     def _on_language_changed(self, new_lang: str):
         """Nyelv változás kezelése."""
@@ -102,15 +100,12 @@ class UITextBinder:
     
     def _apply_binding(self, widget, method_name: str, key: str, kwargs: dict):
         """Kötés alkalmazása."""
-        try:
+        with contextlib.suppress(Exception):
             from dubsync.i18n import t
-            
+
             text = t(key, **kwargs)
-            method = getattr(widget, method_name, None)
-            if method:
+            if method := getattr(widget, method_name, None):
                 method(text)
-        except Exception:
-            pass
     
     def update_all(self):
         """Összes kötés frissítése."""

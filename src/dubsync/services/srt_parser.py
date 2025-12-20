@@ -107,18 +107,17 @@ class SRTParser:
         """
         self.entries = []
         self.errors = []
-        
+
         # Normalize line endings
         content = content.replace("\r\n", "\n").replace("\r", "\n")
-        
+
         # Split into blocks (empty line separates entries)
         blocks = re.split(r"\n\n+", content.strip())
-        
+
         for block_num, block in enumerate(blocks, 1):
-            entry = self._parse_block(block, block_num)
-            if entry:
+            if entry := self._parse_block(block, block_num):
                 self.entries.append(entry)
-        
+
         return self.entries
     
     def _parse_block(self, block: str, block_num: int) -> Optional[SRTEntry]:
@@ -248,23 +247,19 @@ def export_to_srt(cues: List[Cue], use_translated: bool = True) -> str:
         SRT tartalom string
     """
     from dubsync.utils.time_utils import ms_to_timecode
-    
+
     lines = []
-    
+
     for i, cue in enumerate(cues, 1):
         # Index
         lines.append(str(i))
-        
+
         # Time codes
         time_in = ms_to_timecode(cue.time_in_ms, use_comma=True)
         time_out = ms_to_timecode(cue.time_out_ms, use_comma=True)
         lines.append(f"{time_in} --> {time_out}")
-        
+
         # Text
         text = cue.translated_text if use_translated and cue.translated_text else cue.source_text
-        lines.append(text)
-        
-        # Empty line
-        lines.append("")
-    
+        lines.extend((text, ""))
     return "\n".join(lines)

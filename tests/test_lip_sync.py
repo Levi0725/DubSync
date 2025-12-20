@@ -82,30 +82,29 @@ class TestLipSyncEstimator:
     
     def test_estimate_cue_uses_translation(self, estimator):
         """Fordított szöveget használja."""
-        cue = Cue(
-            time_in_ms=0,
-            time_out_ms=5000,
-            source_text="Short",
-            translated_text="Ez egy hosszabb fordított szöveg"
+        self._extracted_from_test_estimate_cue_fallback_to_source_3(
+            "Short",
+            "Ez egy hosszabb fordított szöveg",
+            estimator,
+            "Ez egy hosszabb fordított szöveg",
         )
-        
-        result = estimator.estimate_cue(cue)
-        
-        # Should use translated text length
-        assert result.text_length == len("Ez egy hosszabb fordított szöveg")
     
     def test_estimate_cue_fallback_to_source(self, estimator):
         """Visszaesés forrásra, ha nincs fordítás."""
+        self._extracted_from_test_estimate_cue_fallback_to_source_3(
+            "Source text only", "", estimator, "Source text only"
+        )
+
+    # TODO Rename this here and in `test_estimate_cue_uses_translation` and `test_estimate_cue_fallback_to_source`
+    def _extracted_from_test_estimate_cue_fallback_to_source_3(self, source_text, translated_text, estimator, arg3):
         cue = Cue(
             time_in_ms=0,
             time_out_ms=5000,
-            source_text="Source text only",
-            translated_text=""
+            source_text=source_text,
+            translated_text=translated_text,
         )
-        
         result = estimator.estimate_cue(cue)
-        
-        assert result.text_length == len("Source text only")
+        assert result.text_length == len(arg3)
     
     def test_update_cue_ratio(self, estimator):
         """Cue ratio frissítése."""

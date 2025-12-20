@@ -121,13 +121,17 @@ class TestParseSrtTimeRange:
     
     def test_standard_format(self):
         """Standard SRT formátum."""
-        time_in, time_out = parse_srt_time_range("00:00:01,000 --> 00:00:04,000")
-        assert time_in == 1000
-        assert time_out == 4000
+        self._extracted_from_test_with_extra_spaces_3("00:00:01,000 --> 00:00:04,000")
     
     def test_with_extra_spaces(self):
         """Extra szóközökkel."""
-        time_in, time_out = parse_srt_time_range("00:00:01,000  -->  00:00:04,000")
+        self._extracted_from_test_with_extra_spaces_3(
+            "00:00:01,000  -->  00:00:04,000"
+        )
+
+    # TODO Rename this here and in `test_standard_format` and `test_with_extra_spaces`
+    def _extracted_from_test_with_extra_spaces_3(self, arg0):
+        time_in, time_out = parse_srt_time_range(arg0)
         assert time_in == 1000
         assert time_out == 4000
     

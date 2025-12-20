@@ -119,11 +119,11 @@ class GeneralSettingsTab(QWidget):
             self.language_combo.addItem("🇭🇺 Magyar", "hu")
     
     def _browse_save_path(self):
-        path = QFileDialog.getExistingDirectory(
-            self, "Válassz mentési mappát",
-            self.save_path_edit.text() or str(Path.home())
-        )
-        if path:
+        if path := QFileDialog.getExistingDirectory(
+            self,
+            "Válassz mentési mappát",
+            self.save_path_edit.text() or str(Path.home()),
+        ):
             self.save_path_edit.setText(path)
     
     def _load_settings(self):
@@ -324,37 +324,35 @@ class PluginsSettingsTab(QWidget):
     
     def _on_plugin_selected(self, item: QListWidgetItem):
         plugin_id = item.data(Qt.ItemDataRole.UserRole)
-        plugin = self.plugin_manager.get_plugin(plugin_id)
-        
-        if plugin:
+        if plugin := self.plugin_manager.get_plugin(plugin_id):
             self._current_plugin = plugin
             self._plugin_just_enabled = False
             self._show_plugin_details(plugin)
-            
+
             enabled = self.plugin_manager.is_enabled(plugin_id)
             self.enable_btn.setEnabled(not enabled)
             self.disable_btn.setEnabled(enabled)
     
     def _show_plugin_details(self, plugin: PluginInterface):
         from dubsync.plugins.base import UIPlugin
-        
+
         info = plugin.info
-        
+
         self.plugin_name.setText(f"{info.icon} {info.name}" if info.icon else info.name)
         self.plugin_meta.setText(
             f"v{info.version} • {info.author} • {info.plugin_type.name}"
         )
-        
+
         # Figyelmeztetés csak ha épp aktiváltuk
         self.restart_warning.setVisible(self._plugin_just_enabled)
-        
+
         # Hosszú leírás
         long_desc = plugin.get_long_description()
         self.plugin_description.setMarkdown(long_desc)
-        
+
         # Jobb oldali beállítások megjelenítése
         self.settings_stack.setCurrentIndex(1)
-        
+
         # Panel láthatóság beállítás (csak UI pluginokhoz)
         if isinstance(plugin, UIPlugin) and plugin.create_dock_widget():
             self.panel_visibility_group.setVisible(True)
@@ -365,22 +363,24 @@ class PluginsSettingsTab(QWidget):
             self.show_panel_on_start.blockSignals(False)
         else:
             self.panel_visibility_group.setVisible(False)
-        
-        # Plugin egyedi beállítások
-        settings_widget = plugin.get_settings_widget()
-        if settings_widget:
-            # Régi widget törlése
-            old_widget = self.plugin_settings_container
-            self.plugin_settings_layout.removeWidget(old_widget)
-            old_widget.deleteLater()
-            
-            self.plugin_settings_container = settings_widget
-            self.plugin_settings_layout.addWidget(settings_widget)
-            self.plugin_settings_group.setVisible(True)
+
+        if settings_widget := plugin.get_settings_widget():
+            self._extracted_from__show_plugin_details_34(settings_widget)
         else:
             self.plugin_settings_group.setVisible(False)
-        
+
         self.details_stack.setCurrentIndex(1)
+
+    # TODO Rename this here and in `_show_plugin_details`
+    def _extracted_from__show_plugin_details_34(self, settings_widget):
+        # Régi widget törlése
+        old_widget = self.plugin_settings_container
+        self.plugin_settings_layout.removeWidget(old_widget)
+        old_widget.deleteLater()
+
+        self.plugin_settings_container = settings_widget
+        self.plugin_settings_layout.addWidget(settings_widget)
+        self.plugin_settings_group.setVisible(True)
     
     def _on_panel_visibility_changed(self, state):
         """Panel indulási láthatóság változott."""
@@ -392,45 +392,34 @@ class PluginsSettingsTab(QWidget):
         if self._current_plugin:
             plugin_id = self._current_plugin.info.id
             self.plugin_manager.enable_plugin(plugin_id)
-            self._plugin_just_enabled = True  # Figyelmeztetés megjelenítéséhez
-            self._load_plugins()
-            self.plugins_changed.emit()
-            
-            # Visszaválasztjuk a plugint
-            for i in range(self.plugin_list.count()):
-                item = self.plugin_list.item(i)
-                if item.data(Qt.ItemDataRole.UserRole) == plugin_id:
-                    self.plugin_list.setCurrentItem(item)
-                    self._on_plugin_selected(item)
-                    # Figyelmeztetés megjelenítése kézzel (mert _on_plugin_selected reseteli)
-                    self.restart_warning.setVisible(True)
-                    break
+            self._extracted_from__on_disable_plugin_5(plugin_id)
     
     def _on_disable_plugin(self):
         if self._current_plugin:
             plugin_id = self._current_plugin.info.id
             self.plugin_manager.disable_plugin(plugin_id)
-            self._plugin_just_enabled = True  # Figyelmeztetés megjelenítéséhez (változás történt)
-            self._load_plugins()
-            self.plugins_changed.emit()
-            
-            # Visszaválasztjuk a plugint
-            for i in range(self.plugin_list.count()):
-                item = self.plugin_list.item(i)
-                if item.data(Qt.ItemDataRole.UserRole) == plugin_id:
-                    self.plugin_list.setCurrentItem(item)
-                    self._on_plugin_selected(item)
-                    self.restart_warning.setVisible(True)
-                    break
+            self._extracted_from__on_disable_plugin_5(plugin_id)
+
+    # TODO Rename this here and in `_on_enable_plugin` and `_on_disable_plugin`
+    def _extracted_from__on_disable_plugin_5(self, plugin_id):
+        self._plugin_just_enabled = True
+        self._load_plugins()
+        self.plugins_changed.emit()
+        for i in range(self.plugin_list.count()):
+            item = self.plugin_list.item(i)
+            if item.data(Qt.ItemDataRole.UserRole) == plugin_id:
+                self.plugin_list.setCurrentItem(item)
+                self._on_plugin_selected(item)
+                self.restart_warning.setVisible(True)
+                break
     
     def save_settings(self):
         # Engedélyezett pluginok mentése
         self.settings.enabled_plugins = self.plugin_manager.get_enabled_plugins()
-        
+
         # Plugin saját beállítások mentése
         for plugin in self.plugin_manager.get_all_plugins():
-            settings = plugin.save_settings()
-            if settings:
+            if settings := plugin.save_settings():
                 self.settings.set_plugin_settings(plugin.info.id, settings)
 
 
@@ -443,23 +432,26 @@ class PluginDownloadTab(QWidget):
     
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        
-        # Work in progress jelzés
-        wip_label = QLabel("🚧 Fejlesztés alatt 🚧")
-        wip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        wip_label.setStyleSheet("font-size: 24px; color: #ff9800;")
-        layout.addWidget(wip_label)
-        
-        desc_label = QLabel(
+
+        self._extracted_from__setup_ui_5(
+            "🚧 Fejlesztés alatt 🚧", "font-size: 24px; color: #ff9800;", layout
+        )
+        self._extracted_from__setup_ui_5(
             "Ez a funkció hamarosan elérhető lesz!\n\n"
             "Itt fogsz tudni pluginokat böngészni és telepíteni\n"
-            "egy központi GitHub repository-ból."
+            "egy központi GitHub repository-ból.",
+            "color: #888;",
+            layout,
         )
-        desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        desc_label.setStyleSheet("color: #888;")
-        layout.addWidget(desc_label)
-        
         layout.addStretch()
+
+    # TODO Rename this here and in `_setup_ui`
+    def _extracted_from__setup_ui_5(self, arg0, arg1, layout):
+        # Work in progress jelzés
+        wip_label = QLabel(arg0)
+        wip_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        wip_label.setStyleSheet(arg1)
+        layout.addWidget(wip_label)
 
 
 class ThemeSettingsTab(QWidget):
@@ -551,6 +543,8 @@ class ThemeSettingsTab(QWidget):
     
     def _on_color_click(self):
         btn = self.sender()
+        if not isinstance(btn, QPushButton):
+            return
         key = btn.property("color_key")
         current = btn.property("color_value") or "#000000"
         
@@ -606,8 +600,7 @@ class ThemeSettingsTab(QWidget):
     def save_settings(self):
         theme_type = self.get_selected_theme()
         if theme_type == ThemeType.CUSTOM:
-            custom_colors = self.get_custom_colors()
-            if custom_colors:
+            if custom_colors := self.get_custom_colors():
                 self.theme_manager.set_custom_colors(custom_colors)
         else:
             self.theme_manager.set_theme(theme_type)
@@ -623,20 +616,18 @@ class AboutTab(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
+
         # Logo/Név
         name_label = QLabel(f"🎬 {APP_NAME}")
-        name_label.setStyleSheet("font-size: 32px; font-weight: bold;")
-        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(name_label)
-        
+        self._extracted_from__setup_ui_7(
+            name_label, "font-size: 32px; font-weight: bold;", layout
+        )
         version_label = QLabel(f"Verzió {APP_VERSION}")
-        version_label.setStyleSheet("font-size: 14px; color: #888;")
-        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(version_label)
-        
+        self._extracted_from__setup_ui_7(
+            version_label, "font-size: 14px; color: #888;", layout
+        )
         layout.addSpacing(20)
-        
+
         desc_label = QLabel(
             "Professzionális Szinkronfordítói Editor\n\n"
             "Magyar szinkronfordítók és szinkronrendezők számára készült\n"
@@ -645,9 +636,9 @@ class AboutTab(QWidget):
         desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc_label.setWordWrap(True)
         layout.addWidget(desc_label)
-        
+
         layout.addSpacing(20)
-        
+
         # Linkek
         links_label = QLabel(
             '<a href="https://github.com/Levi0725/DubSync">GitHub Repository</a>'
@@ -655,16 +646,20 @@ class AboutTab(QWidget):
         links_label.setOpenExternalLinks(True)
         links_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(links_label)
-        
+
         layout.addSpacing(30)
-        
+
         layout.addStretch()
-        
+
         # Copyright
         copyright_label = QLabel("© 2025 Levente Kulacsy - MIT License")
-        copyright_label.setStyleSheet("color: #666;")
-        copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(copyright_label)
+        self._extracted_from__setup_ui_7(copyright_label, "color: #666;", layout)
+
+    # TODO Rename this here and in `_setup_ui`
+    def _extracted_from__setup_ui_7(self, arg0, arg1, layout):
+        arg0.setStyleSheet(arg1)
+        arg0.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(arg0)
 
 
 class SettingsDialog(QDialog):
@@ -680,7 +675,7 @@ class SettingsDialog(QDialog):
     TAB_THEME = 3
     TAB_ABOUT = 4
     
-    def __init__(self, parent=None, plugin_manager: PluginManager = None, initial_tab: str = None):
+    def __init__(self, parent=None, plugin_manager: Optional[PluginManager] = None, initial_tab: Optional[str] = None):
         super().__init__(parent)
         self.plugin_manager = plugin_manager or PluginManager()
         self.settings = SettingsManager()
@@ -753,16 +748,18 @@ class SettingsDialog(QDialog):
     
     def _on_apply(self):
         """Beállítások alkalmazása."""
-        self._save_all_settings()
-        self.settings_saved.emit()
-        self.theme_changed.emit()
+        self._extracted_from__on_accept_3()
     
     def _on_accept(self):
         """OK gomb."""
+        self._extracted_from__on_accept_3()
+        self.accept()
+
+    # TODO Rename this here and in `_on_apply` and `_on_accept`
+    def _extracted_from__on_accept_3(self):
         self._save_all_settings()
         self.settings_saved.emit()
         self.theme_changed.emit()
-        self.accept()
     
     def _save_all_settings(self):
         """Összes beállítás mentése."""

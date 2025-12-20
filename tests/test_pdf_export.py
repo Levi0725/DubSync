@@ -242,20 +242,21 @@ class TestPDFContent:
     def test_many_cues(self, exporter, sample_project, temp_dir):
         """Sok cue kezelése (több oldal)."""
         cues = []
-        for i in range(50):
-            cues.append(Cue(
-                id=i+1,
+        cues.extend(
+            Cue(
+                id=i + 1,
                 project_id=1,
-                cue_index=i+1,
+                cue_index=i + 1,
                 time_in_ms=i * 3000,
-                time_out_ms=(i+1) * 3000,
+                time_out_ms=(i + 1) * 3000,
                 character_name="SPEAKER",
-                translated_text=f"Ez a {i+1}. mondat a tesztben."
-            ))
-        
+                translated_text=f"Ez a {i+1}. mondat a tesztben.",
+            )
+            for i in range(50)
+        )
         output_path = temp_dir / "test_many_cues.pdf"
         exporter.export(output_path, sample_project, cues)
-        
+
         assert output_path.exists()
         # Check file is reasonably large (multiple pages)
         assert output_path.stat().st_size > 5000

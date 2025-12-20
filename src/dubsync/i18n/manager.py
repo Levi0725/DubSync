@@ -5,6 +5,8 @@ Központi nyelvkezelő a többnyelvű támogatáshoz.
 Central language manager for multilingual support.
 """
 
+
+import contextlib
 import json
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Callable
@@ -128,7 +130,7 @@ class LocaleManager:
         for k, v in d.items():
             new_key = f"{parent_key}.{k}" if parent_key else k
             if isinstance(v, dict):
-                items.update(self._flatten_dict(v, new_key))
+                items |= self._flatten_dict(v, new_key)
             else:
                 items[new_key] = str(v)
         return items
@@ -200,23 +202,20 @@ class LocaleManager:
         # Jelenlegi nyelv fordítása
         translations = self._translations.get(self._current_language, {})
         text = translations.get(key)
-        
+
         # Fallback az angol nyelvre
         if text is None and self._current_language != self.FALLBACK_LANGUAGE:
             fallback_translations = self._translations.get(self.FALLBACK_LANGUAGE, {})
             text = fallback_translations.get(key)
-        
+
         # Ha nincs fordítás, visszaadjuk a kulcsot
         if text is None:
             return key
-        
+
         # Paraméterek helyettesítése
         if kwargs:
-            try:
+            with contextlib.suppress(KeyError, ValueError):
                 text = text.format(**kwargs)
-            except (KeyError, ValueError):
-                pass
-        
         return text
     
     def translate_plugin(self, plugin_id: str, key: str, **kwargs) -> str:
@@ -235,23 +234,20 @@ class LocaleManager:
         plugin_trans = self._plugin_translations.get(plugin_id, {})
         translations = plugin_trans.get(self._current_language, {})
         text = translations.get(key)
-        
+
         # Fallback az angol nyelvre
         if text is None and self._current_language != self.FALLBACK_LANGUAGE:
             fallback_trans = plugin_trans.get(self.FALLBACK_LANGUAGE, {})
             text = fallback_trans.get(key)
-        
+
         # Fallback az alap fordításokra
         if text is None:
             return self.translate(key, **kwargs)
-        
+
         # Paraméterek helyettesítése
         if kwargs:
-            try:
+            with contextlib.suppress(KeyError, ValueError):
                 text = text.format(**kwargs)
-            except (KeyError, ValueError):
-                pass
-        
         return text
     
     def register_language(self, lang_info: LanguageInfo, translations_file: Optional[Path] = None) -> bool:

@@ -83,8 +83,8 @@ class TranslatorWidget(QWidget):
         layout.addWidget(self.status_label)
         
         # Forrás nyelv
-        source_group = QGroupBox(t("plugins.translator.source_group_en"))
-        source_layout = QVBoxLayout(source_group)
+        self.source_group = QGroupBox(t("plugins.translator.source_group_en"))
+        source_layout = QVBoxLayout(self.source_group)
         
         self.source_text = QTextEdit()
         self.source_text.setPlaceholderText(t("plugins.translator.source_placeholder"))
@@ -92,7 +92,7 @@ class TranslatorWidget(QWidget):
         self.source_text.textChanged.connect(self._on_text_changed)
         source_layout.addWidget(self.source_text)
         
-        layout.addWidget(source_group)
+        layout.addWidget(self.source_group)
         
         # Fordítás gomb
         btn_layout = QHBoxLayout()
@@ -112,8 +112,8 @@ class TranslatorWidget(QWidget):
         layout.addLayout(btn_layout)
         
         # Cél nyelv
-        target_group = QGroupBox(t("plugins.translator.target_group_hu"))
-        target_layout = QVBoxLayout(target_group)
+        self.target_group = QGroupBox(t("plugins.translator.target_group_hu"))
+        target_layout = QVBoxLayout(self.target_group)
         
         self.target_text = QTextEdit()
         self.target_text.setPlaceholderText(t("plugins.translator.target_placeholder"))
@@ -121,7 +121,7 @@ class TranslatorWidget(QWidget):
         self.target_text.setMaximumHeight(120)
         target_layout.addWidget(self.target_text)
         
-        layout.addWidget(target_group)
+        layout.addWidget(self.target_group)
         
         # Akció gombok
         action_layout = QHBoxLayout()
@@ -143,20 +143,18 @@ class TranslatorWidget(QWidget):
         try:
             import argostranslate.package
             import argostranslate.translate
-            
+
             # Telepített nyelvek lekérése
             installed = argostranslate.translate.get_installed_languages()
             lang_codes = [lang.code for lang in installed]
-            
+
             if "en" in lang_codes and "hu" in lang_codes:
-                self._models_loaded = True
-                self.status_label.setText(t("plugins.translator.status_ready"))
-                self.status_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
+                self._extracted_from__download_models_12("plugins.translator.status_ready")
             else:
                 self.status_label.setText(t("plugins.translator.status_models_needed"))
                 self.status_label.setStyleSheet("color: #ff9800; font-size: 11px;")
                 self._download_models()
-                
+
         except ImportError:
             self.status_label.setText(t("plugins.translator.status_not_installed"))
             self.status_label.setStyleSheet("color: #f44336; font-size: 11px;")
@@ -169,31 +167,36 @@ class TranslatorWidget(QWidget):
         """Nyelvi modellek letöltése."""
         try:
             import argostranslate.package
-            
+
             # Elérhető csomagok frissítése
             argostranslate.package.update_package_index()
             available = argostranslate.package.get_available_packages()
-            
+
             # Angol-Magyar keresése
             for pkg in available:
                 if pkg.from_code == "en" and pkg.to_code == "hu":
                     self.status_label.setText(t("plugins.translator.status_downloading_en_hu"))
                     argostranslate.package.install_from_path(pkg.download())
                     break
-            
+
             for pkg in available:
                 if pkg.from_code == "hu" and pkg.to_code == "en":
                     self.status_label.setText(t("plugins.translator.status_downloading_hu_en"))
                     argostranslate.package.install_from_path(pkg.download())
                     break
-            
-            self._models_loaded = True
-            self.status_label.setText(t("plugins.translator.status_models_installed"))
-            self.status_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
-            
+
+            self._extracted_from__download_models_12(
+                "plugins.translator.status_models_installed"
+            )
         except Exception as e:
             self.status_label.setText(t("plugins.translator.status_download_error").format(error=str(e)))
             self.status_label.setStyleSheet("color: #f44336; font-size: 11px;")
+
+    # TODO Rename this here and in `_check_models` and `_download_models`
+    def _extracted_from__download_models_12(self, arg0):
+        self._models_loaded = True
+        self.status_label.setText(t(arg0))
+        self.status_label.setStyleSheet("color: #4CAF50; font-size: 11px;")
     
     def _on_text_changed(self):
         """Szöveg változott - késleltetett fordítás."""
@@ -238,11 +241,11 @@ class TranslatorWidget(QWidget):
         
         # Címkék frissítése
         if self._source_lang == "en":
-            self.source_text.parentWidget().setTitle(t("plugins.translator.source_group_en"))
-            self.target_text.parentWidget().setTitle(t("plugins.translator.target_group_hu"))
+            self.source_group.setTitle(t("plugins.translator.source_group_en"))
+            self.target_group.setTitle(t("plugins.translator.target_group_hu"))
         else:
-            self.source_text.parentWidget().setTitle(t("plugins.translator.source_group_hu"))
-            self.target_text.parentWidget().setTitle(t("plugins.translator.target_group_en"))
+            self.source_group.setTitle(t("plugins.translator.source_group_hu"))
+            self.target_group.setTitle(t("plugins.translator.target_group_en"))
         
         # Szövegek cseréje
         source = self.source_text.toPlainText()
@@ -253,16 +256,14 @@ class TranslatorWidget(QWidget):
     @Slot()
     def _copy_translation(self):
         """Fordítás másolása vágólapra."""
-        text = self.target_text.toPlainText()
-        if text:
+        if text := self.target_text.toPlainText():
             QApplication.clipboard().setText(text)
             self.status_label.setText(t("plugins.translator.status_copied"))
     
     @Slot()
     def _insert_translation(self):
         """Fordítás beillesztése."""
-        text = self.target_text.toPlainText()
-        if text:
+        if text := self.target_text.toPlainText():
             self.insert_translation.emit(text)
     
     def set_source_text(self, text: str):
@@ -340,15 +341,11 @@ class ArgosTranslatorPlugin(UIPlugin, TranslationPlugin):
     
     def create_menu_items(self) -> List[QAction]:
         """Menü elemek létrehozása."""
-        actions = []
-        
         action = QAction(t("plugins.translator.menu_panel"), self._main_window)
         action.setCheckable(True)
         action.setChecked(True)
         action.triggered.connect(self._toggle_dock)
-        actions.append(action)
-        
-        return actions
+        return [action]
     
     def _toggle_dock(self, checked: bool):
         """Dock megjelenítése/elrejtése."""
@@ -357,8 +354,8 @@ class ArgosTranslatorPlugin(UIPlugin, TranslationPlugin):
     
     def _on_insert_translation(self, text: str):
         """Fordítás beillesztése az editorba."""
-        if self._main_window:
-            editor = self._main_window.cue_editor
+        if self._main_window and hasattr(self._main_window, 'cue_editor'):
+            editor = getattr(self._main_window, 'cue_editor', None)
             if editor and hasattr(editor, 'translated_text'):
                 editor.translated_text.setPlainText(text)
     
@@ -373,6 +370,8 @@ class ArgosTranslatorPlugin(UIPlugin, TranslationPlugin):
     
     def get_long_description(self) -> str:
         """README tartalom."""
+        if self._plugin_dir is None:
+            return self.info.description
         readme_path = self._plugin_dir / "README.md"
         if readme_path.exists():
             return readme_path.read_text(encoding='utf-8')

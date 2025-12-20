@@ -5,17 +5,16 @@ Fő alkalmazás ablak a szinkronfordító editorhoz.
 """
 
 from pathlib import Path
-from typing import Optional
-from dataclasses import asdict
+from typing import Optional, cast
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QMenuBar, QMenu, QToolBar, QStatusBar, QFileDialog, QMessageBox,
-    QLabel, QProgressBar, QDockWidget, QApplication, QDialog,
+    QMainWindow, QWidget, QVBoxLayout, QSplitter,
+    QMenu, QToolBar, QFileDialog, QMessageBox,
+    QLabel, QDockWidget, QApplication, QDialog,
     QFormLayout, QComboBox, QColorDialog, QPushButton, QDialogButtonBox
 )
 from PySide6.QtCore import Qt, Signal, Slot, QSettings
-from PySide6.QtGui import QAction, QKeySequence, QIcon, QCloseEvent, QUndoStack, QUndoCommand
+from PySide6.QtGui import QAction, QKeySequence, QCloseEvent, QUndoStack, QUndoCommand
 
 from dubsync.utils.constants import APP_NAME, APP_VERSION, PROJECT_EXTENSION
 from dubsync.i18n import t
@@ -28,10 +27,9 @@ from dubsync.ui.cue_list import CueListWidget
 from dubsync.ui.cue_editor import CueEditorWidget
 from dubsync.ui.video_player import VideoPlayerWidget
 from dubsync.ui.comments_panel import CommentsPanelWidget
-from dubsync.ui.dialogs import ProjectSettingsDialog, AboutDialog
+from dubsync.ui.dialogs import ProjectSettingsDialog
 from dubsync.ui.theme import ThemeManager, ThemeType, ThemeColors, THEMES
-from dubsync.plugins.base import PluginManager, UIPlugin
-from dubsync.models.cue import Cue
+from dubsync.plugins.base import PluginManager
 
 
 class DeleteCueCommand(QUndoCommand):
@@ -60,9 +58,15 @@ class DeleteCueCommand(QUndoCommand):
         if not pm.is_open:
             return
         
+        from dubsync.models.cue import Cue as CueModel
+        
         # Recreate the cue
-        cue = Cue(
-            project_id=self._cue_data.get('project_id'),
+        project_id = self._cue_data.get('project_id')
+        if project_id is None:
+            return
+        
+        cue = CueModel(
+            project_id=project_id,
             cue_index=self._cue_data.get('cue_index', 1),
             time_in_ms=self._cue_data.get('time_in_ms', 0),
             time_out_ms=self._cue_data.get('time_out_ms', 2000),
@@ -150,8 +154,7 @@ class ThemeSettingsDialog(QDialog):
         
         # Ha egyedi téma, töltsük be a mentett színeket
         if theme_mgr.current_theme == ThemeType.CUSTOM:
-            custom_colors_dict = settings_mgr.custom_theme_colors
-            if custom_colors_dict:
+            if custom_colors_dict := settings_mgr.custom_theme_colors:
                 for key, btn in self.color_buttons.items():
                     if key in custom_colors_dict:
                         color = custom_colors_dict[key]
@@ -174,7 +177,10 @@ class ThemeSettingsDialog(QDialog):
             btn.setProperty("color_value", color)
     
     def _on_color_click(self):
-        btn = self.sender()
+        sender = self.sender()
+        if not isinstance(sender, QPushButton):
+            return
+        btn = sender
         key = btn.property("color_key")
         current = btn.property("color_value") or "#000000"
         
@@ -224,7 +230,7 @@ class MainWindow(QMainWindow):
     project_changed = Signal()
     cue_selected = Signal(int)
     
-    def __init__(self, plugin_manager: PluginManager = None):
+    def __init__(self, plugin_manager: Optional[PluginManager] = None):
         super().__init__()
         
         self.project_manager = ProjectManager()
@@ -254,33 +260,27 @@ class MainWindow(QMainWindow):
         """UI felépítése."""
         self.setWindowTitle(f"{APP_NAME} {APP_VERSION}")
         self.setMinimumSize(1200, 800)
-        
+
         central = QWidget()
         self.setCentralWidget(central)
-        
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(4)
-        
+
+        layout = self._extracted_from__setup_ui_9(central, 4)
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
         layout.addWidget(self.main_splitter)
-        
+
         self.cue_list = CueListWidget()
         self.main_splitter.addWidget(self.cue_list)
-        
+
         center_widget = QWidget()
-        center_layout = QVBoxLayout(center_widget)
-        center_layout.setContentsMargins(0, 0, 0, 0)
-        center_layout.setSpacing(4)
-        
+        center_layout = self._extracted_from__setup_ui_9(center_widget, 0)
         self.video_player = VideoPlayerWidget()
         center_layout.addWidget(self.video_player, 2)
-        
+
         self.cue_editor = CueEditorWidget()
         center_layout.addWidget(self.cue_editor, 1)
-        
+
         self.main_splitter.addWidget(center_widget)
-        
+
         self.comments_dock = QDockWidget(t("comments_panel.title"), self)
         self.comments_dock.setObjectName("commentsDock")
         self.comments_dock.setAllowedAreas(
@@ -289,8 +289,16 @@ class MainWindow(QMainWindow):
         self.comments_panel = CommentsPanelWidget()
         self.comments_dock.setWidget(self.comments_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.comments_dock)
-        
+
         self.main_splitter.setSizes([350, 850])
+
+    # TODO Rename this here and in `_setup_ui`
+    def _extracted_from__setup_ui_9(self, arg0, arg1):
+        result = QVBoxLayout(arg0)
+        result.setContentsMargins(arg1, arg1, arg1, arg1)
+        result.setSpacing(4)
+
+        return result
     
     def _setup_menus(self):
         """Menük beállítása."""
@@ -531,21 +539,17 @@ class MainWindow(QMainWindow):
     
     def _load_settings(self):
         """Beállítások betöltése."""
-        geometry = self.settings.value("geometry")
-        if geometry:
+        if geometry := self.settings.value("geometry"):
             self.restoreGeometry(geometry)
         
-        state = self.settings.value("windowState")
-        if state:
+        if state := self.settings.value("windowState"):
             self.restoreState(state)
         
         theme_name = self.settings.value("theme", "dark")
         try:
             theme_type = ThemeType(theme_name)
             if theme_type == ThemeType.CUSTOM:
-                # Egyedi téma színek betöltése
-                custom_colors_dict = self.settings_manager.custom_theme_colors
-                if custom_colors_dict:
+                if custom_colors_dict := self.settings_manager.custom_theme_colors:
                     from dubsync.ui.theme import ThemeColors, THEMES
                     base = THEMES[ThemeType.DARK]
                     custom_colors = ThemeColors(
@@ -589,7 +593,9 @@ class MainWindow(QMainWindow):
     def _apply_theme(self):
         """Téma alkalmazása."""
         stylesheet = self.theme_manager.get_stylesheet()
-        QApplication.instance().setStyleSheet(stylesheet)
+        app = QApplication.instance()
+        if app is not None:
+            cast(QApplication, app).setStyleSheet(stylesheet)
     
     def _setup_plugins(self):
         """Plugin UI elemek beállítása."""
@@ -608,9 +614,7 @@ class MainWindow(QMainWindow):
             try:
                 plugin.set_main_window(self)
                 
-                # Dock widget létrehozása
-                dock = plugin.create_dock_widget()
-                if dock:
+                if dock := plugin.create_dock_widget():
                     self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
                     self._plugin_docks.append(dock)
                     
@@ -624,9 +628,7 @@ class MainWindow(QMainWindow):
                     toggle_action.setText(f"{plugin.info.icon} {plugin.info.name}")
                     self.view_menu.insertAction(self.action_fullscreen, toggle_action)
                 
-                # Menü elemek - Pluginok menübe
-                menu_items = plugin.create_menu_items()
-                if menu_items:
+                if menu_items := plugin.create_menu_items():
                     plugins_menu = self._get_or_create_plugins_menu()
                     for action in menu_items:
                         plugins_menu.addAction(action)
@@ -675,7 +677,7 @@ class MainWindow(QMainWindow):
         """Ablak címének frissítése."""
         title = f"{APP_NAME} {APP_VERSION}"
         
-        if self.project_manager.is_open:
+        if self.project_manager.is_open and self.project_manager.project is not None:
             project_name = self.project_manager.project.get_display_title()
             title = f"{project_name} - {title}"
             
@@ -717,13 +719,15 @@ class MainWindow(QMainWindow):
     def _update_delete_mode_ui(self):
         """Törlés mód UI frissítése."""
         if self._delete_mode:
-            self.delete_mode_label.setText("🗑️ TÖRLÉS MÓD AKTÍV")
-            self.action_delete_cue.setEnabled(True)
-            self.cue_list.set_delete_mode(True)
+            self._extracted_from__update_delete_mode_ui_4("🗑️ TÖRLÉS MÓD AKTÍV", True)
         else:
-            self.delete_mode_label.setText("")
-            self.action_delete_cue.setEnabled(False)
-            self.cue_list.set_delete_mode(False)
+            self._extracted_from__update_delete_mode_ui_4("", False)
+
+    # TODO Rename this here and in `_update_delete_mode_ui`
+    def _extracted_from__update_delete_mode_ui_4(self, arg0, arg1):
+        self.delete_mode_label.setText(arg0)
+        self.action_delete_cue.setEnabled(arg1)
+        self.cue_list.set_delete_mode(arg1)
     
     def _update_statistics(self):
         """Statisztikák frissítése."""
@@ -810,12 +814,13 @@ class MainWindow(QMainWindow):
             file_path: Projekt fájl elérési útja
         """
         try:
+            # sourcery skip: merge-nested-ifs
             self.project_manager.open_project(Path(file_path))
             self._refresh_cue_list()
             
-            # Videó betöltése biztonsággal
-            if self.project_manager.project.has_video():
-                video_path = Path(self.project_manager.project.video_path)
+            project = self.project_manager.project
+            if project is not None and project.has_video():
+                video_path = Path(project.video_path)
                 if video_path.exists():
                     self.video_player.load_video(video_path)
                 else:
@@ -833,8 +838,9 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Projekt megnyitva", 3000)
             
             # Plugin esemény
-            for plugin in self.plugin_manager.get_ui_plugins():
-                plugin.on_project_opened(self.project_manager.project)
+            if project is not None:
+                for plugin in self.plugin_manager.get_ui_plugins():
+                    plugin.on_project_opened(project)
                 
         except Exception as e:
             QMessageBox.critical(self, "Hiba", f"Nem sikerült megnyitni: {e}")
@@ -947,10 +953,11 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_export_pdf(self):
-        if not self.project_manager.is_open:
+        if not self.project_manager.is_open or self.project_manager.project is None:
             return
         
-        default_name = self.project_manager.project.get_display_title()
+        project = self.project_manager.project
+        default_name = project.get_display_title()
         default_name = "".join(c for c in default_name if c.isalnum() or c in " -_")
         
         # Kezdőmappa a beállításokból
@@ -965,7 +972,7 @@ class MainWindow(QMainWindow):
             try:
                 cues = self.project_manager.get_cues()
                 exporter = PDFExporter()
-                exporter.export(Path(file_path), self.project_manager.project, cues)
+                exporter.export(Path(file_path), project, cues)
                 QMessageBox.information(self, t("menu.file.export"), t("messages.export_success", path=file_path))
             except Exception as e:
                 QMessageBox.critical(self, t("messages.error"), t("messages.export_error", error=str(e)))
@@ -993,10 +1000,11 @@ class MainWindow(QMainWindow):
     
     def _on_plugin_export(self, plugin):
         """Plugin export végrehajtása."""
-        if not self.project_manager.is_open:
+        if not self.project_manager.is_open or self.project_manager.project is None:
             return
         
-        default_name = self.project_manager.project.get_display_title()
+        project = self.project_manager.project
+        default_name = project.get_display_title()
         default_name = "".join(c for c in default_name if c.isalnum() or c in " -_")
         
         # Kezdőmappa a beállításokból
@@ -1022,7 +1030,7 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_project_settings(self):
-        if not self.project_manager.is_open:
+        if not self.project_manager.is_open or self.project_manager.project is None:
             return
         
         dialog = ProjectSettingsDialog(self.project_manager.project, self)
@@ -1045,8 +1053,7 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             theme_type = dialog.get_selected_theme()
             if theme_type == ThemeType.CUSTOM:
-                custom_colors = dialog.get_custom_colors()
-                if custom_colors:
+                if custom_colors := dialog.get_custom_colors():
                     self.theme_manager.set_custom_colors(custom_colors)
                     # Egyedi színek mentése
                     self.settings_manager.custom_theme_colors = {
@@ -1157,8 +1164,7 @@ class MainWindow(QMainWindow):
         if not self._delete_mode or not self.project_manager.is_open:
             return
         
-        cue_id = self.cue_list.get_selected_cue_id()
-        if cue_id:
+        if cue_id := self.cue_list.get_selected_cue_id():
             self._on_delete_cue_confirmed(cue_id)
     
     @Slot(int)
@@ -1177,9 +1183,7 @@ class MainWindow(QMainWindow):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            # Save cue data for undo
-            cue = self.project_manager.get_cue(cue_id)
-            if cue:
+            if cue := self.project_manager.get_cue(cue_id):
                 cue_data = {
                     'id': cue.id,
                     'project_id': cue.project_id,
@@ -1211,15 +1215,12 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, t("dialogs.timing_editor.title"), t("messages.select_cue_for_timing"))
             return
         
-        cue = self.project_manager.get_cue(cue_id)
-        if cue:
+        if cue := self.project_manager.get_cue(cue_id):
             self.cue_editor.show_timing_editor(cue)
     
     @Slot()
     def _on_timing_changed(self):
-        # Get the cue from the editor and save it
-        cue = self.cue_editor.get_cue()
-        if cue:
+        if cue := self.cue_editor.get_cue():
             self.project_manager.save_cue(cue)
             self._refresh_cue_list()
             self._update_title()
@@ -1238,34 +1239,30 @@ class MainWindow(QMainWindow):
     
     @Slot()
     def _on_goto_next_empty(self):
-        if not self.project_manager.is_open:
+        if not self.project_manager.is_open or self.project_manager.db is None or self.project_manager.project is None:
             return
         
         from dubsync.models.cue import Cue
         current_index = self.cue_list.get_current_index()
         
-        cue = Cue.find_next_empty(
+        if cue := Cue.find_next_empty(
             self.project_manager.db, current_index, self.project_manager.project.id
-        )
-        
-        if cue:
+        ):
             self.cue_list.select_cue(cue.id)
         else:
             self.statusBar().showMessage(t("messages.no_more_empty_cues"), 3000)
     
     @Slot()
     def _on_goto_next_lipsync_issue(self):
-        if not self.project_manager.is_open:
+        if not self.project_manager.is_open or self.project_manager.db is None or self.project_manager.project is None:
             return
         
         from dubsync.models.cue import Cue
         current_index = self.cue_list.get_current_index()
         
-        cue = Cue.find_next_lipsync_issue(
+        if cue := Cue.find_next_lipsync_issue(
             self.project_manager.db, current_index, self.project_manager.project.id
-        )
-        
-        if cue:
+        ):
             self.cue_list.select_cue(cue.id)
         else:
             self.statusBar().showMessage(t("messages.no_more_lipsync_issues"), 3000)
@@ -1300,14 +1297,13 @@ class MainWindow(QMainWindow):
     
     @Slot(int)
     def _on_cue_selected(self, cue_id: int):
-        cue = self.project_manager.get_cue(cue_id)
-        if cue:
+        if (cue := self.project_manager.get_cue(cue_id)) and self.project_manager.db is not None:
             self.cue_editor.set_cue(cue)
             self.comments_panel.set_cue(cue, self.project_manager.db)
             self.video_player.seek_to(cue.time_in_ms)
             
             # Set subtitle for fullscreen video
-            subtitle_text = cue.translated_text if cue.translated_text else cue.source_text
+            subtitle_text = cue.translated_text or cue.source_text
             self.video_player.set_subtitle(subtitle_text)
             
             # Plugin értesítés
@@ -1317,15 +1313,12 @@ class MainWindow(QMainWindow):
     def _on_cue_double_clicked(self, cue_id: int):
         if self._delete_mode:
             self._on_delete_cue_confirmed(cue_id)
-        else:
-            cue = self.project_manager.get_cue(cue_id)
-            if cue:
-                self.video_player.play_segment(cue.time_in_ms, cue.time_out_ms)
+        elif cue := self.project_manager.get_cue(cue_id):
+            self.video_player.play_segment(cue.time_in_ms, cue.time_out_ms)
     
     @Slot()
     def _on_cue_saved(self):
-        cue = self.cue_editor.get_cue()
-        if cue:
+        if cue := self.cue_editor.get_cue():
             # Save the current cue index BEFORE refreshing (refresh loses selection)
             current_cue_index = cue.cue_index
             
@@ -1344,11 +1337,10 @@ class MainWindow(QMainWindow):
     @Slot(int)
     def _on_video_position_changed(self, position_ms: int):
         from dubsync.models.cue import Cue
-        if self.project_manager.is_open:
-            cue = Cue.find_at_time(
+        if self.project_manager.is_open and self.project_manager.db is not None and self.project_manager.project is not None:
+            if cue := Cue.find_at_time(
                 self.project_manager.db, position_ms, self.project_manager.project.id
-            )
-            if cue:
+            ):
                 self.cue_list.highlight_cue(cue.id)
     
     @Slot()

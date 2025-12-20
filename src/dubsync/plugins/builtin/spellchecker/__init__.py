@@ -4,6 +4,8 @@ Spellchecker Plugin
 Magyar helyesírás-ellenőrző plugin a DubSync alkalmazáshoz.
 """
 
+
+import contextlib
 import re
 import json
 from pathlib import Path
@@ -26,7 +28,7 @@ class SpellcheckerEngine:
     """Helyesírás-ellenőrző motor."""
     
     def __init__(self):
-        self._dictionary = None
+        self._dictionary: Any = None
         self._available = False
         self._error_message = ""
         self._custom_words: Set[str] = set()
@@ -36,7 +38,7 @@ class SpellcheckerEngine:
     def _load_dictionary(self):
         """Magyar szótár betöltése."""
         try:
-            from spylls.hunspell import Dictionary
+            from spylls.hunspell import Dictionary # type: ignore
             
             # Próbáljuk betölteni a magyar szótárt
             # A spylls automatikusan megkeresi a rendszer szótárakat
@@ -141,14 +143,12 @@ class SpellcheckerEngine:
         """Szavak betöltése."""
         if not path.exists():
             return
-        
-        try:
+
+        with contextlib.suppress(Exception):
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             self._ignored_words = set(data.get("ignored", []))
             self._custom_words = set(data.get("custom", []))
-        except Exception:
-            pass
 
 
 class SpellingError:
@@ -301,8 +301,7 @@ class SpellcheckerWidget(QWidget):
     
     def _on_error_clicked(self, item):
         """Hibára kattintás."""
-        error = item.data(Qt.ItemDataRole.UserRole)
-        if error:
+        if error := item.data(Qt.ItemDataRole.UserRole):
             self.highlight_error.emit(error.word, error.position)
     
     def _show_error_menu(self, pos):
@@ -310,42 +309,41 @@ class SpellcheckerWidget(QWidget):
         item = self.errors_list.itemAt(pos)
         if not item:
             return
-        
+
         error = item.data(Qt.ItemDataRole.UserRole)
         if not error:
             return
-        
+
         menu = QMenu(self)
-        
+
         # Javaslatok
         if error.suggestions:
             for suggestion in error.suggestions:
                 action = menu.addAction(f"➡️ {suggestion}")
                 action.setData(("replace", suggestion))
             menu.addSeparator()
-        
+
         ignore_action = menu.addAction(t("plugins.spellchecker.context_ignore"))
         ignore_action.setData(("ignore", error.word))
-        
+
         add_action = menu.addAction(t("plugins.spellchecker.context_add"))
         add_action.setData(("add", error.word))
-        
+
         action = menu.exec_(self.errors_list.mapToGlobal(pos))
         if action and action.data():
             cmd, word = action.data()
             if cmd == "ignore":
                 self.engine.add_to_ignore(word)
-                self._save_words()
-                self._update_ignored_list()
-                self._recheck_current()
+                self._extracted_from__show_error_menu_31()
             elif cmd == "add":
                 self.engine.add_custom_word(word)
-                self._save_words()
-                self._update_ignored_list()
-                self._recheck_current()
-            elif cmd == "replace":
-                # TODO: Csere implementálása
-                pass
+                self._extracted_from__show_error_menu_31()
+
+    # TODO Rename this here and in `_show_error_menu`
+    def _extracted_from__show_error_menu_31(self):
+        self._save_words()
+        self._update_ignored_list()
+        self._recheck_current()
     
     def _show_ignored_menu(self, pos):
         """Kivételek kontextus menü."""
@@ -367,9 +365,8 @@ class SpellcheckerWidget(QWidget):
         item = self.errors_list.currentItem()
         if not item:
             return
-        
-        error = item.data(Qt.ItemDataRole.UserRole)
-        if error:
+
+        if error := item.data(Qt.ItemDataRole.UserRole):
             self.engine.add_to_ignore(error.word)
             self._save_words()
             self._update_ignored_list()
@@ -381,9 +378,8 @@ class SpellcheckerWidget(QWidget):
         item = self.errors_list.currentItem()
         if not item:
             return
-        
-        error = item.data(Qt.ItemDataRole.UserRole)
-        if error:
+
+        if error := item.data(Qt.ItemDataRole.UserRole):
             self.engine.add_custom_word(error.word)
             self._save_words()
             self._update_ignored_list()
@@ -576,15 +572,11 @@ class SpellcheckerPlugin(UIPlugin):
     
     def create_menu_items(self) -> List[QAction]:
         """Menü elemek létrehozása."""
-        actions = []
-        
         action = QAction(t("plugins.spellchecker.panel"), self._main_window)
         action.setCheckable(True)
         action.setChecked(True)
         action.triggered.connect(self._toggle_dock)
-        actions.append(action)
-        
-        return actions
+        return [action]
     
     @Slot(str, int)
     def _on_highlight_error(self, word: str, position: int):
@@ -601,18 +593,17 @@ class SpellcheckerPlugin(UIPlugin):
     def on_cue_selected(self, cue) -> None:
         """Cue kiválasztás esemény - ellenőrzés."""
         if self._widget and cue:
-            if hasattr(cue, 'target_text') and cue.target_text:
-                self._widget.check_text(cue.target_text)
-    
+            if target_text := getattr(cue, 'target_text', None):
+                self._widget.check_text(target_text)
+            
     def get_widget(self) -> Optional[SpellcheckerWidget]:
         """Widget visszaadása."""
         return self._widget
     
+    # sourcery skip: merge-nested-ifs
     def check_text(self, text: str) -> List[SpellingError]:
         """Szöveg ellenőrzése."""
-        if self._widget:
-            return self._widget.check_text(text)
-        return []
+        return self._widget.check_text(text) if self._widget else []
 
 
 # Plugin exportálása

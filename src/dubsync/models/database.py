@@ -203,7 +203,7 @@ def init_database(db: Database) -> None:
     
     # Ensure at least one project exists
     row = db.fetchone("SELECT COUNT(*) as count FROM project")
-    if row["count"] == 0:
+    if row is None or row["count"] == 0:
         db.execute(
             "INSERT INTO project (title) VALUES (?)",
             ("Új projekt",)

@@ -28,6 +28,7 @@ def sample_project(memory_db):
     """Minta projekt létrehozása."""
     # Load the default project created by init_database
     project = Project.load(memory_db, 1)
+    assert project is not None, "Project with id 1 should exist"
     project.title = "Test Movie"
     project.series_title = "Test Series"
     project.season = "01"
@@ -66,12 +67,14 @@ class TestProjectModel:
         """Projekt mentése."""
         # Load the default project (id=1 is created by init_database)
         project = Project.load(memory_db, 1)
+        assert project is not None, "Project with id 1 should exist"
         project.title = "Save Test"
         project.translator = "Test"
         project.save(memory_db)
         
         # Reload and verify
         reloaded = Project.load(memory_db, 1)
+        assert reloaded is not None
         assert reloaded.title == "Save Test"
     
     def test_load_project(self, memory_db, sample_project):
@@ -96,6 +99,7 @@ class TestProjectModel:
         sample_project.save(memory_db)
         
         loaded = Project.load(memory_db, sample_project.id)
+        assert loaded is not None, "Loaded project should not be None"
         assert loaded.title == "Updated Title"
         assert loaded.translator == "New Translator"
     
@@ -236,6 +240,7 @@ class TestCueModel:
         cue.save(memory_db)
         
         loaded = Cue.load_by_id(memory_db, cue.id)
+        assert loaded is not None
         assert loaded.translated_text == "Fordított"
         assert loaded.status == CueStatus.APPROVED
     

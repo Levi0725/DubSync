@@ -37,65 +37,65 @@ class ProjectSettingsDialog(QDialog):
     def _setup_ui(self):
         """UI felépítése."""
         layout = QVBoxLayout(self)
-        
+
         # Form
         form = QFormLayout()
-        
-        self.title_edit = QLineEdit()
-        self.title_edit.setPlaceholderText(t("dialogs.project_settings.project_title_placeholder"))
-        form.addRow(t("dialogs.project_settings.project_title"), self.title_edit)
-        
-        self.series_edit = QLineEdit()
-        self.series_edit.setPlaceholderText(t("dialogs.project_settings.series_placeholder"))
-        form.addRow(t("dialogs.project_settings.series"), self.series_edit)
-        
+
+        self.title_edit = self._extracted_from__setup_ui_8(
+            "dialogs.project_settings.project_title_placeholder",
+            form,
+            "dialogs.project_settings.project_title",
+        )
+        self.series_edit = self._extracted_from__setup_ui_8(
+            "dialogs.project_settings.series_placeholder",
+            form,
+            "dialogs.project_settings.series",
+        )
         # Season/Episode row
         season_layout = QHBoxLayout()
-        self.season_edit = QLineEdit()
-        self.season_edit.setPlaceholderText("1")
-        self.season_edit.setMaximumWidth(60)
-        season_layout.addWidget(self.season_edit)
-        season_layout.addWidget(QLabel(t("dialogs.project_settings.season")))
-        
-        self.episode_edit = QLineEdit()
-        self.episode_edit.setPlaceholderText("1")
-        self.episode_edit.setMaximumWidth(60)
-        season_layout.addWidget(self.episode_edit)
-        season_layout.addWidget(QLabel(t("dialogs.project_settings.episode")))
+        self.season_edit = self._extracted_from__setup_ui_18(
+            season_layout, "dialogs.project_settings.season"
+        )
+        self.episode_edit = self._extracted_from__setup_ui_18(
+            season_layout, "dialogs.project_settings.episode"
+        )
         season_layout.addStretch()
-        
+
         form.addRow(f"{t('dialogs.project_settings.season')}/{t('dialogs.project_settings.episode')}:", season_layout)
-        
-        self.episode_title_edit = QLineEdit()
-        self.episode_title_edit.setPlaceholderText(t("dialogs.project_settings.episode_title_placeholder"))
-        form.addRow(t("dialogs.project_settings.episode_title"), self.episode_title_edit)
-        
+
+        self.episode_title_edit = self._extracted_from__setup_ui_8(
+            "dialogs.project_settings.episode_title_placeholder",
+            form,
+            "dialogs.project_settings.episode_title",
+        )
         form.addRow("", QLabel(""))  # Spacer
-        
-        self.translator_edit = QLineEdit()
-        self.translator_edit.setPlaceholderText(t("dialogs.project_settings.translator_placeholder"))
-        form.addRow(t("dialogs.project_settings.translator"), self.translator_edit)
-        
-        self.editor_edit = QLineEdit()
-        self.editor_edit.setPlaceholderText(t("dialogs.project_settings.editor_placeholder"))
-        form.addRow(t("dialogs.project_settings.editor"), self.editor_edit)
-        
+
+        self.translator_edit = self._extracted_from__setup_ui_8(
+            "dialogs.project_settings.translator_placeholder",
+            form,
+            "dialogs.project_settings.translator",
+        )
+        self.editor_edit = self._extracted_from__setup_ui_8(
+            "dialogs.project_settings.editor_placeholder",
+            form,
+            "dialogs.project_settings.editor",
+        )
         form.addRow("", QLabel(""))  # Spacer
-        
+
         # Technical settings
         tech_group = QGroupBox(t("dialogs.project_settings.technical"))
         tech_layout = QFormLayout(tech_group)
-        
+
         self.framerate_spin = QDoubleSpinBox()
         self.framerate_spin.setRange(1.0, 120.0)
         self.framerate_spin.setValue(25.0)
         self.framerate_spin.setDecimals(3)
         self.framerate_spin.setSuffix(" fps")
         tech_layout.addRow(t("dialogs.project_settings.framerate"), self.framerate_spin)
-        
+
         layout.addLayout(form)
         layout.addWidget(tech_group)
-        
+
         # Buttons
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | 
@@ -104,6 +104,24 @@ class ProjectSettingsDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    # TODO Rename this here and in `_setup_ui`
+    def _extracted_from__setup_ui_18(self, season_layout, arg1):
+        result = QLineEdit()
+        result.setPlaceholderText("1")
+        result.setMaximumWidth(60)
+        season_layout.addWidget(result)
+        season_layout.addWidget(QLabel(t(arg1)))
+
+        return result
+
+    # TODO Rename this here and in `_setup_ui`
+    def _extracted_from__setup_ui_8(self, arg0, form, arg2):
+        result = QLineEdit()
+        result.setPlaceholderText(t(arg0))
+        form.addRow(t(arg2), result)
+
+        return result
     
     def _load_values(self):
         """Értékek betöltése a projektből."""

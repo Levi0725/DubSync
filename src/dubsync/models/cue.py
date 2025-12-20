@@ -188,7 +188,7 @@ class Cue:
                     self.lip_sync_ratio,
                 )
             )
-            self.id = cursor.lastrowid
+            self.id = cursor.lastrowid or 0
         else:
             db.execute(
                 """
@@ -262,7 +262,7 @@ class Cue:
         """
         Megjelenítendő szöveg (fordítás vagy forrás).
         """
-        return self.translated_text if self.translated_text else self.source_text
+        return self.translated_text or self.source_text
     
     def get_lip_sync_status(self) -> LipSyncStatus:
         """

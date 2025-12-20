@@ -54,6 +54,7 @@ def sample_project(memory_db):
     Minta projekt tesztekhez.
     """
     project = Project.load(memory_db, 1)
+    assert project is not None, "Project with id 1 should exist"
     project.title = "Teszt Epizód"
     project.series_title = "Teszt Sorozat"
     project.season = "1"

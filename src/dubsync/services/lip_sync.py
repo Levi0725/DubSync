@@ -176,7 +176,7 @@ class LipSyncEstimator:
         Returns:
             LipSyncResult a becslés eredményével
         """
-        text = cue.translated_text if cue.translated_text else cue.source_text
+        text = cue.translated_text or cue.source_text
         source = cue.source_text if cue.translated_text else ""
         return self.estimate(text, cue.duration_ms, source)
     

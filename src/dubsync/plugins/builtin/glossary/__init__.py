@@ -70,20 +70,28 @@ class GlossaryData:
     def find_translation(self, text: str) -> Optional[str]:
         """Fordítás keresése a szótárban."""
         text_lower = text.lower()
-        for entry in self.entries:
-            if entry.source.lower() == text_lower:
-                return entry.target
-        return None
+        return next(
+            (
+                entry.target
+                for entry in self.entries
+                if entry.source.lower() == text_lower
+            ),
+            None,
+        )
     
     def search(self, query: str) -> List[GlossaryEntry]:
         """Bejegyzések keresése."""
         query_lower = query.lower()
         results = []
-        for entry in self.entries:
-            if (query_lower in entry.source.lower() or 
-                query_lower in entry.target.lower() or
-                query_lower in entry.notes.lower()):
-                results.append(entry)
+        results.extend(
+            entry
+            for entry in self.entries
+            if (
+                query_lower in entry.source.lower()
+                or query_lower in entry.target.lower()
+                or query_lower in entry.notes.lower()
+            )
+        )
         return results
     
     def to_dict(self) -> Dict[str, Any]:
@@ -135,31 +143,20 @@ class AddEditEntryDialog(QDialog):
     
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        
-        # Forrás szó
-        source_layout = QHBoxLayout()
-        source_layout.addWidget(QLabel(t("plugins.glossary.source")))
-        self.source_edit = QLineEdit()
-        self.source_edit.setPlaceholderText(t("plugins.glossary.source_placeholder"))
-        source_layout.addWidget(self.source_edit)
-        layout.addLayout(source_layout)
-        
-        # Cél szó
-        target_layout = QHBoxLayout()
-        target_layout.addWidget(QLabel(t("plugins.glossary.target")))
-        self.target_edit = QLineEdit()
-        self.target_edit.setPlaceholderText(t("plugins.glossary.target_placeholder"))
-        target_layout.addWidget(self.target_edit)
-        layout.addLayout(target_layout)
-        
-        # Megjegyzés
-        notes_layout = QHBoxLayout()
-        notes_layout.addWidget(QLabel(t("plugins.glossary.notes")))
-        self.notes_edit = QLineEdit()
-        self.notes_edit.setPlaceholderText(t("plugins.glossary.notes_placeholder"))
-        notes_layout.addWidget(self.notes_edit)
-        layout.addLayout(notes_layout)
-        
+
+        self.source_edit = self._extracted_from__setup_ui_5(
+            "plugins.glossary.source",
+            "plugins.glossary.source_placeholder",
+            layout,
+        )
+        self.target_edit = self._extracted_from__setup_ui_5(
+            "plugins.glossary.target",
+            "plugins.glossary.target_placeholder",
+            layout,
+        )
+        self.notes_edit = self._extracted_from__setup_ui_5(
+            "plugins.glossary.notes", "plugins.glossary.notes_placeholder", layout
+        )
         # Gombok
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | 
@@ -168,6 +165,18 @@ class AddEditEntryDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    # TODO Rename this here and in `_setup_ui`
+    def _extracted_from__setup_ui_5(self, arg0, arg1, layout):
+        # Forrás szó
+        source_layout = QHBoxLayout()
+        source_layout.addWidget(QLabel(t(arg0)))
+        result = QLineEdit()
+        result.setPlaceholderText(t(arg1))
+        source_layout.addWidget(result)
+        layout.addLayout(source_layout)
+
+        return result
     
     def get_entry(self) -> GlossaryEntry:
         """Visszaadja a szerkesztett bejegyzést."""
@@ -258,24 +267,29 @@ class ImportExportDialog(QDialog):
     
     def _select_all(self):
         for i in range(self.tree.topLevelItemCount()):
-            self.tree.topLevelItem(i).setCheckState(0, Qt.CheckState.Checked)
+            item = self.tree.topLevelItem(i)
+            if item is not None:
+                item.setCheckState(0, Qt.CheckState.Checked)
     
     def _select_none(self):
         for i in range(self.tree.topLevelItemCount()):
-            self.tree.topLevelItem(i).setCheckState(0, Qt.CheckState.Unchecked)
+            item = self.tree.topLevelItem(i)
+            if item is not None:
+                item.setCheckState(0, Qt.CheckState.Unchecked)
     
     def _update_count(self):
-        checked = sum(
-            1 for i in range(self.tree.topLevelItemCount())
-            if self.tree.topLevelItem(i).checkState(0) == Qt.CheckState.Checked
-        )
+        checked = 0
+        for i in range(self.tree.topLevelItemCount()):
+            item = self.tree.topLevelItem(i)
+            if item is not None and item.checkState(0) == Qt.CheckState.Checked:
+                checked += 1
         self.count_label.setText(t("plugins.glossary.selected_count", checked=checked, total=self.tree.topLevelItemCount()))
     
     def _on_accept(self):
         self.selected_entries = []
         for i in range(self.tree.topLevelItemCount()):
             item = self.tree.topLevelItem(i)
-            if item.checkState(0) == Qt.CheckState.Checked:
+            if item is not None and item.checkState(0) == Qt.CheckState.Checked:
                 entry = item.data(0, Qt.ItemDataRole.UserRole)
                 self.selected_entries.append(entry)
         self.accept()
@@ -653,22 +667,17 @@ class GlossaryPlugin(UIPlugin):
     
     def create_menu_items(self) -> List[QAction]:
         """Menü elemek létrehozása."""
-        actions = []
-        
         action = QAction(t("plugins.glossary.panel"), self._main_window)
         action.setCheckable(True)
         action.setChecked(True)
         action.triggered.connect(self._toggle_dock)
-        actions.append(action)
-        
-        return actions
+        return [action]
     
     @Slot(str)
     def _on_insert_translation(self, text: str):
         """Fordítás beillesztése a cue editorba."""
         if self._main_window:
-            editor = getattr(self._main_window, 'cue_editor', None)
-            if editor:
+            if editor := getattr(self._main_window, 'cue_editor', None):
                 editor.insert_text(text)
     
     @Slot(bool)
@@ -679,9 +688,6 @@ class GlossaryPlugin(UIPlugin):
     
     def on_cue_selected(self, cue) -> None:
         """Cue kiválasztás esemény."""
-        if self._widget and cue and hasattr(cue, 'source_text'):
-            # Keresés a forrás szövegben
-            pass
     
     def get_widget(self) -> Optional[GlossaryWidget]:
         """Widget visszaadása."""

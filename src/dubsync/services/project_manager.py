@@ -5,15 +5,14 @@ Projekt kezelő szolgáltatás.
 Projekt létrehozás, megnyitás, mentés, import műveletek.
 """
 
-import shutil
 from pathlib import Path
 from typing import Optional, List, Tuple
-from datetime import datetime
+import sqlite3
 
 from dubsync.models.database import Database, init_database
 from dubsync.models.project import Project
 from dubsync.models.cue import Cue, CueBatch
-from dubsync.services.srt_parser import SRTParser, parse_srt_file
+from dubsync.services.srt_parser import parse_srt_file
 from dubsync.services.lip_sync import LipSyncEstimator
 from dubsync.services.settings_manager import SettingsManager
 from dubsync.utils.constants import PROJECT_EXTENSION
@@ -53,6 +52,18 @@ class ProjectManager:
         """Projekt megjelölése mentettként."""
         self._dirty = False
     
+    def _get_db(self) -> Database:
+        """Get database, raising if not open."""
+        if self.db is None:
+            raise ValueError("Nincs megnyitott projekt")
+        return self.db
+    
+    def _get_project(self) -> Project:
+        """Get project, raising if not open."""
+        if self.project is None:
+            raise ValueError("Nincs megnyitott projekt")
+        return self.project
+    
     def new_project(self, project_path: Optional[Path] = None) -> Project:
         """
         Új projekt létrehozása.
@@ -73,6 +84,9 @@ class ProjectManager:
         
         # Load project
         self.project = Project.load(self.db, 1)
+        
+        if self.project is None:
+            raise ValueError("Nem sikerült létrehozni a projektet")
         
         # Alapértelmezett fordító név beállítása a beállításokból
         settings = SettingsManager()
@@ -131,38 +145,40 @@ class ProjectManager:
         """
         if not self.is_open:
             raise ValueError("Nincs megnyitott projekt")
-        
+
+        db = self._get_db()
+        proj = self._get_project()
+
         # If no path provided, use the current one
         target_path = project_path or self.project_path
-        
+
         if target_path is None:
             raise ValueError("Nincs megadva mentési útvonal")
-        
+
         # Save project data first
-        self.project.save(self.db)
-        self.db.commit()
-        
+        proj.save(db)
+        db.commit()
+
         # If the database is in memory or we're saving to a new location
-        if self.db.db_path is None or (project_path is not None and project_path != self.project_path):
-            # We need to create a new file
-            # First, backup the in-memory data by creating a new file database
-            import sqlite3
-            
-            # Create new database file
-            new_conn = sqlite3.connect(str(target_path))
-            
-            # Copy all data from current connection to new file
-            self.db.connection.backup(new_conn)
-            new_conn.close()
-            
-            # Close old connection and reopen from file
-            self.db.close()
-            self.db = Database(target_path)
-            self.project = Project.load(self.db, 1)
-            self.project_path = target_path
-        
+        if db.db_path is None or (project_path is not None and project_path != self.project_path):
+            self._extracted_from_save_project_33(target_path, db)
         self._dirty = False
         return target_path
+
+    # TODO Rename this here and in `save_project`
+    def _extracted_from_save_project_33(self, target_path, db):
+        # Create new database file
+        new_conn = sqlite3.connect(str(target_path))
+
+        # Copy all data from current connection to new file
+        db.connection.backup(new_conn)
+        new_conn.close()
+
+        # Close old connection and reopen from file
+        db.close()
+        self.db = Database(target_path)
+        self.project = Project.load(self.db, 1)
+        self.project_path = target_path
     
     def close(self):
         """
@@ -199,15 +215,18 @@ class ProjectManager:
         if not self.is_open:
             raise ValueError("Nincs megnyitott projekt")
         
+        db = self._get_db()
+        proj = self._get_project()
+        
         # Parse SRT
-        cues, errors = parse_srt_file(srt_path, self.project.id)
+        cues, errors = parse_srt_file(srt_path, proj.id)
         
         if not cues:
-            return 0, errors if errors else ["Nem található felirat a fájlban"]
+            return 0, errors or ["Nem található felirat a fájlban"]
         
         # Clear existing cues if requested
         if clear_existing:
-            CueBatch.delete_all(self.db, self.project.id)
+            CueBatch.delete_all(db, proj.id)
         
         # Calculate lip-sync if requested
         if calculate_lipsync:
@@ -216,7 +235,7 @@ class ProjectManager:
                 estimator.update_cue_ratio(cue)
         
         # Save cues
-        CueBatch.save_all(self.db, cues)
+        CueBatch.save_all(db, cues)
         
         self.mark_dirty()
         return len(cues), errors
@@ -228,19 +247,13 @@ class ProjectManager:
         Returns:
             Cue lista
         """
-        if not self.is_open:
-            return []
-        
-        return Cue.load_all(self.db, self.project.id)
+        return Cue.load_all(self._get_db(), self._get_project().id) if self.is_open else []
     
     def get_cue(self, cue_id: int) -> Optional[Cue]:
         """
         Egyetlen cue lekérése.
         """
-        if not self.is_open:
-            return None
-        
-        return Cue.load_by_id(self.db, cue_id)
+        return Cue.load_by_id(self._get_db(), cue_id) if self.is_open else None
     
     def save_cue(self, cue: Cue) -> None:
         """
@@ -249,7 +262,7 @@ class ProjectManager:
         if not self.is_open:
             raise ValueError("Nincs megnyitott projekt")
         
-        cue.save(self.db)
+        cue.save(self._get_db())
         self.mark_dirty()
     
     def delete_cue(self, cue_id: int) -> None:
@@ -262,13 +275,15 @@ class ProjectManager:
         if not self.is_open:
             raise ValueError("Nincs megnyitott projekt")
         
-        cue = Cue.load_by_id(self.db, cue_id)
-        if cue:
-            cue.delete(self.db)
-            CueBatch.reindex(self.db, self.project.id)
+        db = self._get_db()
+        proj = self._get_project()
+        
+        if cue := Cue.load_by_id(db, cue_id):
+            cue.delete(db)
+            CueBatch.reindex(db, proj.id)
             self.mark_dirty()
     
-    def add_new_cue(self, time_in_ms: int = None) -> Cue:
+    def add_new_cue(self, time_in_ms: Optional[int] = None) -> Cue:
         """
         Új cue hozzáadása a lista végére.
         
@@ -281,17 +296,19 @@ class ProjectManager:
         if not self.is_open:
             raise ValueError("Nincs megnyitott projekt")
         
+        db = self._get_db()
+        proj = self._get_project()
+        
         cues = self.get_cues()
         next_index = len(cues) + 1
         
         # Calculate time based on parameter or last cue
         if time_in_ms is not None:
             # Check if time overlaps with existing cue
-            overlapping = False
-            for cue in cues:
-                if cue.time_in_ms <= time_in_ms < cue.time_out_ms:
-                    overlapping = True
-                    break
+            overlapping = any(
+                cue.time_in_ms <= time_in_ms < cue.time_out_ms
+                for cue in cues
+            )
             
             if overlapping:
                 # Fall back to default behavior (after last cue)
@@ -313,18 +330,28 @@ class ProjectManager:
             time_in = 0
             time_out = 2000
         
-        cue = Cue(
-            project_id=self.project.id,
-            cue_index=next_index,
+        cue = self._create_cue(proj.id, next_index, time_in, time_out)
+        cue.save(db)
+        self.mark_dirty()
+        return cue
+        
+    def _create_cue(
+        self,
+        project_id: int,
+        cue_index: int,
+        time_in: int,
+        time_out: int
+    ) -> Cue:
+        """Helper method to create a new Cue object."""
+        return Cue(
+            project_id=project_id,
+            cue_index=cue_index,
             time_in_ms=time_in,
             time_out_ms=time_out,
             source_text="",
             translated_text="",
         )
-        cue.save(self.db)
-        self.mark_dirty()
-        return cue
-    
+
     def insert_cue_at(self, index: int) -> Cue:
         """
         Cue beszúrása adott pozícióba.
@@ -338,13 +365,16 @@ class ProjectManager:
         if not self.is_open:
             raise ValueError("Nincs megnyitott projekt")
         
+        db = self._get_db()
+        proj = self._get_project()
+        
         cues = self.get_cues()
         
         # Shift indices
         for cue in cues:
             if cue.cue_index >= index:
                 cue.cue_index += 1
-                cue.save(self.db)
+                cue.save(db)
         
         # Calculate time based on adjacent cues
         prev_cue = None
@@ -370,15 +400,8 @@ class ProjectManager:
             time_in = 0
             time_out = 2000
         
-        cue = Cue(
-            project_id=self.project.id,
-            cue_index=index,
-            time_in_ms=time_in,
-            time_out_ms=time_out,
-            source_text="",
-            translated_text="",
-        )
-        cue.save(self.db)
+        cue = self._create_cue(proj.id, index, time_in, time_out)
+        cue.save(db)
         self.mark_dirty()
         return cue
     
@@ -392,11 +415,14 @@ class ProjectManager:
         if not self.is_open:
             raise ValueError("Nincs megnyitott projekt")
         
-        for key, value in kwargs.items():
-            if hasattr(self.project, key):
-                setattr(self.project, key, value)
+        db = self._get_db()
+        proj = self._get_project()
         
-        self.project.save(self.db)
+        for key, value in kwargs.items():
+            if hasattr(proj, key):
+                setattr(proj, key, value)
+        
+        proj.save(db)
         self.mark_dirty()
     
     def recalculate_all_lipsync(self) -> int:
@@ -409,12 +435,13 @@ class ProjectManager:
         if not self.is_open:
             return 0
         
+        db = self._get_db()
         cues = self.get_cues()
         estimator = LipSyncEstimator()
         
         for cue in cues:
             estimator.update_cue_ratio(cue)
-            cue.save(self.db)
+            cue.save(db)
         
         self.mark_dirty()
         return len(cues)
@@ -429,14 +456,17 @@ class ProjectManager:
         if not self.is_open:
             return {}
         
+        db = self._get_db()
+        proj = self._get_project()
+        
         cues = self.get_cues()
-        status_counts = Cue.count_by_status(self.db, self.project.id)
+        status_counts = Cue.count_by_status(db, proj.id)
         
         total = len(cues)
-        translated = sum(1 for c in cues if c.has_translation())
+        translated = sum(c.has_translation() for c in cues)
         lipsync_issues = sum(
-            1 for c in cues 
-            if c.lip_sync_ratio and c.lip_sync_ratio > 1.05
+            c.lip_sync_ratio is not None and c.lip_sync_ratio > 1.05
+            for c in cues
         )
         
         return {

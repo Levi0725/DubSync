@@ -36,15 +36,13 @@ class DubSyncApp(MainWindow):
         """
         try:
             from dubsync.i18n import get_locale_manager
-            
+
             settings = SettingsManager()
             locale_manager = get_locale_manager()
-            
-            # Mentett nyelv betöltése
-            saved_lang = settings.language
-            if saved_lang:
+
+            if saved_lang := settings.language:
                 locale_manager.set_language(saved_lang)
-            
+
             print(f"Nyelv beállítva: {locale_manager.current_language}")
         except Exception as e:
             print(f"i18n inicializálási hiba: {e}")

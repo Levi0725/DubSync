@@ -23,14 +23,12 @@ def ms_to_timecode(milliseconds: int, use_comma: bool = True) -> str:
         >>> ms_to_timecode(3661500)
         '01:01:01,500'
     """
-    if milliseconds < 0:
-        milliseconds = 0
-    
+    milliseconds = max(milliseconds, 0)
     hours = milliseconds // 3600000
     minutes = (milliseconds % 3600000) // 60000
     seconds = (milliseconds % 60000) // 1000
     ms = milliseconds % 1000
-    
+
     separator = "," if use_comma else "."
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}{separator}{ms:03d}"
 
@@ -54,26 +52,24 @@ def timecode_to_ms(timecode: str) -> int:
     """
     # Support both comma and dot as millisecond separator
     timecode = timecode.strip().replace(",", ".")
-    
+
     pattern = r"^(\d{1,2}):(\d{2}):(\d{2})\.(\d{1,3})$"
     match = re.match(pattern, timecode)
-    
+
     if not match:
         raise ValueError(f"Érvénytelen időkód formátum: {timecode}")
-    
+
     hours, minutes, seconds, ms = match.groups()
-    
+
     # Pad milliseconds if needed (e.g., "5" -> "500")
     ms = ms.ljust(3, "0")
-    
-    total_ms = (
-        int(hours) * 3600000 +
-        int(minutes) * 60000 +
-        int(seconds) * 1000 +
-        int(ms)
+
+    return (
+        int(hours) * 3600000
+        + int(minutes) * 60000
+        + int(seconds) * 1000
+        + int(ms)
     )
-    
-    return total_ms
 
 
 def format_duration(milliseconds: int) -> str:
