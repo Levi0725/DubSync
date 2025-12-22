@@ -2,14 +2,15 @@
 DubSync Basic QA Plugin
 
 Alapvető minőségellenőrzési szabályok a fordítások ellenőrzéséhez.
+Extended with CPS (characters per second), overlap, and minimum duration checks.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTreeWidget, QTreeWidgetItem, QGroupBox, QDockWidget,
-    QHeaderView
+    QHeaderView, QFormLayout, QSpinBox, QDoubleSpinBox, QCheckBox
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction, QColor
@@ -21,6 +22,13 @@ from dubsync.models.project import Project
 from dubsync.models.cue import Cue
 from dubsync.utils.constants import LIPSYNC_THRESHOLD_WARNING
 from dubsync.i18n import t
+
+
+# Default QA thresholds
+DEFAULT_MAX_CPS = 20.0  # Characters per second
+DEFAULT_MIN_CPS = 5.0   # Minimum CPS (too slow to read)
+DEFAULT_MIN_DURATION_MS = 500  # Minimum cue duration
+DEFAULT_MAX_DURATION_MS = 10000  # Maximum cue duration (10 seconds)
 
 
 class QAResultsWidget(QWidget):
@@ -160,19 +168,37 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
     - Üres karakter nevek
     - Dupla szóközök
     - Felesleges whitespace
+    - CPS (characters per second) - too fast / too slow
+    - Overlap between consecutive cues
+    - Minimum/Maximum duration
     """
     
     def __init__(self):
         super().__init__()
         self._dock: Optional[QDockWidget] = None
         self._widget: Optional[QAResultsWidget] = None
+        # QA settings with defaults
+        self._settings: Dict[str, Any] = {
+            "check_cps": True,
+            "max_cps": DEFAULT_MAX_CPS,
+            "min_cps": DEFAULT_MIN_CPS,
+            "check_overlap": True,
+            "check_duration": True,
+            "min_duration_ms": DEFAULT_MIN_DURATION_MS,
+            "max_duration_ms": DEFAULT_MAX_DURATION_MS,
+            "check_lipsync": True,
+            "check_missing_translation": True,
+            "check_double_space": True,
+            "check_missing_character": True,
+            "check_whitespace": True,
+        }
     
     @property
     def info(self) -> PluginInfo:
         return PluginInfo(
             id="basic_qa",
             name=t("plugins.basic_qa.name"),
-            version="1.1.0",
+            version="2.0.0",
             author="Levente Kulacsy",
             description=t("plugins.basic_qa.description"),
             plugin_type=PluginType.QA,
@@ -180,13 +206,175 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
             readme_path="README.md"
         )
     
+    def load_settings(self, settings: Dict[str, Any]) -> None:
+        """Load plugin settings."""
+        self._settings.update(settings)
+    
+    def save_settings(self) -> Dict[str, Any]:
+        """Save plugin settings."""
+        return self._settings.copy()
+    
+    def get_settings_widget(self) -> Optional[QWidget]:
+        """Get settings widget."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        
+        # CPS settings
+        cps_group = QGroupBox(t("plugins.basic_qa.settings.cps_group"))
+        cps_layout = QFormLayout(cps_group)
+        
+        self.check_cps_cb = QCheckBox()
+        self.check_cps_cb.setChecked(self._settings["check_cps"])
+        cps_layout.addRow(t("plugins.basic_qa.settings.check_cps"), self.check_cps_cb)
+        
+        self.max_cps_spin = QDoubleSpinBox()
+        self.max_cps_spin.setRange(10, 40)
+        self.max_cps_spin.setValue(self._settings["max_cps"])
+        self.max_cps_spin.setSuffix(" CPS")
+        cps_layout.addRow(t("plugins.basic_qa.settings.max_cps"), self.max_cps_spin)
+        
+        self.min_cps_spin = QDoubleSpinBox()
+        self.min_cps_spin.setRange(1, 15)
+        self.min_cps_spin.setValue(self._settings["min_cps"])
+        self.min_cps_spin.setSuffix(" CPS")
+        cps_layout.addRow(t("plugins.basic_qa.settings.min_cps"), self.min_cps_spin)
+        
+        layout.addWidget(cps_group)
+        
+        # Duration settings
+        duration_group = QGroupBox(t("plugins.basic_qa.settings.duration_group"))
+        duration_layout = QFormLayout(duration_group)
+        
+        self.check_duration_cb = QCheckBox()
+        self.check_duration_cb.setChecked(self._settings["check_duration"])
+        duration_layout.addRow(t("plugins.basic_qa.settings.check_duration"), self.check_duration_cb)
+        
+        self.min_duration_spin = QSpinBox()
+        self.min_duration_spin.setRange(100, 2000)
+        self.min_duration_spin.setValue(self._settings["min_duration_ms"])
+        self.min_duration_spin.setSuffix(" ms")
+        duration_layout.addRow(t("plugins.basic_qa.settings.min_duration"), self.min_duration_spin)
+        
+        self.max_duration_spin = QSpinBox()
+        self.max_duration_spin.setRange(3000, 30000)
+        self.max_duration_spin.setValue(self._settings["max_duration_ms"])
+        self.max_duration_spin.setSuffix(" ms")
+        duration_layout.addRow(t("plugins.basic_qa.settings.max_duration"), self.max_duration_spin)
+        
+        layout.addWidget(duration_group)
+        
+        # Overlap settings
+        overlap_group = QGroupBox(t("plugins.basic_qa.settings.overlap_group"))
+        overlap_layout = QFormLayout(overlap_group)
+        
+        self.check_overlap_cb = QCheckBox()
+        self.check_overlap_cb.setChecked(self._settings["check_overlap"])
+        overlap_layout.addRow(t("plugins.basic_qa.settings.check_overlap"), self.check_overlap_cb)
+        
+        layout.addWidget(overlap_group)
+        
+        layout.addStretch()
+        
+        # Connect signals
+        self.check_cps_cb.stateChanged.connect(self._save_settings_from_widget)
+        self.max_cps_spin.valueChanged.connect(self._save_settings_from_widget)
+        self.min_cps_spin.valueChanged.connect(self._save_settings_from_widget)
+        self.check_duration_cb.stateChanged.connect(self._save_settings_from_widget)
+        self.min_duration_spin.valueChanged.connect(self._save_settings_from_widget)
+        self.max_duration_spin.valueChanged.connect(self._save_settings_from_widget)
+        self.check_overlap_cb.stateChanged.connect(self._save_settings_from_widget)
+        
+        return widget
+    
+    def _save_settings_from_widget(self):
+        """Save settings from widget values."""
+        if hasattr(self, 'check_cps_cb'):
+            self._settings["check_cps"] = self.check_cps_cb.isChecked()
+            self._settings["max_cps"] = self.max_cps_spin.value()
+            self._settings["min_cps"] = self.min_cps_spin.value()
+            self._settings["check_duration"] = self.check_duration_cb.isChecked()
+            self._settings["min_duration_ms"] = self.min_duration_spin.value()
+            self._settings["max_duration_ms"] = self.max_duration_spin.value()
+            self._settings["check_overlap"] = self.check_overlap_cb.isChecked()
+    
     def check(self, project: Project, cues: List[Cue]) -> List[QAIssue]:
         """QA ellenőrzés végrehajtása."""
         issues = []
         
-        for cue in cues:
+        # Sort cues by time for overlap detection
+        sorted_cues = sorted(cues, key=lambda c: c.time_in_ms)
+        
+        for i, cue in enumerate(sorted_cues):
+            duration_ms = cue.time_out_ms - cue.time_in_ms
+            duration_s = duration_ms / 1000.0
+            text = cue.translated_text or ""
+            char_count = len(text.replace(" ", ""))  # Characters without spaces
+            
+            # ============================================
+            # NEW: CPS (Characters Per Second) check
+            # ============================================
+            if self._settings["check_cps"] and text.strip() and duration_s > 0:
+                cps = char_count / duration_s
+                
+                if cps > self._settings["max_cps"]:
+                    issues.append(QAIssue(
+                        cue_id=cue.id,
+                        severity="error",
+                        message=t("plugins.basic_qa.issues.cps_too_high", cps=f"{cps:.1f}"),
+                        suggestion=t("plugins.basic_qa.issues.cps_too_high_suggestion", 
+                                    max_cps=f"{self._settings['max_cps']:.1f}")
+                    ))
+                elif cps < self._settings["min_cps"] and char_count > 5:
+                    issues.append(QAIssue(
+                        cue_id=cue.id,
+                        severity="info",
+                        message=t("plugins.basic_qa.issues.cps_too_low", cps=f"{cps:.1f}"),
+                        suggestion=t("plugins.basic_qa.issues.cps_too_low_suggestion")
+                    ))
+            
+            # ============================================
+            # NEW: Overlap detection
+            # ============================================
+            if self._settings["check_overlap"] and i > 0:
+                prev_cue = sorted_cues[i - 1]
+                if cue.time_in_ms < prev_cue.time_out_ms:
+                    overlap_ms = prev_cue.time_out_ms - cue.time_in_ms
+                    issues.append(QAIssue(
+                        cue_id=cue.id,
+                        severity="error",
+                        message=t("plugins.basic_qa.issues.overlap", 
+                                 overlap_ms=overlap_ms, prev_id=prev_cue.id),
+                        suggestion=t("plugins.basic_qa.issues.overlap_suggestion")
+                    ))
+            
+            # ============================================
+            # NEW: Duration check (min/max)
+            # ============================================
+            if self._settings["check_duration"]:
+                if duration_ms < self._settings["min_duration_ms"]:
+                    issues.append(QAIssue(
+                        cue_id=cue.id,
+                        severity="warning",
+                        message=t("plugins.basic_qa.issues.duration_too_short", 
+                                 duration_ms=duration_ms),
+                        suggestion=t("plugins.basic_qa.issues.duration_too_short_suggestion",
+                                    min_ms=self._settings["min_duration_ms"])
+                    ))
+                elif duration_ms > self._settings["max_duration_ms"]:
+                    issues.append(QAIssue(
+                        cue_id=cue.id,
+                        severity="warning",
+                        message=t("plugins.basic_qa.issues.duration_too_long",
+                                 duration_ms=duration_ms),
+                        suggestion=t("plugins.basic_qa.issues.duration_too_long_suggestion")
+                    ))
+            
+            # ============================================
+            # Existing checks
+            # ============================================
+            
             # Hiányzó fordítás
-            if not cue.translated_text or not cue.translated_text.strip():
+            if self._settings.get("check_missing_translation", True) and (not text or not text.strip()):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="warning",
@@ -195,18 +383,15 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 ))
             
             # Lip-sync hiba
-            if cue.lip_sync_ratio and cue.lip_sync_ratio > LIPSYNC_THRESHOLD_WARNING:
+            if self._settings.get("check_lipsync", True) and (cue.lip_sync_ratio and cue.lip_sync_ratio > LIPSYNC_THRESHOLD_WARNING):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="error",
                     message=t("plugins.basic_qa.issues.lipsync_too_long", ratio=f"{cue.lip_sync_ratio:.0%}"),
                     suggestion=t("plugins.basic_qa.issues.lipsync_suggestion")
                 ))
-            
-            text = cue.translated_text or ""
-            
             # Dupla szóközök
-            if "  " in text:
+            if self._settings.get("check_double_space", True) and "  " in text:
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="info",
@@ -215,7 +400,7 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 ))
             
             # Hiányzó karakter név
-            if text and not cue.character_name:
+            if self._settings.get("check_missing_character", True) and (text and not cue.character_name):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="info",
@@ -224,7 +409,7 @@ class BasicQAPlugin(QAPlugin, UIPlugin):
                 ))
             
             # Felesleges whitespace
-            if text and (text != text.strip()):
+            if self._settings.get("check_whitespace", True) and (text and (text != text.strip())):
                 issues.append(QAIssue(
                     cue_id=cue.id,
                     severity="info",

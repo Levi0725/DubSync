@@ -1,9 +1,24 @@
 @echo off
 REM DubSync - Start script (Windows Batch)
 REM This script activates the virtual environment and starts the program
+REM Usage: run.bat [project_file] [--debug]
 
-REM Save the path of the file to open (if any)
-set "OPEN_FILE=%~1"
+REM Parse arguments
+set "OPEN_FILE="
+set "DEBUG_FLAG="
+
+:parse_args
+if "%~1"=="" goto :done_parsing
+if /i "%~1"=="--debug" (
+    set "DEBUG_FLAG=--debug"
+) else if /i "%~1"=="-d" (
+    set "DEBUG_FLAG=--debug"
+) else (
+    set "OPEN_FILE=%~1"
+)
+shift
+goto :parse_args
+:done_parsing
 
 REM Change to the script's own directory (where DubSync is installed)
 cd /d "%~dp0"
@@ -70,16 +85,22 @@ if errorlevel 1 (
 REM Starting application
 echo.
 echo [*] Starting DubSync...
+if not "%DEBUG_FLAG%"=="" echo [*] Debug mode enabled.
 echo.
 cd src
 
-REM If a file parameter was received, pass it to the application
-if "%OPEN_FILE%"=="" (
-    python -m dubsync
-) else (
+REM Build command with optional arguments
+set "CMD=python -m dubsync"
+if not "%OPEN_FILE%"=="" (
     echo [*] Opening project: %OPEN_FILE%
-    python -m dubsync "%OPEN_FILE%"
+    set "CMD=%CMD% "%OPEN_FILE%""
 )
+if not "%DEBUG_FLAG%"=="" (
+    set "CMD=%CMD% %DEBUG_FLAG%"
+)
+
+REM Execute
+%CMD%
 
 REM When the program exits
 echo.

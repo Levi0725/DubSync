@@ -1,5 +1,5 @@
 """
-DubSync - Szinkronfordítói Editor
+DubSync - Professional Dubbing Translation Editor
 Setup configuration
 """
 
@@ -13,7 +13,7 @@ setup(
     version="1.0.0",
     author="Levente Kulacsy",
     author_email="levi0725gamer@gmail.com",
-    description="Professzionális szinkronfordítói editor Windows-ra",
+    description="Professional dubbing translation editor for Windows",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Levi0725/DubSync",
@@ -30,20 +30,23 @@ setup(
         "Programming Language :: Python :: 3.12",
         "Operating System :: Microsoft :: Windows",
         "Natural Language :: Hungarian",
+        "Natural Language :: English",
     ],
     python_requires=">=3.10",
     install_requires=[
-        "PySide6>=6.6.0",
-        "reportlab>=4.0.0",
+        "PySide6>=6.6.0,<7.0.0",
+        "reportlab>=4.0.0,<5.0.0",
+        "psutil>=5.9.0,<6.0.0",
     ],
     extras_require={
         "dev": [
-            "pytest>=7.4.0",
-            "pytest-qt>=4.2.0",
-            "pytest-cov>=4.1.0",
-            "black>=23.0.0",
-            "isort>=5.12.0",
-            "mypy>=1.5.0",
+            "pytest>=7.4.0,<8.0.0",
+            "pytest-qt>=4.2.0,<5.0.0",
+            "pytest-cov>=4.1.0,<5.0.0",
+            "black>=23.0.0,<25.0.0",
+            "isort>=5.12.0,<6.0.0",
+            "mypy>=1.5.0,<2.0.0",
+            "ruff>=0.1.0,<1.0.0",
         ],
     },
     entry_points={

@@ -10,13 +10,14 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QFrame,
     QLabel, QPushButton, QTextEdit, QLineEdit, QGroupBox
 )
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Qt, Signal, Slot, QSize
 
 from dubsync.models.cue import Cue
 from dubsync.models.comment import Comment
 from dubsync.utils.constants import CommentStatus
 from dubsync.services.settings_manager import SettingsManager
 from dubsync.i18n import t
+from dubsync.resources.icon_manager import get_icon_manager
 
 if TYPE_CHECKING:
     from dubsync.models.database import Database
@@ -85,7 +86,10 @@ class CommentWidget(QFrame):
         actions_layout = QHBoxLayout()
         actions_layout.addStretch()
 
+        icon_mgr = get_icon_manager()
         self.resolve_btn = QPushButton(t("comments_panel.resolve"))
+        self.resolve_btn.setIcon(icon_mgr.get_icon("comment_resolve"))
+        self.resolve_btn.setIconSize(QSize(14, 14))
         self.resolve_btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {colors.success};
@@ -179,7 +183,10 @@ class CommentsPanelWidget(QWidget):
         theme = ThemeManager()
         colors = theme.colors
         
+        icon_mgr = get_icon_manager()
         self.add_btn = QPushButton(t("comments_panel.add"))
+        self.add_btn.setIcon(icon_mgr.get_icon("comment_add"))
+        self.add_btn.setIconSize(QSize(16, 16))
         self.add_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {colors.primary};

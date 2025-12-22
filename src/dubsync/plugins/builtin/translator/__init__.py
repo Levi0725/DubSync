@@ -65,7 +65,8 @@ class TranslatorWidget(QWidget):
         self._models_loaded = False
         
         self._setup_ui()
-        self._check_models()
+        # Lazy check - delay model check to avoid blocking
+        QTimer.singleShot(100, self._check_models)
     
     def _setup_ui(self):
         layout = QVBoxLayout(self)

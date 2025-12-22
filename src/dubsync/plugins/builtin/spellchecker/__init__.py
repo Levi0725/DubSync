@@ -33,6 +33,14 @@ class SpellcheckerEngine:
         self._error_message = ""
         self._custom_words: Set[str] = set()
         self._ignored_words: Set[str] = set()
+        self._initialized = False
+        # Lazy loading - don't load dictionary until actually needed
+    
+    def _ensure_loaded(self):
+        """Lazy loading - load dictionary when first needed."""
+        if self._initialized:
+            return
+        self._initialized = True
         self._load_dictionary()
     
     def _load_dictionary(self):
@@ -66,14 +74,17 @@ class SpellcheckerEngine:
     
     @property
     def is_available(self) -> bool:
+        self._ensure_loaded()
         return self._available
     
     @property
     def error_message(self) -> str:
+        self._ensure_loaded()
         return self._error_message
     
     def check_word(self, word: str) -> bool:
         """Szó ellenőrzése."""
+        self._ensure_loaded()
         if not self._available:
             return True
         
@@ -97,6 +108,7 @@ class SpellcheckerEngine:
     
     def suggest(self, word: str) -> List[str]:
         """Javaslatok hibás szóhoz."""
+        self._ensure_loaded()
         if not self._available:
             return []
         

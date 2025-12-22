@@ -16,6 +16,7 @@ from pathlib import Path
 if TYPE_CHECKING:
     from dubsync.models.project import Project
     from dubsync.models.cue import Cue
+    from dubsync.plugins.context import PluginContext
     from PySide6.QtWidgets import QWidget, QMainWindow, QDockWidget, QAction
 
 
@@ -55,6 +56,7 @@ class PluginInfo:
     homepage: str = ""          # Plugin homepage URL
     readme_path: str = ""       # README.md relative path
     icon: str = ""              # Icon emoji or path
+    min_api_version: int = 1    # Minimum required Plugin API version
     
     def __str__(self) -> str:
         return f"{self.name} v{self.version} by {self.author}"
@@ -65,9 +67,28 @@ class PluginInterface(ABC):
     Plugin interface.
     
     Every plugin must implement this interface.
+    Plugins receive a PluginContext for accessing application features safely.
     """
     
     _plugin_dir: Optional[Path] = None  # Plugin directory path
+    _context: Optional["PluginContext"] = None  # Plugin context for API access
+    
+    @property
+    def context(self) -> Optional["PluginContext"]:
+        """
+        Get plugin context for API access.
+        
+        Returns:
+            PluginContext instance or None if not yet initialized
+        """
+        return self._context
+    
+    def set_context(self, context: "PluginContext") -> None:
+        """
+        Set plugin context.
+        Called by the plugin system during initialization.
+        """
+        self._context = context
     
     @property
     @abstractmethod

@@ -217,8 +217,13 @@ QMenu {{
     padding: 4px;
 }}
 
+QMenu::icon {{
+    margin-left: 8px;
+    padding-right: 4px;
+}}
+
 QMenu::item {{
-    padding: 8px 24px;
+    padding: 8px 24px 8px 32px;
     border-radius: 4px;
 }}
 

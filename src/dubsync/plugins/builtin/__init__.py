@@ -6,7 +6,10 @@ Beépített pluginok a DubSync-hez.
 Struktúra:
     builtin/
     ├── basic_qa/         # QA ellenőrzés plugin
-    ├── csv_export/       # CSV export plugin
+    ├── csv_export/       # CSV export plugin  
+    ├── docx_export/      # DOCX Word export plugin
+    ├── glossary/         # Szótár plugin
+    ├── spellchecker/     # Helyesírás-ellenőrző plugin
     └── translator/       # Argos fordító plugin
 """
 

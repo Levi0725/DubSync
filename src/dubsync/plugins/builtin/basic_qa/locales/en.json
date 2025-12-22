@@ -1,6 +1,6 @@
 {
   "name": "Basic QA",
-  "description": "Basic quality assurance checks",
+  "description": "Basic quality assurance checks (CPS, overlap, duration)",
   "header": "🔍 QA Check Results",
   "no_check": "Run a check to see results",
   "no_project": "No project open",
@@ -17,6 +17,18 @@
   "summary": "{errors} errors, {warnings} warnings",
   "recheck_btn": "🔄 Re-check",
   "fix_all_btn": "✨ Fix all",
+  "settings": {
+    "cps_group": "Reading Speed (CPS)",
+    "check_cps": "Enable CPS check:",
+    "max_cps": "Maximum CPS (characters/second):",
+    "min_cps": "Minimum CPS:",
+    "duration_group": "Duration Check",
+    "check_duration": "Enable duration check:",
+    "min_duration": "Minimum duration:",
+    "max_duration": "Maximum duration:",
+    "overlap_group": "Overlap Detection",
+    "check_overlap": "Enable overlap check:"
+  },
   "issues": {
     "missing_translation": "Missing translation",
     "missing_translation_suggestion": "Add translation",
@@ -27,7 +39,17 @@
     "missing_character": "Missing character name",
     "missing_character_suggestion": "Add character name",
     "extra_whitespace": "Extra whitespace at end",
-    "extra_whitespace_suggestion": "Remove trailing whitespace"
+    "extra_whitespace_suggestion": "Remove trailing whitespace",
+    "cps_too_high": "Reading too fast ({cps} CPS)",
+    "cps_too_high_suggestion": "Shorten text or increase duration (max: {max_cps} CPS)",
+    "cps_too_low": "Reading too slow ({cps} CPS)",
+    "cps_too_low_suggestion": "Text is too short for the duration",
+    "overlap": "Overlap with previous cue ({overlap_ms}ms, #{prev_id})",
+    "overlap_suggestion": "Adjust timing to remove overlap",
+    "duration_too_short": "Duration too short ({duration_ms}ms)",
+    "duration_too_short_suggestion": "Minimum duration: {min_ms}ms",
+    "duration_too_long": "Duration too long ({duration_ms}ms)",
+    "duration_too_long_suggestion": "Consider splitting the subtitle"
   },
   "panel": "🔍 QA Panel",
   "run_qa": "🔍 Run QA"

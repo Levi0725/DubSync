@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSlider,
     QLabel, QStyle, QSizePolicy, QFrame, QStackedLayout
 )
-from PySide6.QtCore import Qt, Signal, Slot, QUrl, QTimer
+from PySide6.QtCore import Qt, Signal, Slot, QUrl, QTimer, QSize
 from PySide6.QtGui import QKeySequence, QFont
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
@@ -19,6 +19,7 @@ from PySide6.QtMultimediaWidgets import QVideoWidget
 from dubsync.utils.time_utils import ms_to_timecode
 from dubsync.utils.constants import APP_NAME
 from dubsync.i18n import t
+from dubsync.resources.icon_manager import get_icon_manager
 
 
 class SubtitleOverlay(QLabel):
@@ -146,6 +147,11 @@ class VideoPlayerWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
+        # Video container with overlay
+        self.video_container = QWidget()
+        video_container_layout = QStackedLayout(self.video_container)
+        video_container_layout.setStackingMode(QStackedLayout.StackingMode.StackAll)
+        
         # Video display
         self.video_widget = QVideoWidget()
         self.video_widget.setMinimumSize(400, 225)
@@ -153,7 +159,17 @@ class VideoPlayerWidget(QWidget):
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding
         )
-        layout.addWidget(self.video_widget, 1)
+        video_container_layout.addWidget(self.video_widget)
+        
+        # Subtitle overlay for normal view
+        self.subtitle_overlay = SubtitleOverlay(self.video_container)
+        video_container_layout.addWidget(self.subtitle_overlay)
+        
+        self.video_container.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding
+        )
+        layout.addWidget(self.video_container, 1)
         
         # Controls container
         controls_frame = QFrame()
@@ -206,14 +222,21 @@ class VideoPlayerWidget(QWidget):
         # Playback controls
         buttons_layout = QHBoxLayout()
         
+        icon_mgr = get_icon_manager()
+        icon_size = QSize(20, 20)
+        
         # Play/Pause
-        self.play_btn = QPushButton("▶")
+        self.play_btn = QPushButton()
+        self.play_btn.setIcon(icon_mgr.get_icon("player_play", size=icon_size))
+        self.play_btn.setIconSize(icon_size)
         self.play_btn.setMinimumSize(44, 32)
         self.play_btn.setStyleSheet(self._get_button_style())
         buttons_layout.addWidget(self.play_btn)
         
         # Stop
-        self.stop_btn = QPushButton("■")
+        self.stop_btn = QPushButton()
+        self.stop_btn.setIcon(icon_mgr.get_icon("player_stop", size=icon_size))
+        self.stop_btn.setIconSize(icon_size)
         self.stop_btn.setMinimumSize(44, 32)
         self.stop_btn.setStyleSheet(self._get_button_style())
         buttons_layout.addWidget(self.stop_btn)
@@ -221,13 +244,17 @@ class VideoPlayerWidget(QWidget):
         buttons_layout.addSpacing(20)
         
         # Frame step buttons
-        self.prev_frame_btn = QPushButton("◀|")
+        self.prev_frame_btn = QPushButton()
+        self.prev_frame_btn.setIcon(icon_mgr.get_icon("player_frame_back", size=icon_size))
+        self.prev_frame_btn.setIconSize(icon_size)
         self.prev_frame_btn.setMinimumSize(44, 32)
         self.prev_frame_btn.setStyleSheet(self._get_button_style())
         self.prev_frame_btn.setToolTip(t("video_player.prev_frame_tooltip"))
         buttons_layout.addWidget(self.prev_frame_btn)
         
-        self.next_frame_btn = QPushButton("|▶")
+        self.next_frame_btn = QPushButton()
+        self.next_frame_btn.setIcon(icon_mgr.get_icon("player_frame_forward", size=icon_size))
+        self.next_frame_btn.setIconSize(icon_size)
         self.next_frame_btn.setMinimumSize(44, 32)
         self.next_frame_btn.setStyleSheet(self._get_button_style())
         self.next_frame_btn.setToolTip(t("video_player.next_frame_tooltip"))
@@ -275,15 +302,19 @@ class VideoPlayerWidget(QWidget):
         buttons_layout.addSpacing(20)
         
         # Loop segment
-        self.loop_btn = QPushButton("🔁 Loop")
-        self.loop_btn.setMinimumSize(70, 32)
+        self.loop_btn = QPushButton()
+        self.loop_btn.setIcon(icon_mgr.get_icon("player_loop", size=icon_size))
+        self.loop_btn.setIconSize(icon_size)
+        self.loop_btn.setMinimumSize(50, 32)
         self.loop_btn.setCheckable(True)
         self.loop_btn.setStyleSheet(self._get_button_style(True))
         self.loop_btn.setToolTip(t("video_player.loop_tooltip"))
         buttons_layout.addWidget(self.loop_btn)
         
         # Fullscreen button
-        self.fullscreen_btn = QPushButton("⛶")
+        self.fullscreen_btn = QPushButton()
+        self.fullscreen_btn.setIcon(icon_mgr.get_icon("player_fullscreen", size=icon_size))
+        self.fullscreen_btn.setIconSize(icon_size)
         self.fullscreen_btn.setMinimumSize(44, 32)
         self.fullscreen_btn.setStyleSheet(self._get_button_style())
         self.fullscreen_btn.setToolTip(t("video_player.fullscreen_tooltip"))
@@ -514,10 +545,12 @@ class VideoPlayerWidget(QWidget):
     @Slot(QMediaPlayer.PlaybackState)
     def _on_state_changed(self, state: QMediaPlayer.PlaybackState):
         """Playback state changed."""
+        icon_mgr = get_icon_manager()
+        icon_size = QSize(20, 20)
         if state == QMediaPlayer.PlaybackState.PlayingState:
-            self.play_btn.setText("⏸")
+            self.play_btn.setIcon(icon_mgr.get_icon("player_pause", size=icon_size))
         else:
-            self.play_btn.setText("▶")
+            self.play_btn.setIcon(icon_mgr.get_icon("player_play", size=icon_size))
     
     @Slot()
     def _on_slider_pressed(self):
@@ -571,11 +604,37 @@ class VideoPlayerWidget(QWidget):
     
     def set_subtitle(self, text: str):
         """
-        Set subtitle (for fullscreen mode).
+        Set subtitle text on video overlay.
         
         Args:
-            text: Subtitle text
+            text: Subtitle text to display (empty to hide)
         """
         self._current_subtitle_text = text
+        
+        # Update normal view overlay
+        if text:
+            self.subtitle_overlay.setText(text)
+            self.subtitle_overlay.show()
+        else:
+            self.subtitle_overlay.hide()
+        
+        # Update fullscreen overlay if visible
         if self._fullscreen_widget and self._fullscreen_widget.isVisible():
             self._fullscreen_widget.set_subtitle(text)
+
+    def update_icons(self):
+        """Update icons for theme change."""
+        icon_mgr = get_icon_manager()
+        icon_size = QSize(20, 20)
+        
+        # Update play/pause based on current state
+        if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.play_btn.setIcon(icon_mgr.get_icon("player_pause", size=icon_size))
+        else:
+            self.play_btn.setIcon(icon_mgr.get_icon("player_play", size=icon_size))
+        
+        self.stop_btn.setIcon(icon_mgr.get_icon("player_stop", size=icon_size))
+        self.prev_frame_btn.setIcon(icon_mgr.get_icon("player_frame_back", size=icon_size))
+        self.next_frame_btn.setIcon(icon_mgr.get_icon("player_frame_forward", size=icon_size))
+        self.loop_btn.setIcon(icon_mgr.get_icon("player_loop", size=icon_size))
+        self.fullscreen_btn.setIcon(icon_mgr.get_icon("player_fullscreen", size=icon_size))

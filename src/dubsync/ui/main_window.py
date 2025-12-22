@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QLabel, QDockWidget, QApplication, QDialog,
     QFormLayout, QComboBox, QColorDialog, QPushButton, QDialogButtonBox
 )
-from PySide6.QtCore import Qt, Signal, Slot, QSettings
+from PySide6.QtCore import Qt, Signal, Slot, QSettings, QSize
 from PySide6.QtGui import QAction, QKeySequence, QCloseEvent, QUndoStack, QUndoCommand
 
 from dubsync.utils.constants import APP_NAME, APP_VERSION, PROJECT_EXTENSION
@@ -28,9 +28,11 @@ from dubsync.ui.cue_list import CueListWidget
 from dubsync.ui.cue_editor import CueEditorWidget
 from dubsync.ui.video_player import VideoPlayerWidget
 from dubsync.ui.comments_panel import CommentsPanelWidget
-from dubsync.ui.dialogs import ProjectSettingsDialog
+from dubsync.ui.timeline_widget import TimelineWidget
+from dubsync.ui.dialogs import ProjectSettingsDialog, BatchTimingDialog
 from dubsync.ui.theme import ThemeManager, ThemeType, ThemeColors, THEMES
 from dubsync.plugins.base import PluginManager
+from dubsync.resources import get_icon, get_icon_manager
 
 
 class DeleteCueCommand(QUndoCommand):
@@ -269,18 +271,53 @@ class MainWindow(QMainWindow):
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
         layout.addWidget(self.main_splitter)
 
+        # ═══════════════════════════════════════════════════════════════
+        # LEFT PANEL: Cue List + Timeline (stacked vertically)
+        # ═══════════════════════════════════════════════════════════════
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(0)
+        
+        # Cue list (main)
         self.cue_list = CueListWidget()
-        self.main_splitter.addWidget(self.cue_list)
+        left_layout.addWidget(self.cue_list, 1)
+        
+        # Timeline widget underneath cue list
+        self.timeline_container = QWidget()
+        timeline_container_layout = QVBoxLayout(self.timeline_container)
+        timeline_container_layout.setContentsMargins(0, 0, 0, 0)
+        timeline_container_layout.setSpacing(0)
+        
+        self.timeline_widget = TimelineWidget()
+        self.timeline_widget.setMaximumHeight(100)
+        self.timeline_widget.setMinimumHeight(60)
+        timeline_container_layout.addWidget(self.timeline_widget)
+        
+        left_layout.addWidget(self.timeline_container, 0)
+        
+        self.main_splitter.addWidget(left_widget)
 
-        center_widget = QWidget()
-        center_layout = self._extracted_from__setup_ui_9(center_widget, 0)
+        # ═══════════════════════════════════════════════════════════════
+        # RIGHT PANEL: Video Player + Cue Editor (with adjustable splitter)
+        # ═══════════════════════════════════════════════════════════════
+        right_splitter = QSplitter(Qt.Orientation.Vertical)
+        right_splitter.setHandleWidth(4)
+        
+        # Video player at top (adjustable height)
         self.video_player = VideoPlayerWidget()
-        center_layout.addWidget(self.video_player, 2)
+        self.video_player.setMinimumHeight(150)
+        right_splitter.addWidget(self.video_player)
 
+        # Cue editor at bottom
         self.cue_editor = CueEditorWidget()
-        center_layout.addWidget(self.cue_editor, 1)
-
-        self.main_splitter.addWidget(center_widget)
+        self.cue_editor.setMinimumHeight(120)
+        right_splitter.addWidget(self.cue_editor)
+        
+        # Set initial sizes: video 60%, editor 40%
+        right_splitter.setSizes([350, 250])
+        
+        self.main_splitter.addWidget(right_splitter)
 
         self.comments_dock = QDockWidget(t("comments_panel.title"), self)
         self.comments_dock.setObjectName("commentsDock")
@@ -291,7 +328,7 @@ class MainWindow(QMainWindow):
         self.comments_dock.setWidget(self.comments_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.comments_dock)
 
-        self.main_splitter.setSizes([350, 850])
+        self.main_splitter.setSizes([400, 800])
 
     # TODO Rename this here and in `_setup_ui`
     def _extracted_from__setup_ui_9(self, arg0, arg1):
@@ -301,6 +338,17 @@ class MainWindow(QMainWindow):
 
         return result
     
+    def _create_action(self, text: str, icon_name: str = "", shortcut: str = "") -> QAction:
+        """Create an action with optional icon and shortcut."""
+        action = QAction(text, self)
+        if icon_name:
+            icon = get_icon(icon_name)
+            if not icon.isNull():
+                action.setIcon(icon)
+        if shortcut:
+            action.setShortcut(QKeySequence(shortcut))
+        return action
+    
     def _setup_menus(self):
         """Setup menus."""
         menubar = self.menuBar()
@@ -308,45 +356,47 @@ class MainWindow(QMainWindow):
         # === File menu ===
         file_menu = menubar.addMenu(t("menu.file._title"))
         
-        self.action_new = QAction(t("menu.file.new"), self)
+        self.action_new = self._create_action(t("menu.file.new"), "file_new")
         self.action_new.setShortcut(QKeySequence.StandardKey.New)
         self.action_new.triggered.connect(self._on_new_project)
         file_menu.addAction(self.action_new)
         
-        self.action_open = QAction(t("menu.file.open"), self)
+        self.action_open = self._create_action(t("menu.file.open"), "file_open")
         self.action_open.setShortcut(QKeySequence.StandardKey.Open)
         self.action_open.triggered.connect(self._on_open_project)
         file_menu.addAction(self.action_open)
         
-        self.action_save = QAction(t("menu.file.save"), self)
+        self.action_save = self._create_action(t("menu.file.save"), "file_save")
         self.action_save.setShortcut(QKeySequence.StandardKey.Save)
         self.action_save.triggered.connect(self._on_save_project)
         file_menu.addAction(self.action_save)
         
-        self.action_save_as = QAction(t("menu.file.save_as"), self)
+        self.action_save_as = self._create_action(t("menu.file.save_as"), "file_save_as")
         self.action_save_as.setShortcut(QKeySequence("Ctrl+Shift+S"))
         self.action_save_as.triggered.connect(self._on_save_project_as)
         file_menu.addAction(self.action_save_as)
         
         file_menu.addSeparator()
         
-        import_menu = file_menu.addMenu(t("menu.file.import"))
+        self.import_menu = file_menu.addMenu(t("menu.file.import"))
+        self.import_menu.setIcon(get_icon("file_import"))
         
-        self.action_import_srt = QAction(t("menu.file.import_srt"), self)
+        self.action_import_srt = self._create_action(t("menu.file.import_srt"), "file_import")
         self.action_import_srt.triggered.connect(self._on_import_srt)
-        import_menu.addAction(self.action_import_srt)
+        self.import_menu.addAction(self.action_import_srt)
         
-        self.action_import_video = QAction(t("menu.file.import_video"), self)
+        self.action_import_video = self._create_action(t("menu.file.import_video"), "player_play")
         self.action_import_video.triggered.connect(self._on_import_video)
-        import_menu.addAction(self.action_import_video)
+        self.import_menu.addAction(self.action_import_video)
         
         self.export_menu = file_menu.addMenu(t("menu.file.export"))
+        self.export_menu.setIcon(get_icon("file_export"))
         
-        self.action_export_pdf = QAction(t("menu.file.export_pdf"), self)
+        self.action_export_pdf = self._create_action(t("menu.file.export_pdf"), "file_pdf")
         self.action_export_pdf.triggered.connect(self._on_export_pdf)
         self.export_menu.addAction(self.action_export_pdf)
         
-        self.action_export_srt = QAction(t("menu.file.export_srt"), self)
+        self.action_export_srt = self._create_action(t("menu.file.export_srt"), "file_export")
         self.action_export_srt.triggered.connect(self._on_export_srt)
         self.export_menu.addAction(self.action_export_srt)
         
@@ -354,18 +404,18 @@ class MainWindow(QMainWindow):
         
         file_menu.addSeparator()
         
-        self.action_settings = QAction(t("menu.file.project_settings"), self)
+        self.action_settings = self._create_action(t("menu.file.project_settings"), "settings")
         self.action_settings.triggered.connect(self._on_project_settings)
         file_menu.addAction(self.action_settings)
         
-        self.action_app_settings = QAction(t("menu.file.app_settings"), self)
+        self.action_app_settings = self._create_action(t("menu.file.app_settings"), "settings_general")
         self.action_app_settings.setShortcut(QKeySequence("Ctrl+,"))
         self.action_app_settings.triggered.connect(self._on_app_settings)
         file_menu.addAction(self.action_app_settings)
         
         file_menu.addSeparator()
         
-        self.action_exit = QAction(t("menu.file.exit"), self)
+        self.action_exit = self._create_action(t("menu.file.exit"), "close")
         self.action_exit.setShortcut(QKeySequence.StandardKey.Quit)
         self.action_exit.triggered.connect(self.close)
         file_menu.addAction(self.action_exit)
@@ -375,36 +425,38 @@ class MainWindow(QMainWindow):
         
         self.action_undo = self._undo_stack.createUndoAction(self, t("menu.edit.undo"))
         self.action_undo.setShortcut(QKeySequence.StandardKey.Undo)
+        self.action_undo.setIcon(get_icon("edit_undo"))
         edit_menu.addAction(self.action_undo)
         
         self.action_redo = self._undo_stack.createRedoAction(self, t("menu.edit.redo"))
         self.action_redo.setShortcut(QKeySequence.StandardKey.Redo)
+        self.action_redo.setIcon(get_icon("edit_redo"))
         edit_menu.addAction(self.action_redo)
         
         edit_menu.addSeparator()
         
-        self.action_add_cue = QAction(t("menu.edit.add_cue"), self)
+        self.action_add_cue = self._create_action(t("menu.edit.add_cue"), "cue_add")
         self.action_add_cue.setShortcut(QKeySequence("Ctrl+Shift+N"))
         self.action_add_cue.triggered.connect(self._on_add_cue)
         edit_menu.addAction(self.action_add_cue)
         
-        self.action_insert_cue_before = QAction(t("menu.edit.insert_before"), self)
+        self.action_insert_cue_before = self._create_action(t("menu.edit.insert_before"), "cue_move_up")
         self.action_insert_cue_before.setShortcut(QKeySequence("Ctrl+Shift+Up"))
         self.action_insert_cue_before.triggered.connect(self._on_insert_cue_before)
         edit_menu.addAction(self.action_insert_cue_before)
         
-        self.action_insert_cue_after = QAction(t("menu.edit.insert_after"), self)
+        self.action_insert_cue_after = self._create_action(t("menu.edit.insert_after"), "cue_move_down")
         self.action_insert_cue_after.setShortcut(QKeySequence("Ctrl+Shift+Down"))
         self.action_insert_cue_after.triggered.connect(self._on_insert_cue_after)
         edit_menu.addAction(self.action_insert_cue_after)
         
-        self.action_delete_mode = QAction(t("menu.edit.delete_mode"), self)
+        self.action_delete_mode = self._create_action(t("menu.edit.delete_mode"), "edit_delete")
         self.action_delete_mode.setShortcut(QKeySequence("Ctrl+D"))
         self.action_delete_mode.setCheckable(True)
         self.action_delete_mode.triggered.connect(self._on_toggle_delete_mode)
         edit_menu.addAction(self.action_delete_mode)
         
-        self.action_delete_cue = QAction(t("menu.edit.delete_cue"), self)
+        self.action_delete_cue = self._create_action(t("menu.edit.delete_cue"), "cue_delete")
         self.action_delete_cue.setShortcut(QKeySequence.StandardKey.Delete)
         self.action_delete_cue.triggered.connect(self._on_delete_cue)
         self.action_delete_cue.setEnabled(False)
@@ -412,43 +464,48 @@ class MainWindow(QMainWindow):
         
         edit_menu.addSeparator()
         
-        self.action_edit_timing = QAction(t("menu.edit.edit_timing"), self)
+        self.action_edit_timing = self._create_action(t("menu.edit.edit_timing"), "cue_timing")
         self.action_edit_timing.setShortcut(QKeySequence("Ctrl+T"))
         self.action_edit_timing.triggered.connect(self._on_edit_timing)
         edit_menu.addAction(self.action_edit_timing)
         
+        self.action_batch_timing = self._create_action(t("menu.edit.batch_timing"), "cue_sync")
+        self.action_batch_timing.setShortcut(QKeySequence("Ctrl+Shift+T"))
+        self.action_batch_timing.triggered.connect(self._on_batch_timing)
+        edit_menu.addAction(self.action_batch_timing)
+        
         edit_menu.addSeparator()
         
-        self.action_recalc_lipsync = QAction(t("menu.edit.recalc_lipsync"), self)
+        self.action_recalc_lipsync = self._create_action(t("menu.edit.recalc_lipsync"), "sync")
         self.action_recalc_lipsync.triggered.connect(self._on_recalculate_lipsync)
         edit_menu.addAction(self.action_recalc_lipsync)
         
         # === Navigate menu ===
         nav_menu = menubar.addMenu(t("menu.navigate._title"))
         
-        self.action_prev_cue = QAction(t("menu.navigate.prev_cue"), self)
+        self.action_prev_cue = self._create_action(t("menu.navigate.prev_cue"), "chevron_left")
         self.action_prev_cue.setShortcut(QKeySequence("Ctrl+Up"))
         self.action_prev_cue.triggered.connect(self._on_goto_prev_cue)
         nav_menu.addAction(self.action_prev_cue)
         
-        self.action_next_cue = QAction(t("menu.navigate.next_cue"), self)
+        self.action_next_cue = self._create_action(t("menu.navigate.next_cue"), "chevron_right")
         self.action_next_cue.setShortcut(QKeySequence("Ctrl+Down"))
         self.action_next_cue.triggered.connect(self._on_goto_next_cue)
         nav_menu.addAction(self.action_next_cue)
         
         nav_menu.addSeparator()
         
-        self.action_next_empty = QAction(t("menu.navigate.next_empty"), self)
+        self.action_next_empty = self._create_action(t("menu.navigate.next_empty"), "edit_find")
         self.action_next_empty.setShortcut(QKeySequence("Ctrl+E"))
         self.action_next_empty.triggered.connect(self._on_goto_next_empty)
         nav_menu.addAction(self.action_next_empty)
         
-        self.action_next_lipsync = QAction(t("menu.navigate.next_lipsync"), self)
+        self.action_next_lipsync = self._create_action(t("menu.navigate.next_lipsync"), "warning")
         self.action_next_lipsync.setShortcut(QKeySequence("Ctrl+L"))
         self.action_next_lipsync.triggered.connect(self._on_goto_next_lipsync_issue)
         nav_menu.addAction(self.action_next_lipsync)
         
-        self.action_next_comment = QAction(t("menu.navigate.next_comment"), self)
+        self.action_next_comment = self._create_action(t("menu.navigate.next_comment"), "comment_unresolved")
         self.action_next_comment.setShortcut(QKeySequence("Ctrl+M"))
         self.action_next_comment.triggered.connect(self._on_goto_next_comment)
         nav_menu.addAction(self.action_next_comment)
@@ -461,13 +518,21 @@ class MainWindow(QMainWindow):
         
         self.action_toggle_comments = self.comments_dock.toggleViewAction()
         self.action_toggle_comments.setText(t("menu.view.comments_panel"))
+        self.action_toggle_comments.setIcon(get_icon("view_comments"))
         self.view_menu.addAction(self.action_toggle_comments)
+        
+        # Timeline toggle
+        self.action_toggle_timeline = self._create_action(t("menu.view.timeline_panel"), "view_timeline")
+        self.action_toggle_timeline.setCheckable(True)
+        self.action_toggle_timeline.setChecked(True)
+        self.action_toggle_timeline.triggered.connect(self._toggle_timeline)
+        self.view_menu.addAction(self.action_toggle_timeline)
         
         # Plugin panels will be added later in _setup_plugins()
         
         self.view_menu.addSeparator()
         
-        self.action_fullscreen = QAction(t("menu.view.fullscreen"), self)
+        self.action_fullscreen = self._create_action(t("menu.view.fullscreen"), "view_fullscreen")
         self.action_fullscreen.setShortcut(QKeySequence("F11"))
         self.action_fullscreen.setCheckable(True)
         self.action_fullscreen.triggered.connect(self._toggle_fullscreen)
@@ -476,14 +541,14 @@ class MainWindow(QMainWindow):
         # === Help menu ===
         help_menu = menubar.addMenu(t("menu.help._title"))
         
-        self.action_tutorial = QAction(t("menu.help.tutorial"), self)
+        self.action_tutorial = self._create_action(t("menu.help.tutorial"), "help")
         self.action_tutorial.setShortcut(QKeySequence("F1"))
         self.action_tutorial.triggered.connect(self._on_tutorial)
         help_menu.addAction(self.action_tutorial)
         
         help_menu.addSeparator()
         
-        self.action_about = QAction(t("menu.help.about"), self)
+        self.action_about = self._create_action(t("menu.help.about"), "about")
         self.action_about.triggered.connect(self._on_about)
         help_menu.addAction(self.action_about)
     
@@ -492,6 +557,7 @@ class MainWindow(QMainWindow):
         toolbar = QToolBar(t("toolbar.main"))
         toolbar.setObjectName("mainToolbar")
         toolbar.setMovable(False)
+        toolbar.setIconSize(QSize(20, 20))
         self.addToolBar(toolbar)
         
         toolbar.addAction(self.action_new)
@@ -537,6 +603,13 @@ class MainWindow(QMainWindow):
         self.video_player.position_changed.connect(self._on_video_position_changed)
         
         self.comments_panel.comment_added.connect(self._on_comment_added)
+        
+        # Timeline signals
+        self.timeline_widget.cue_selected.connect(self._on_cue_selected)
+        self.timeline_widget.cue_double_clicked.connect(self._on_cue_double_clicked)
+        self.timeline_widget.playhead_moved.connect(self._on_timeline_playhead_moved)
+        self.timeline_widget.cue_moved.connect(self._on_timeline_cue_moved)
+        self.timeline_widget.cue_resized.connect(self._on_timeline_cue_resized)
     
     def _load_settings(self):
         """Load settings."""
@@ -597,13 +670,27 @@ class MainWindow(QMainWindow):
         app = QApplication.instance()
         if app is not None:
             cast(QApplication, app).setStyleSheet(stylesheet)
+        
+        # Update icon colors based on theme
+        from PySide6.QtGui import QColor
+        icon_manager = get_icon_manager()
+        icon_color = QColor(self.theme_manager.colors.foreground)
+        icon_manager.set_icon_color(icon_color)
+        
+        # Rebuild menus to apply new icon colors
+        self._refresh_menu_icons()
+        
+        # Update widget icons
+        if hasattr(self, 'video_player'):
+            self.video_player.update_icons()
     
     def _setup_plugins(self):
         """Setup plugin UI elements."""
         # Add export plugins to File->Export menu
         for export_plugin in self.plugin_manager.get_export_plugins(enabled_only=True):
             try:
-                action = QAction(f"{export_plugin.info.icon} {export_plugin.info.name}...", self)
+                action = QAction(export_plugin.info.name + "...", self)
+                action.setIcon(get_icon("file_export"))
                 action.setData(export_plugin.info.id)
                 action.triggered.connect(lambda checked, p=export_plugin: self._on_plugin_export(p))
                 self.export_menu.addAction(action)
@@ -626,12 +713,17 @@ class MainWindow(QMainWindow):
                     
                     # Add panel toggle directly to the View menu
                     toggle_action = dock.toggleViewAction()
-                    toggle_action.setText(f"{plugin.info.icon} {plugin.info.name}")
+                    toggle_action.setText(plugin.info.name)
+                    toggle_action.setIcon(get_icon("plugin"))
                     self.view_menu.insertAction(self.action_fullscreen, toggle_action)
                 
                 if menu_items := plugin.create_menu_items():
                     plugins_menu = self._get_or_create_plugins_menu()
                     for action in menu_items:
+                        if not action.icon().isNull():
+                            pass  # Keep existing icon
+                        else:
+                            action.setIcon(get_icon("plugin"))
                         plugins_menu.addAction(action)
                 
             except Exception as e:
@@ -674,6 +766,86 @@ class MainWindow(QMainWindow):
         self._apply_theme()
         self.settings.setValue("theme", theme_type.value)
     
+    def _refresh_menu_icons(self):
+        """Refresh all menu icons with current theme colors."""
+        # File menu actions
+        if hasattr(self, 'action_new'):
+            self.action_new.setIcon(get_icon("file_new"))
+        if hasattr(self, 'action_open'):
+            self.action_open.setIcon(get_icon("file_open"))
+        if hasattr(self, 'action_save'):
+            self.action_save.setIcon(get_icon("file_save"))
+        if hasattr(self, 'action_save_as'):
+            self.action_save_as.setIcon(get_icon("file_save_as"))
+        if hasattr(self, 'action_import_srt'):
+            self.action_import_srt.setIcon(get_icon("file_import"))
+        if hasattr(self, 'action_import_video'):
+            self.action_import_video.setIcon(get_icon("player_play"))
+        if hasattr(self, 'action_export_pdf'):
+            self.action_export_pdf.setIcon(get_icon("file_pdf"))
+        if hasattr(self, 'action_export_srt'):
+            self.action_export_srt.setIcon(get_icon("file_export"))
+        if hasattr(self, 'action_settings'):
+            self.action_settings.setIcon(get_icon("settings"))
+        if hasattr(self, 'action_app_settings'):
+            self.action_app_settings.setIcon(get_icon("settings_general"))
+        if hasattr(self, 'action_exit'):
+            self.action_exit.setIcon(get_icon("close"))
+        
+        # Edit menu actions
+        if hasattr(self, 'action_undo'):
+            self.action_undo.setIcon(get_icon("edit_undo"))
+        if hasattr(self, 'action_redo'):
+            self.action_redo.setIcon(get_icon("edit_redo"))
+        if hasattr(self, 'action_add_cue'):
+            self.action_add_cue.setIcon(get_icon("cue_add"))
+        if hasattr(self, 'action_insert_cue_before'):
+            self.action_insert_cue_before.setIcon(get_icon("cue_move_up"))
+        if hasattr(self, 'action_insert_cue_after'):
+            self.action_insert_cue_after.setIcon(get_icon("cue_move_down"))
+        if hasattr(self, 'action_delete_mode'):
+            self.action_delete_mode.setIcon(get_icon("edit_delete"))
+        if hasattr(self, 'action_delete_cue'):
+            self.action_delete_cue.setIcon(get_icon("cue_delete"))
+        if hasattr(self, 'action_edit_timing'):
+            self.action_edit_timing.setIcon(get_icon("cue_timing"))
+        if hasattr(self, 'action_batch_timing'):
+            self.action_batch_timing.setIcon(get_icon("cue_sync"))
+        if hasattr(self, 'action_recalc_lipsync'):
+            self.action_recalc_lipsync.setIcon(get_icon("sync"))
+        
+        # Navigate menu actions
+        if hasattr(self, 'action_prev_cue'):
+            self.action_prev_cue.setIcon(get_icon("chevron_left"))
+        if hasattr(self, 'action_next_cue'):
+            self.action_next_cue.setIcon(get_icon("chevron_right"))
+        if hasattr(self, 'action_next_empty'):
+            self.action_next_empty.setIcon(get_icon("edit_find"))
+        if hasattr(self, 'action_next_lipsync'):
+            self.action_next_lipsync.setIcon(get_icon("warning"))
+        if hasattr(self, 'action_next_comment'):
+            self.action_next_comment.setIcon(get_icon("comment_unresolved"))
+        
+        # View menu actions
+        if hasattr(self, 'action_toggle_comments'):
+            self.action_toggle_comments.setIcon(get_icon("view_comments"))
+        if hasattr(self, 'action_toggle_timeline'):
+            self.action_toggle_timeline.setIcon(get_icon("view_timeline"))
+        if hasattr(self, 'action_fullscreen'):
+            self.action_fullscreen.setIcon(get_icon("view_fullscreen"))
+        
+        # Help menu actions
+        if hasattr(self, 'action_tutorial'):
+            self.action_tutorial.setIcon(get_icon("help"))
+        if hasattr(self, 'action_about'):
+            self.action_about.setIcon(get_icon("about"))
+        
+        # Submenus
+        if hasattr(self, 'import_menu'):
+            self.import_menu.setIcon(get_icon("file_import"))
+        if hasattr(self, 'export_menu'):
+            self.export_menu.setIcon(get_icon("file_export"))
+
     def _update_title(self):
         """Update window title."""
         title = f"{APP_NAME} {APP_VERSION}"
@@ -708,6 +880,7 @@ class MainWindow(QMainWindow):
         self.action_insert_cue_after.setEnabled(has_project)
         self.action_delete_mode.setEnabled(has_project)
         self.action_edit_timing.setEnabled(has_project)
+        self.action_batch_timing.setEnabled(has_project)
         
         self.cue_list.setEnabled(has_project)
         self.cue_editor.setEnabled(has_project)
@@ -750,6 +923,8 @@ class MainWindow(QMainWindow):
         if self.project_manager.is_open:
             cues = self.project_manager.get_cues()
             self.cue_list.set_cues(cues)
+            # Also update timeline
+            self.timeline_widget.set_cues(cues)
     
     def _check_save_changes(self) -> bool:
         """Check for unsaved changes."""
@@ -1248,6 +1423,105 @@ class MainWindow(QMainWindow):
             self.cue_editor.show_timing_editor(cue)
     
     @Slot()
+    def _on_batch_timing(self):
+        """Open batch timing adjustment dialog."""
+        if not self.project_manager.is_open:
+            return
+        
+        cues = self.project_manager.get_cues()
+        if not cues:
+            QMessageBox.information(
+                self, 
+                t("dialogs.batch_timing.title"), 
+                t("messages.no_cues_to_adjust")
+            )
+            return
+        
+        # Get selected cues count (for now, we don't have multi-select)
+        selected_count = 1 if self.cue_list.get_selected_cue_id() else 0
+        
+        dialog = BatchTimingDialog(
+            cue_count=len(cues),
+            selected_count=selected_count,
+            parent=self
+        )
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            settings = dialog.get_settings()
+            offset_ms = settings["offset_ms"]
+            scope = settings["scope"]
+            ripple = settings["ripple"]
+            
+            if offset_ms == 0:
+                return
+            
+            self._apply_batch_timing(offset_ms, scope, ripple)
+    
+    def _apply_batch_timing(self, offset_ms: int, scope: str, ripple: bool):
+        """
+        Apply batch timing adjustment to cues.
+        
+        Args:
+            offset_ms: Time offset in milliseconds
+            scope: "all", "selected", or "from_current"
+            ripple: Whether to use ripple edit
+        """
+        cues = self.project_manager.get_cues()
+        if not cues:
+            return
+        
+        # Sort cues by time_in
+        sorted_cues = sorted(cues, key=lambda c: c.time_in_ms)
+        
+        # Determine which cues to modify
+        current_cue_id = self.cue_list.get_selected_cue_id()
+        current_index = 0
+        
+        if current_cue_id:
+            for i, cue in enumerate(sorted_cues):
+                if cue.id == current_cue_id:
+                    current_index = i
+                    break
+        
+        cues_to_modify = []
+        
+        if scope == "all":
+            cues_to_modify = sorted_cues
+        elif scope == "selected" and current_cue_id:
+            # For now, just the current cue
+            cues_to_modify = [sorted_cues[current_index]]
+        elif scope == "from_current":
+            cues_to_modify = sorted_cues[current_index:]
+        
+        if not cues_to_modify:
+            return
+        
+        # Apply offset
+        modified_count = 0
+        for cue in cues_to_modify:
+            # Ensure times don't go negative
+            new_time_in = max(0, cue.time_in_ms + offset_ms)
+            new_time_out = max(new_time_in + 1, cue.time_out_ms + offset_ms)
+            
+            cue.time_in_ms = new_time_in
+            cue.time_out_ms = new_time_out
+            
+            self.project_manager.save_cue(cue)
+            modified_count += 1
+        
+        # Refresh UI
+        self._refresh_cue_list()
+        self._update_title()
+        self._update_statistics()
+        
+        # Log and show status
+        log_activity("Batch timing applied", f"{modified_count} cues, {offset_ms}ms offset")
+        self.statusBar().showMessage(
+            t("messages.batch_timing_applied", count=modified_count, offset=offset_ms),
+            3000
+        )
+    
+    @Slot()
     def _on_timing_changed(self):
         if cue := self.cue_editor.get_cue():
             self.project_manager.save_cue(cue)
@@ -1324,12 +1598,21 @@ class MainWindow(QMainWindow):
             self.showFullScreen()
             self.action_fullscreen.setChecked(True)
     
+    @Slot()
+    def _toggle_timeline(self):
+        """Toggle timeline visibility."""
+        visible = self.action_toggle_timeline.isChecked()
+        self.timeline_container.setVisible(visible)
+    
     @Slot(int)
     def _on_cue_selected(self, cue_id: int):
         if (cue := self.project_manager.get_cue(cue_id)) and self.project_manager.db is not None:
             self.cue_editor.set_cue(cue)
             self.comments_panel.set_cue(cue, self.project_manager.db)
             self.video_player.seek_to(cue.time_in_ms)
+            
+            # Update timeline selection
+            self.timeline_widget.set_selected_cue(cue_id)
             
             # Set subtitle for fullscreen video
             subtitle_text = cue.translated_text or cue.source_text
@@ -1371,10 +1654,61 @@ class MainWindow(QMainWindow):
                 self.project_manager.db, position_ms, self.project_manager.project.id
             ):
                 self.cue_list.highlight_cue(cue.id)
+            # Update timeline playhead
+            self.timeline_widget.set_playhead_position(position_ms)
     
     @Slot()
     def _on_comment_added(self):
         self._update_title()
+    
+    @Slot(int)
+    def _on_timeline_playhead_moved(self, position_ms: int):
+        """Handle timeline playhead movement."""
+        self.video_player.seek_to(position_ms)
+        self.timeline_widget.set_playhead_position(position_ms)
+    
+    @Slot(int, int, int)
+    def _on_timeline_cue_moved(self, cue_id: int, new_time_in: int, new_time_out: int):
+        """Handle cue moved in timeline via drag & drop."""
+        if not self.project_manager.is_open or not self.project_manager.db:
+            return
+        
+        cue = self.project_manager.get_cue(cue_id)
+        if cue:
+            cue.time_in_ms = new_time_in
+            cue.time_out_ms = new_time_out
+            cue.save(self.project_manager.db)
+            self._refresh_cue_list()
+            self._update_statistics()
+            self._update_title()
+    
+    @Slot(int, int, int)
+    def _on_timeline_cue_resized(self, cue_id: int, new_time_in: int, new_time_out: int):
+        """Handle cue resized in timeline via edge dragging."""
+        if not self.project_manager.is_open or not self.project_manager.db:
+            return
+        
+        cue = self.project_manager.get_cue(cue_id)
+        if cue:
+            cue.time_in_ms = new_time_in
+            cue.time_out_ms = new_time_out
+            # Recalculate lip-sync ratio using LipSyncEstimator
+            from dubsync.services.lip_sync import LipSyncEstimator
+            estimator = LipSyncEstimator()
+            estimator.update_cue_ratio(cue)
+            cue.save(self.project_manager.db)
+            self._refresh_cue_list()
+            self._update_statistics()
+            self._update_title()
+            # Update editor if this cue is selected
+            selected_cue_id = self.cue_list.get_selected_cue_id()
+            if selected_cue_id and selected_cue_id == cue_id:
+                self.cue_editor.set_cue(cue)
+    
+    @Slot(int)
+    def _on_video_position_for_timeline(self, position_ms: int):
+        """Update timeline playhead when video position changes."""
+        self.timeline_widget.set_playhead_position(position_ms)
     
     def _goto_next_cue(self):
         """Navigate to the next cue."""

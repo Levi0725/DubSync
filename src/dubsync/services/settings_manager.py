@@ -28,6 +28,21 @@ class AppSettings:
     show_line_numbers: bool = True
     compact_mode: bool = False
     
+    # UI Layout settings
+    cue_list_position: str = "left"  # left, right
+    timeline_position: str = "under_cue_list"  # under_cue_list, under_video, hidden
+    video_player_height: int = 350  # default height in pixels
+    cue_editor_collapsed: bool = False  # start collapsed?
+    show_lipsync_indicator: bool = True
+    show_sfx_field: bool = True
+    show_notes_field: bool = True
+    
+    # Editor settings
+    editor_font_family: str = ""  # empty = system default
+    editor_font_size: int = 12
+    source_text_height: int = 50  # pixels
+    translation_text_height: int = 100  # pixels
+    
     # Language settings (i18n)
     language: str = "en"  # ISO 639-1 code (en, hu, etc.)
     
@@ -294,3 +309,93 @@ class SettingsManager:
     def load_state(self, key: str) -> Optional[bytes]:
         """Load state."""
         return self._qt_settings.value(f"state/{key}")
+    
+    # UI Layout settings
+    
+    @property
+    def cue_list_position(self) -> str:
+        return self._settings.cue_list_position
+    
+    @cue_list_position.setter
+    def cue_list_position(self, value: str) -> None:
+        self._settings.cue_list_position = value
+    
+    @property
+    def timeline_position(self) -> str:
+        return self._settings.timeline_position
+    
+    @timeline_position.setter
+    def timeline_position(self, value: str) -> None:
+        self._settings.timeline_position = value
+    
+    @property
+    def video_player_height(self) -> int:
+        return self._settings.video_player_height
+    
+    @video_player_height.setter
+    def video_player_height(self, value: int) -> None:
+        self._settings.video_player_height = value
+    
+    @property
+    def cue_editor_collapsed(self) -> bool:
+        return self._settings.cue_editor_collapsed
+    
+    @cue_editor_collapsed.setter
+    def cue_editor_collapsed(self, value: bool) -> None:
+        self._settings.cue_editor_collapsed = value
+    
+    @property
+    def show_lipsync_indicator(self) -> bool:
+        return self._settings.show_lipsync_indicator
+    
+    @show_lipsync_indicator.setter
+    def show_lipsync_indicator(self, value: bool) -> None:
+        self._settings.show_lipsync_indicator = value
+    
+    @property
+    def show_sfx_field(self) -> bool:
+        return self._settings.show_sfx_field
+    
+    @show_sfx_field.setter
+    def show_sfx_field(self, value: bool) -> None:
+        self._settings.show_sfx_field = value
+    
+    @property
+    def show_notes_field(self) -> bool:
+        return self._settings.show_notes_field
+    
+    @show_notes_field.setter
+    def show_notes_field(self, value: bool) -> None:
+        self._settings.show_notes_field = value
+    
+    @property
+    def editor_font_family(self) -> str:
+        return self._settings.editor_font_family
+    
+    @editor_font_family.setter
+    def editor_font_family(self, value: str) -> None:
+        self._settings.editor_font_family = value
+    
+    @property
+    def editor_font_size(self) -> int:
+        return self._settings.editor_font_size
+    
+    @editor_font_size.setter
+    def editor_font_size(self, value: int) -> None:
+        self._settings.editor_font_size = value
+    
+    @property
+    def source_text_height(self) -> int:
+        return self._settings.source_text_height
+    
+    @source_text_height.setter
+    def source_text_height(self, value: int) -> None:
+        self._settings.source_text_height = value
+    
+    @property
+    def translation_text_height(self) -> int:
+        return self._settings.translation_text_height
+    
+    @translation_text_height.setter
+    def translation_text_height(self, value: int) -> None:
+        self._settings.translation_text_height = value

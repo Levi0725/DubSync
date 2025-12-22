@@ -19,7 +19,7 @@
       "export_pdf": "PDF script...",
       "export_srt": "SRT subtitle...",
       "project_settings": "Project &settings...",
-      "app_settings": "⚙️ &Application settings...",
+      "app_settings": "&Application settings...",
       "exit": "&Exit"
     },
     "edit": {
@@ -29,9 +29,10 @@
       "add_cue": "&New row",
       "insert_before": "Insert row &before",
       "insert_after": "Insert row &after",
-      "delete_mode": "🗑️ &Delete mode",
+      "delete_mode": "&Delete mode",
       "delete_cue": "&Delete selected row",
       "edit_timing": "&Edit timing...",
+      "batch_timing": "&Batch timing...",
       "recalc_lipsync": "&Recalculate lip-sync"
     },
     "navigate": {
@@ -44,16 +45,17 @@
     },
     "view": {
       "_title": "&View",
-      "panels": "📋 Panels",
-      "comments_panel": "💬 &Comments panel",
-      "fullscreen": "🖥️ &Fullscreen"
+      "panels": "Panels",
+      "comments_panel": "&Comments panel",
+      "timeline_panel": "&Timeline",
+      "fullscreen": "&Fullscreen"
     },
     "help": {
       "_title": "&Help",
-      "tutorial": "📖 &Tutorial",
-      "about": "ℹ️ &About"
+      "tutorial": "&Tutorial",
+      "about": "&About"
     },
-    "plugins": "🔌 &Plugins"
+    "plugins": "&Plugins"
   },
   "toolbar": {
     "main": "Main toolbar"
@@ -67,7 +69,7 @@
   },
   "cue_editor": {
     "index": "#-",
-    "time_format": "{start} → {end}",
+    "time_format": "{start} - {end}",
     "duration": "({duration}s)",
     "status_label": "Status:",
     "collapse_tooltip": "Collapse/expand editor",
@@ -78,6 +80,7 @@
     "translation": "Translation:",
     "translation_placeholder": "Enter translation...",
     "lipsync_group": "Lip-sync estimate",
+    "lipsync_disclaimer": "This is just an estimate based on character count.\nActual speech time depends on:\n- Speaker's tempo\n- Target language characteristics\n- Emotions and emphasis\n\nDon't treat this as an absolute value!",
     "no_data": "No data",
     "notes": "Notes:",
     "notes_placeholder": "Director notes, comments...",
@@ -85,15 +88,15 @@
     "sfx_placeholder": "Background noise, music, effects...",
     "save": "Save",
     "reset": "Reset",
-    "approve": "✓ Approve",
-    "revision": "⚠ Needs revision",
-    "prev": "◀ Previous",
-    "next": "Next ▶",
+    "approve": "Approve",
+    "revision": "Needs revision",
+    "prev": "Previous",
+    "next": "Next",
     "no_cue_selected": "Select a row from the list to edit",
     "lipsync": {
-      "good": "✓ Good ({ratio}%)",
-      "close": "⚠ Close ({ratio}%)",
-      "too_long": "✗ Too long ({ratio}%)",
+      "good": "Good ({ratio}%)",
+      "close": "Close ({ratio}%)",
+      "too_long": "Too long ({ratio}%)",
       "details_good": "Duration: {duration}s\nEstimated speech time: {estimated}s\nYou have some room to spare.",
       "details_close": "Duration: {duration}s\nEstimated speech time: {estimated}s\nAt the limit, be careful!",
       "details_long": "Duration: {duration}s\nEstimated speech time: {estimated}s\nConsider shortening the text!"
@@ -112,8 +115,8 @@
     },
     "info": "{filtered} / {total} cues",
     "context_menu": {
-      "insert": "➕ Insert row here",
-      "delete": "🗑️ Delete row"
+      "insert": "Insert row here",
+      "delete": "Delete row"
     }
   },
   "video_player": {
@@ -121,8 +124,8 @@
     "speed": "Speed:",
     "loop_tooltip": "Loop cue",
     "fullscreen_tooltip": "Fullscreen (F)",
-    "prev_frame_tooltip": "Previous frame (←)",
-    "next_frame_tooltip": "Next frame (→)",
+    "prev_frame_tooltip": "Previous frame",
+    "next_frame_tooltip": "Next frame",
     "fullscreen_hint": "ESC - Exit | Space - Play/Pause",
     "fullscreen_title": "Video"
   },
@@ -131,7 +134,7 @@
     "select_cue": "Select a cue",
     "header": "Comments - #{index}",
     "no_comments": "No comments",
-    "resolved": "✓ Resolved",
+    "resolved": "Resolved",
     "resolve": "Resolve",
     "new_comment": "New comment",
     "author": "Name:",
@@ -179,7 +182,7 @@
     },
     "tutorial": {
       "title": "{app_name} - Tutorial",
-      "welcome": "🎬 Welcome to {app_name}!",
+      "welcome": "Welcome to {app_name}!",
       "understood": "Got it!"
     },
     "timing_editor": {
@@ -187,15 +190,15 @@
       "start": "Start:",
       "end": "End:",
       "duration": "Duration: {duration}",
-      "error_end_before_start": "⚠️ End cannot be before start!"
+      "error_end_before_start": "End cannot be before start!"
     },
     "theme_settings": {
       "title": "Theme settings",
       "theme": "Theme:",
-      "dark": "🌙 Dark",
-      "dark_contrast": "🌑 Dark contrast",
-      "light": "☀️ Light",
-      "custom": "🎨 Custom",
+      "dark": "Dark",
+      "dark_contrast": "Dark contrast",
+      "light": "Light",
+      "custom": "Custom",
       "custom_colors": "Custom colors",
       "primary": "Primary color:",
       "background": "Background:",
@@ -224,12 +227,33 @@
     },
     "save_project": {
       "title": "Save Project"
+    },
+    "batch_timing": {
+      "title": "Batch Timing Adjustment",
+      "description": "Apply time offset to multiple cues at once. Shifts the start and end times of all selected cues by the specified value.",
+      "offset_group": "Offset Amount",
+      "offset": "Offset:",
+      "scope_group": "Apply To",
+      "all_cues": "All cues ({count} total)",
+      "selected_cues": "Selected cues ({count} total)",
+      "from_current": "From current cue onwards (ripple)",
+      "ripple_group": "Ripple Edit",
+      "ripple_edit": "Enable ripple edit",
+      "ripple_description": "Ripple edit shifts all subsequent cues as well. Useful when changing one cue's timing and the following cues need to follow.",
+      "preview_no_change": "No change",
+      "later": "later by",
+      "earlier": "earlier by",
+      "preview_all": "All cues",
+      "preview_selected": "{count} selected cues",
+      "preview_from_current": "Current and following cues",
+      "preview_ripple": " (+ ripple)"
     }
   },
   "settings": {
     "title": "Application settings",
     "tabs": {
       "general": "General",
+      "appearance": "Appearance",
       "plugins": "Plugins",
       "download": "Download plugins",
       "theme": "Theme",
@@ -253,6 +277,30 @@
       "app_language": "Application language:",
       "language_restart_hint": "Application restart required for language change"
     },
+    "appearance": {
+      "layout": "Layout",
+      "cue_list_position": "Cue list position:",
+      "cue_list_left": "Left",
+      "cue_list_right": "Right",
+      "timeline_position": "Timeline position:",
+      "timeline_under_cue_list": "Under cue list",
+      "timeline_under_video": "Under video",
+      "timeline_hidden": "Hidden",
+      "video_player": "Video Player",
+      "video_player_height": "Default height:",
+      "video_player_height_px": " pixels",
+      "cue_editor": "Cue Editor",
+      "start_collapsed": "Start collapsed",
+      "show_lipsync": "Show lip-sync indicator",
+      "show_notes": "Show notes field",
+      "show_sfx": "Show background/SFX field",
+      "fonts": "Fonts",
+      "editor_font": "Editor font:",
+      "system_default": "System default",
+      "font_size": "Font size:",
+      "font_size_pt": " pt",
+      "restart_hint": "Some changes require restart"
+    },
     "plugins": {
       "available": "Available plugins:",
       "info": "Plugin information:",
@@ -261,14 +309,14 @@
       "settings_hint": "Select plugin for settings",
       "enable": "Enable",
       "disable": "Disable",
-      "restart_warning": "⚠️ Changes will take effect after restart!",
+      "restart_warning": "Changes will take effect after restart!",
       "panel_settings": "Panel display",
       "show_on_start": "Show on startup",
       "show_on_start_tooltip": "If enabled, plugin panel appears automatically on application start",
       "plugin_settings": "Plugin settings"
     },
     "download": {
-      "wip_title": "🚧 Under Development 🚧",
+      "wip_title": "Under Development",
       "wip_message": "This feature will be available soon!\n\nHere you will be able to browse and install plugins\nfrom a central GitHub repository."
     }
   },
@@ -280,7 +328,7 @@
     "video_loaded": "Video loaded: {name}",
     "export_success": "Export successful: {path}",
     "export_error": "Export error: {error}",
-    "delete_mode_on": "🗑️ DELETE MODE - Click on a row to delete",
+    "delete_mode_on": "DELETE MODE - Click on a row to delete",
     "delete_mode_off": "",
     "no_project": "No open project",
     "lipsync_recalculated": "{count} cue lip-sync updated",
@@ -303,8 +351,10 @@
     "last_cue": "Last row",
     "warnings": "Warnings",
     "error": "Error",
-    "video_not_found": "The video attached to the project was not found:\n\n{path}\n\nThe video has been detached. You can reattach it from File → Import → Video.",
-    "file_not_found": "File not found:\n{path}"
+    "video_not_found": "The video attached to the project was not found:\n\n{path}\n\nThe video has been detached. You can reattach it from File > Import > Video.",
+    "file_not_found": "File not found:\n{path}",
+    "no_cues_to_adjust": "There are no cues in the project to adjust timing.",
+    "batch_timing_applied": "{count} cues timing adjusted ({offset}ms)"
   },
   "statistics": {
     "format": "{total} rows | {translated} translated ({percent}%)",
@@ -312,6 +362,14 @@
   },
   "filters": {
     "all_statuses": "All statuses"
+  },
+  "timeline": {
+    "title": "Timeline",
+    "zoom": "Zoom level",
+    "zoom_in": "Zoom in",
+    "zoom_out": "Zoom out",
+    "fit_to_view": "Fit to view",
+    "no_cues": "No cues to display"
   },
   "buttons": {
     "ok": "OK",

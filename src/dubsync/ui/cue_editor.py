@@ -9,9 +9,10 @@ from typing import Optional
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
     QLineEdit, QTextEdit, QComboBox, QPushButton, QLabel,
-    QFrame, QSizePolicy, QDialog, QDialogButtonBox, QSpinBox
+    QFrame, QSizePolicy, QDialog, QDialogButtonBox, QSpinBox,
+    QSplitter, QToolButton
 )
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Qt, Signal, Slot, QSize
 from PySide6.QtGui import QColor, QPalette
 
 from dubsync.models.cue import Cue
@@ -22,6 +23,7 @@ from dubsync.utils.constants import (
 from dubsync.utils.time_utils import ms_to_timecode, format_duration
 from dubsync.services.lip_sync import LipSyncEstimator, LipSyncResult
 from dubsync.i18n import t
+from dubsync.resources.icon_manager import get_icon_manager
 
 
 class TimingEditorDialog(QDialog):
@@ -162,199 +164,363 @@ class CueEditorWidget(QWidget):
         self._update_ui_state()
     
     def _setup_ui(self):
-        """Setup UI."""
+        """Setup UI - compact modern design."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
         
-        # Header with time info - always visible
+        icon_mgr = get_icon_manager()
+        
+        # ═══════════════════════════════════════════════════════════════
+        # COMPACT HEADER BAR
+        # ═══════════════════════════════════════════════════════════════
         header_widget = QWidget()
+        header_widget.setStyleSheet("background: transparent;")
         header_layout = QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setContentsMargins(4, 2, 4, 2)
+        header_layout.setSpacing(8)
         
-        self.index_label = QLabel(t("cue_editor.index"))
-        self.index_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        # Index badge
+        self.index_label = QLabel("#-")
+        self.index_label.setStyleSheet(
+            "font-weight: bold; font-size: 12px; "
+            "background: #2196F3; color: white; padding: 2px 6px; border-radius: 3px;"
+        )
+        self.index_label.setFixedWidth(40)
+        self.index_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(self.index_label)
         
+        # Time info (compact)
         self.time_label = QLabel("00:00:00 → 00:00:00")
-        self.time_label.setStyleSheet("color: #666;")
+        self.time_label.setStyleSheet("color: #888; font-size: 11px; font-family: monospace;")
         header_layout.addWidget(self.time_label)
         
         self.duration_label = QLabel("(0.0s)")
-        self.duration_label.setStyleSheet("color: #666;")
+        self.duration_label.setStyleSheet("color: #666; font-size: 11px;")
         header_layout.addWidget(self.duration_label)
         
         header_layout.addStretch()
         
-        # Status selector
+        # Status combo (compact)
         self.status_combo = QComboBox()
+        self.status_combo.setFixedWidth(120)
+        self.status_combo.setStyleSheet("font-size: 11px;")
         self.status_combo.addItem(t("status.new"), CueStatus.NEW.value)
         self.status_combo.addItem(t("status.translated"), CueStatus.TRANSLATED.value)
         self.status_combo.addItem(t("status.needs_revision"), CueStatus.NEEDS_REVISION.value)
         self.status_combo.addItem(t("status.approved"), CueStatus.APPROVED.value)
-        header_layout.addWidget(QLabel(t("cue_editor.status_label")))
         header_layout.addWidget(self.status_combo)
         
+        # Quick action buttons (toolbar style)
+        self.approve_btn = QToolButton()
+        self.approve_btn.setIcon(icon_mgr.get_icon("success"))
+        self.approve_btn.setIconSize(QSize(14, 14))
+        self.approve_btn.setToolTip(t("cue_editor.approve"))
+        self.approve_btn.setStyleSheet(
+            "QToolButton { background: #4CAF50; border-radius: 3px; padding: 3px; }"
+            "QToolButton:hover { background: #45a049; }"
+        )
+        header_layout.addWidget(self.approve_btn)
+        
+        self.revision_btn = QToolButton()
+        self.revision_btn.setIcon(icon_mgr.get_icon("warning"))
+        self.revision_btn.setIconSize(QSize(14, 14))
+        self.revision_btn.setToolTip(t("cue_editor.revision"))
+        self.revision_btn.setStyleSheet(
+            "QToolButton { background: #FF9800; border-radius: 3px; padding: 3px; }"
+            "QToolButton:hover { background: #F57C00; }"
+        )
+        header_layout.addWidget(self.revision_btn)
+        
         # Collapse button
-        self.collapse_btn = QPushButton()
-        self.collapse_btn.setText("[-]")
+        self.collapse_btn = QToolButton()
+        self.collapse_btn.setIcon(icon_mgr.get_icon("collapse"))
+        self.collapse_btn.setIconSize(QSize(14, 14))
         self.collapse_btn.setToolTip(t("cue_editor.collapse_tooltip"))
-        self.collapse_btn.setFixedSize(28, 28)
         self.collapse_btn.setCheckable(True)
+        self.collapse_btn.setStyleSheet(
+            "QToolButton { border: none; padding: 3px; }"
+            "QToolButton:hover { background: rgba(128,128,128,0.2); border-radius: 3px; }"
+        )
         self.collapse_btn.clicked.connect(self._toggle_collapse)
         header_layout.addWidget(self.collapse_btn)
         
         layout.addWidget(header_widget)
         
-        # Separator
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        layout.addWidget(line)
-        
-        # Collapsible content container
+        # ═══════════════════════════════════════════════════════════════
+        # COLLAPSIBLE CONTENT
+        # ═══════════════════════════════════════════════════════════════
         self.content_widget = QWidget()
-        content_main_layout = QVBoxLayout(self.content_widget)
-        content_main_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout = QVBoxLayout(self.content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(4)
         
-        # Main content area
-        content_layout = QHBoxLayout()
+        # Main splitter: left (texts) | right (info)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_splitter.setHandleWidth(3)
         
-        # Left side - Source and translation
-        left_layout = QVBoxLayout()
+        # ─────────────────────────────────────────────────────────────
+        # LEFT PANEL: Character + Source + Translation
+        # ─────────────────────────────────────────────────────────────
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(4, 4, 4, 4)
+        left_layout.setSpacing(4)
         
-        # Character name
-        char_layout = QHBoxLayout()
-        char_layout.addWidget(QLabel(t("cue_editor.character")))
+        # Character row
+        char_row = QHBoxLayout()
+        char_row.setSpacing(4)
+        char_label = QLabel(t("cue_editor.character"))
+        char_label.setStyleSheet("font-size: 11px; color: #888;")
+        char_label.setFixedWidth(60)
+        char_row.addWidget(char_label)
         self.character_edit = QLineEdit()
         self.character_edit.setPlaceholderText(t("cue_editor.character_placeholder"))
-        char_layout.addWidget(self.character_edit)
+        self.character_edit.setStyleSheet("font-size: 11px; padding: 2px 4px;")
+        self.character_edit.setFixedHeight(24)
+        char_row.addWidget(self.character_edit)
         
         # Source lock button
-        self.source_lock_btn = QPushButton()
-        self.source_lock_btn.setText("[L]")
+        self.source_lock_btn = QToolButton()
+        self.source_lock_btn.setIcon(icon_mgr.get_icon("lock"))
+        self.source_lock_btn.setIconSize(QSize(12, 12))
         self.source_lock_btn.setToolTip(t("cue_editor.source_lock_tooltip"))
-        self.source_lock_btn.setFixedSize(28, 28)
         self.source_lock_btn.setCheckable(True)
-        self.source_lock_btn.setChecked(True)  # Default: locked
+        self.source_lock_btn.setChecked(True)
+        self.source_lock_btn.setStyleSheet(
+            "QToolButton { border: none; padding: 2px; }"
+            "QToolButton:checked { background: rgba(244,67,54,0.2); border-radius: 3px; }"
+        )
         self.source_lock_btn.clicked.connect(self._on_source_lock_toggled)
-        char_layout.addWidget(self.source_lock_btn)
+        char_row.addWidget(self.source_lock_btn)
+        left_layout.addLayout(char_row)
         
-        left_layout.addLayout(char_layout)
+        # Source text (compact)
+        source_label = QLabel(t("cue_editor.source_text"))
+        source_label.setStyleSheet("font-size: 10px; color: #888; margin-top: 2px;")
+        left_layout.addWidget(source_label)
         
-        # Source text (lockable)
-        left_layout.addWidget(QLabel(t("cue_editor.source_text")))
         self.source_text = QTextEdit()
         self.source_text.setReadOnly(True)
-        self.source_text.setMaximumHeight(80)
+        self.source_text.setMaximumHeight(50)
+        self.source_text.setStyleSheet(
+            "QTextEdit { font-size: 11px; background: rgba(0,0,0,0.05); "
+            "border: 1px solid #ddd; border-radius: 3px; padding: 2px; }"
+        )
         self._source_locked = True
-        self._update_source_text_style()
         left_layout.addWidget(self.source_text)
         
-        # Translated text
-        left_layout.addWidget(QLabel(t("cue_editor.translation")))
+        # Translation text
+        trans_label = QLabel(t("cue_editor.translation"))
+        trans_label.setStyleSheet("font-size: 10px; color: #888; margin-top: 2px;")
+        left_layout.addWidget(trans_label)
+        
         self.translated_text = QTextEdit()
         self.translated_text.setPlaceholderText(t("cue_editor.translation_placeholder"))
-        self.translated_text.setMinimumHeight(100)
-        left_layout.addWidget(self.translated_text)
+        self.translated_text.setStyleSheet(
+            "QTextEdit { font-size: 12px; border: 1px solid #4CAF50; "
+            "border-radius: 3px; padding: 4px; }"
+        )
+        left_layout.addWidget(self.translated_text, 1)
         
-        content_layout.addLayout(left_layout, 2)
+        main_splitter.addWidget(left_panel)
         
-        # Right side - Notes and lip-sync
-        right_layout = QVBoxLayout()
+        # ─────────────────────────────────────────────────────────────
+        # RIGHT PANEL: Lip-sync + Notes + SFX
+        # ─────────────────────────────────────────────────────────────
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(4, 4, 4, 4)
+        right_layout.setSpacing(4)
         
-        # Lip-sync indicator
-        lipsync_group = QGroupBox(t("cue_editor.lipsync_group"))
-        lipsync_layout = QVBoxLayout(lipsync_group)
-        lipsync_layout.setSpacing(4)
+        # Lip-sync compact widget
+        lipsync_frame = QFrame()
+        lipsync_frame.setStyleSheet(
+            "QFrame { background: rgba(0,0,0,0.03); border-radius: 4px; }"
+        )
+        lipsync_layout = QVBoxLayout(lipsync_frame)
+        lipsync_layout.setContentsMargins(6, 4, 6, 4)
+        lipsync_layout.setSpacing(2)
         
+        # Lip-sync header row
+        lipsync_header = QHBoxLayout()
+        lipsync_title = QLabel(t("cue_editor.lipsync_group"))
+        lipsync_title.setStyleSheet("font-size: 10px; font-weight: bold; color: #666;")
+        lipsync_header.addWidget(lipsync_title)
+        lipsync_header.addStretch()
+        
+        self.lipsync_info_btn = QToolButton()
+        self.lipsync_info_btn.setIcon(icon_mgr.get_icon("info"))
+        self.lipsync_info_btn.setIconSize(QSize(10, 10))
+        self.lipsync_info_btn.setToolTip(t("cue_editor.lipsync_disclaimer"))
+        self.lipsync_info_btn.setCursor(Qt.CursorShape.WhatsThisCursor)
+        self.lipsync_info_btn.setStyleSheet(
+            "QToolButton { border: none; padding: 1px; }"
+        )
+        lipsync_header.addWidget(self.lipsync_info_btn)
+        lipsync_layout.addLayout(lipsync_header)
+        
+        # Status indicator bar
         self.lipsync_indicator = QFrame()
-        self.lipsync_indicator.setMinimumHeight(40)
-        self.lipsync_indicator.setMaximumHeight(40)
+        self.lipsync_indicator.setMinimumHeight(24)
+        self.lipsync_indicator.setMaximumHeight(24)
         self.lipsync_indicator.setStyleSheet(
-            "background-color: #CCCCCC; border-radius: 4px;"
+            "background-color: #CCCCCC; border-radius: 3px;"
         )
         
-        # Label inside the indicator
-        indicator_layout = QVBoxLayout(self.lipsync_indicator)
-        indicator_layout.setContentsMargins(4, 0, 4, 0)
+        indicator_layout = QHBoxLayout(self.lipsync_indicator)
+        indicator_layout.setContentsMargins(6, 0, 6, 0)
         self.lipsync_label = QLabel(t("cue_editor.no_data"))
         self.lipsync_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lipsync_label.setStyleSheet("background: transparent; color: white; font-weight: bold;")
+        self.lipsync_label.setStyleSheet(
+            "background: transparent; color: white; font-weight: bold; font-size: 11px;"
+        )
         indicator_layout.addWidget(self.lipsync_label)
-        
         lipsync_layout.addWidget(self.lipsync_indicator)
         
-        self.lipsync_details = QLabel("")
-        self.lipsync_details.setStyleSheet("color: #666; font-size: 11px;")
-        self.lipsync_details.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lipsync_details.setWordWrap(True)
-        self.lipsync_details.setMinimumHeight(36)
-        lipsync_layout.addWidget(self.lipsync_details)
+        # Progress bar
+        self.lipsync_progress_frame = QFrame()
+        self.lipsync_progress_frame.setMinimumHeight(6)
+        self.lipsync_progress_frame.setMaximumHeight(6)
+        self.lipsync_progress_frame.setStyleSheet(
+            "background-color: #333; border-radius: 3px;"
+        )
+        lipsync_layout.addWidget(self.lipsync_progress_frame)
         
-        right_layout.addWidget(lipsync_group)
+        self.lipsync_fill = QFrame(self.lipsync_progress_frame)
+        self.lipsync_fill.setGeometry(0, 0, 0, 6)
+        self.lipsync_fill.setStyleSheet(
+            "background-color: #4CAF50; border-radius: 3px;"
+        )
         
-        # Notes
-        right_layout.addWidget(QLabel(t("cue_editor.notes")))
+        # Details row
+        details_layout = QHBoxLayout()
+        details_layout.setContentsMargins(0, 0, 0, 0)
+        self.lipsync_chars_label = QLabel("")
+        self.lipsync_chars_label.setStyleSheet("color: #888; font-size: 10px;")
+        details_layout.addWidget(self.lipsync_chars_label)
+        details_layout.addStretch()
+        self.lipsync_time_label = QLabel("")
+        self.lipsync_time_label.setStyleSheet("color: #888; font-size: 10px;")
+        details_layout.addWidget(self.lipsync_time_label)
+        lipsync_layout.addLayout(details_layout)
+        
+        right_layout.addWidget(lipsync_frame)
+        
+        # Notes (fills available space)
+        notes_label = QLabel(t("cue_editor.notes"))
+        notes_label.setStyleSheet("font-size: 10px; color: #888;")
+        right_layout.addWidget(notes_label)
+        
         self.notes_edit = QTextEdit()
         self.notes_edit.setPlaceholderText(t("cue_editor.notes_placeholder"))
-        self.notes_edit.setMaximumHeight(60)
-        right_layout.addWidget(self.notes_edit)
+        self.notes_edit.setMinimumHeight(30)
+        self.notes_edit.setStyleSheet(
+            "QTextEdit { font-size: 11px; border: 1px solid #ddd; border-radius: 3px; }"
+        )
+        right_layout.addWidget(self.notes_edit, 1)  # stretch factor 1
         
-        # SFX notes
-        right_layout.addWidget(QLabel(t("cue_editor.sfx")))
+        # SFX (fills available space)
+        sfx_label = QLabel(t("cue_editor.sfx"))
+        sfx_label.setStyleSheet("font-size: 10px; color: #888;")
+        right_layout.addWidget(sfx_label)
+        
         self.sfx_edit = QTextEdit()
         self.sfx_edit.setPlaceholderText(t("cue_editor.sfx_placeholder"))
-        self.sfx_edit.setMaximumHeight(60)
-        right_layout.addWidget(self.sfx_edit)
+        self.sfx_edit.setMinimumHeight(30)
+        self.sfx_edit.setStyleSheet(
+            "QTextEdit { font-size: 11px; border: 1px solid #ddd; border-radius: 3px; }"
+        )
+        right_layout.addWidget(self.sfx_edit, 1)  # stretch factor 1
         
-        content_layout.addLayout(right_layout, 1)
+        main_splitter.addWidget(right_panel)
+        main_splitter.setSizes([400, 200])
         
-        content_main_layout.addLayout(content_layout)
+        content_layout.addWidget(main_splitter, 1)
         
-        # Bottom buttons
-        button_layout = QHBoxLayout()
+        # ─────────────────────────────────────────────────────────────
+        # BOTTOM ACTION BAR
+        # ─────────────────────────────────────────────────────────────
+        action_bar = QWidget()
+        action_bar.setStyleSheet("background: transparent;")
+        action_layout = QHBoxLayout(action_bar)
+        action_layout.setContentsMargins(4, 2, 4, 2)
+        action_layout.setSpacing(4)
         
         self.save_btn = QPushButton(t("cue_editor.save"))
+        self.save_btn.setIcon(icon_mgr.get_icon("file_save"))
+        self.save_btn.setIconSize(QSize(14, 14))
         self.save_btn.setShortcut("Ctrl+Return")
         self.save_btn.setStyleSheet(
             "QPushButton { background-color: #4CAF50; color: white; "
-            "padding: 8px 16px; border: none; border-radius: 4px; }"
+            "padding: 4px 12px; border: none; border-radius: 3px; font-size: 11px; }"
             "QPushButton:hover { background-color: #45a049; }"
             "QPushButton:disabled { background-color: #cccccc; }"
         )
-        button_layout.addWidget(self.save_btn)
+        action_layout.addWidget(self.save_btn)
         
         self.reset_btn = QPushButton(t("cue_editor.reset"))
+        self.reset_btn.setIcon(icon_mgr.get_icon("refresh"))
+        self.reset_btn.setIconSize(QSize(14, 14))
         self.reset_btn.setStyleSheet(
-            "QPushButton { padding: 8px 16px; }"
+            "QPushButton { padding: 4px 12px; font-size: 11px; }"
         )
-        button_layout.addWidget(self.reset_btn)
+        action_layout.addWidget(self.reset_btn)
         
-        button_layout.addStretch()
+        action_layout.addStretch()
         
-        # Quick status buttons
-        self.approve_btn = QPushButton(t("cue_editor.approve"))
-        self.approve_btn.setStyleSheet(
-            "QPushButton { background-color: #4CAF50; color: white; "
-            "padding: 6px 12px; border: none; border-radius: 4px; }"
-        )
-        button_layout.addWidget(self.approve_btn)
+        content_layout.addWidget(action_bar)
         
-        self.revision_btn = QPushButton(t("cue_editor.revision"))
-        self.revision_btn.setStyleSheet(
-            "QPushButton { background-color: #FF9800; color: white; "
-            "padding: 6px 12px; border: none; border-radius: 4px; }"
-        )
-        button_layout.addWidget(self.revision_btn)
-        
-        content_main_layout.addLayout(button_layout)
-        
-        # Add content widget to main layout
-        layout.addWidget(self.content_widget)
+        layout.addWidget(self.content_widget, 1)
         
         # Collapsed state
         self._collapsed = False
+        
+        # Install event filter for progress bar resize
+        self.lipsync_progress_frame.installEventFilter(self)
     
+    def eventFilter(self, obj, event):
+        """Event filter to handle progress bar resize."""
+        from PySide6.QtCore import QEvent
+        if obj == self.lipsync_progress_frame and event.type() == QEvent.Type.Resize:
+            # Update fill bar on resize
+            self._update_lipsync_progress_bar()
+        return super().eventFilter(obj, event)
+    
+    def _update_lipsync_progress_bar(self):
+        """Update progress bar fill width based on current text."""
+        if self._cue is None:
+            return
+            
+        translated = self.translated_text.toPlainText()
+        source = self.source_text.toPlainText()
+        text = translated if translated else source
+        
+        # Calculate chars
+        result = self._lip_sync_estimator.estimate(text, self._cue.duration_ms, source if translated else "")
+        max_chars = self._lip_sync_estimator.calculate_max_chars(self._cue.duration_ms)
+        current_chars = result.text_length
+        
+        # Calculate fill width
+        progress_width = self.lipsync_progress_frame.width()
+        if max_chars > 0:
+            fill_ratio = min(current_chars / max_chars, 1.5)
+            fill_width = int(progress_width * min(fill_ratio, 1.0))
+        else:
+            fill_width = 0
+        
+        # Get current color
+        from dubsync.utils.constants import LIPSYNC_THRESHOLD_GOOD, LIPSYNC_THRESHOLD_WARNING
+        if result.ratio <= LIPSYNC_THRESHOLD_GOOD:
+            color = COLOR_LIPSYNC_GOOD
+        elif result.ratio <= LIPSYNC_THRESHOLD_WARNING:
+            color = COLOR_LIPSYNC_WARNING
+        else:
+            color = COLOR_LIPSYNC_TOO_LONG
+        
+        self.lipsync_fill.setGeometry(0, 0, fill_width, 8)
+        self.lipsync_fill.setStyleSheet(f"background-color: {color}; border-radius: 4px;")
+
     def _connect_signals(self):
         """Connect signals."""
         self.translated_text.textChanged.connect(self._on_text_changed)
@@ -372,22 +538,32 @@ class CueEditorWidget(QWidget):
     @Slot()
     def _toggle_collapse(self):
         """Toggle editor content collapse/expand."""
+        icon_mgr = get_icon_manager()
         self._collapsed = self.collapse_btn.isChecked()
         self.content_widget.setVisible(not self._collapsed)
-        self.collapse_btn.setText("[+]" if self._collapsed else "[-]")
-        
-        # Set maximum height when collapsed to make widget smaller
         if self._collapsed:
-            self.setMaximumHeight(60)  # Just header height
+            self.collapse_btn.setIcon(icon_mgr.get_icon("expand"))
         else:
+            self.collapse_btn.setIcon(icon_mgr.get_icon("collapse"))
+        
+        # Set fixed height when collapsed to make widget smaller
+        if self._collapsed:
+            self.setFixedHeight(36)  # Compact header height
+        else:
+            self.setMinimumHeight(120)
             self.setMaximumHeight(16777215)  # Reset to default max
     
     @Slot()
     def _on_source_lock_toggled(self):
         """Toggle source lock."""
+        icon_mgr = get_icon_manager()
         self._source_locked = self.source_lock_btn.isChecked()
         self.source_text.setReadOnly(self._source_locked)
         self._update_source_text_style()
+        if self._source_locked:
+            self.source_lock_btn.setIcon(icon_mgr.get_icon("lock"))
+        else:
+            self.source_lock_btn.setIcon(icon_mgr.get_icon("unlock"))
     
     def _update_source_text_style(self):
         """Update source text style based on lock state."""
@@ -498,7 +674,7 @@ class CueEditorWidget(QWidget):
         return self._cue
     
     def _update_lipsync(self):
-        """Update lip-sync indicator."""
+        """Update lip-sync indicator with visual progress bar."""
         if self._cue is None:
             return
         
@@ -541,14 +717,29 @@ class CueEditorWidget(QWidget):
         
         self.lipsync_label.setText(status_text)
         
-        # Details
+        # Update progress bar
         max_chars = self._lip_sync_estimator.calculate_max_chars(self._cue.duration_ms)
         current_chars = result.text_length
         
-        self.lipsync_details.setText(
-            f"{current_chars} / ~{max_chars} karakter | "
-            f"Becsült: {result.estimated_time_ms/1000:.1f}s / "
-            f"{self._cue.duration_ms/1000:.1f}s"
+        # Calculate fill width as percentage of max chars
+        progress_width = self.lipsync_progress_frame.width()
+        if max_chars > 0:
+            fill_ratio = min(current_chars / max_chars, 1.5)  # Cap at 150%
+            fill_width = int(progress_width * min(fill_ratio, 1.0))
+        else:
+            fill_width = 0
+            fill_ratio = 0
+        
+        # Set fill bar width and color
+        self.lipsync_fill.setGeometry(0, 0, fill_width, 8)
+        self.lipsync_fill.setStyleSheet(
+            f"background-color: {color}; border-radius: 4px;"
+        )
+        
+        # Update detail labels
+        self.lipsync_chars_label.setText(f"{current_chars} / ~{max_chars} kar")
+        self.lipsync_time_label.setText(
+            f"{result.estimated_time_ms/1000:.1f}s / {self._cue.duration_ms/1000:.1f}s"
         )
     
     @Slot()
@@ -633,7 +824,9 @@ class CueEditorWidget(QWidget):
             "background-color: #CCCCCC; border-radius: 4px;"
         )
         self.lipsync_label.setText(t("cue_editor.no_data"))
-        self.lipsync_details.setText("")
+        self.lipsync_chars_label.setText("")
+        self.lipsync_time_label.setText("")
+        self.lipsync_fill.setGeometry(0, 0, 0, 8)
         
         self._update_ui_state()
     

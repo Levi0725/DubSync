@@ -19,7 +19,7 @@
       "export_pdf": "PDF szövegkönyv...",
       "export_srt": "SRT felirat...",
       "project_settings": "Projekt &beállítások...",
-      "app_settings": "⚙️ &Alkalmazás beállítások...",
+      "app_settings": "&Alkalmazás beállítások...",
       "exit": "&Kilépés"
     },
     "edit": {
@@ -29,9 +29,10 @@
       "add_cue": "Ú&j sor hozzáadása",
       "insert_before": "Sor beszúrása &elé",
       "insert_after": "Sor beszúrása &mögé",
-      "delete_mode": "🗑️ &Törlés mód",
+      "delete_mode": "&Törlés mód",
       "delete_cue": "Kijelölt sor &törlése",
       "edit_timing": "&Időzítés szerkesztése...",
+      "batch_timing": "&Csoportos időzítés...",
       "recalc_lipsync": "Lip-sync &újraszámítás"
     },
     "navigate": {
@@ -44,16 +45,17 @@
     },
     "view": {
       "_title": "&Nézet",
-      "panels": "📋 Panelek",
-      "comments_panel": "💬 &Megjegyzések panel",
-      "fullscreen": "🖥️ &Teljes képernyő"
+      "panels": "Panelek",
+      "comments_panel": "&Megjegyzések panel",
+      "timeline_panel": "&Idővonal",
+      "fullscreen": "&Teljes képernyő"
     },
     "help": {
       "_title": "&Súgó",
-      "tutorial": "📖 &Útmutató",
-      "about": "ℹ️ &Névjegy"
+      "tutorial": "&Útmutató",
+      "about": "&Névjegy"
     },
-    "plugins": "🔌 &Pluginok"
+    "plugins": "&Pluginok"
   },
   "toolbar": {
     "main": "Fő eszköztár"
@@ -67,7 +69,7 @@
   },
   "cue_editor": {
     "index": "#-",
-    "time_format": "{start} → {end}",
+    "time_format": "{start} - {end}",
     "duration": "({duration}s)",
     "status_label": "Státusz:",
     "collapse_tooltip": "Szerkesztő összecsukása/kinyitása",
@@ -78,6 +80,7 @@
     "translation": "Fordítás:",
     "translation_placeholder": "Írja be a fordítást...",
     "lipsync_group": "Lip-sync becslés",
+    "lipsync_disclaimer": "Ez csak egy becslés a szöveg karakterszáma alapján.\nA tényleges beszédidő függ:\n- A beszélő tempójától\n- A célnyelv sajátosságaitól\n- Az érzelmektől és hangsúlyoktól\n\nNe tekintsd abszolút értéknek!",
     "no_data": "Nincs adat",
     "notes": "Megjegyzés:",
     "notes_placeholder": "Rendezői utasítások, megjegyzések...",
@@ -85,15 +88,15 @@
     "sfx_placeholder": "Háttérzajok, zene, effektek...",
     "save": "Mentés",
     "reset": "Visszaállítás",
-    "approve": "✓ Jóváhagyás",
-    "revision": "⚠ Javítandó",
-    "prev": "◀ Előző",
-    "next": "Következő ▶",
+    "approve": "Jóváhagyás",
+    "revision": "Javítandó",
+    "prev": "Előző",
+    "next": "Következő",
     "no_cue_selected": "Válasszon ki egy sort a listából a szerkesztéshez",
     "lipsync": {
-      "good": "✓ Megfelelő ({ratio}%)",
-      "close": "⚠ Határeset ({ratio}%)",
-      "too_long": "✗ Túl hosszú ({ratio}%)",
+      "good": "Megfelelő ({ratio}%)",
+      "close": "Határeset ({ratio}%)",
+      "too_long": "Túl hosszú ({ratio}%)",
       "details_good": "Időtartam: {duration}s\nBecsült beszédidő: {estimated}s\nVan még hely.",
       "details_close": "Időtartam: {duration}s\nBecsült beszédidő: {estimated}s\nA határ közelében, légy óvatos!",
       "details_long": "Időtartam: {duration}s\nBecsült beszédidő: {estimated}s\nFontold meg a szöveg rövidítését!"
@@ -112,8 +115,8 @@
     },
     "info": "{filtered} / {total} cue",
     "context_menu": {
-      "insert": "➕ Sor beszúrása ide",
-      "delete": "🗑️ Sor törlése"
+      "insert": "Sor beszúrása ide",
+      "delete": "Sor törlése"
     }
   },
   "video_player": {
@@ -121,8 +124,8 @@
     "speed": "Sebesség:",
     "loop_tooltip": "Cue ismétlése",
     "fullscreen_tooltip": "Teljes képernyő (F)",
-    "prev_frame_tooltip": "Előző frame (←)",
-    "next_frame_tooltip": "Következő frame (→)",
+    "prev_frame_tooltip": "Előző frame",
+    "next_frame_tooltip": "Következő frame",
     "fullscreen_hint": "ESC - Kilépés | Szóköz - Lejátszás/Megállítás",
     "fullscreen_title": "Videó"
   },
@@ -131,7 +134,7 @@
     "select_cue": "Válasszon ki egy cue-t",
     "header": "Megjegyzések - #{index}",
     "no_comments": "Nincs megjegyzés",
-    "resolved": "✓ Lezárva",
+    "resolved": "Lezárva",
     "resolve": "Lezár",
     "new_comment": "Új megjegyzés",
     "author": "Név:",
@@ -179,7 +182,7 @@
     },
     "tutorial": {
       "title": "{app_name} - Útmutató",
-      "welcome": "🎬 Üdvözöljük a {app_name}-ban!",
+      "welcome": "Üdvözöljük a {app_name}-ban!",
       "understood": "Megértettem!"
     },
     "timing_editor": {
@@ -187,15 +190,15 @@
       "start": "Kezdés:",
       "end": "Vége:",
       "duration": "Hossz: {duration}",
-      "error_end_before_start": "⚠️ A vége nem lehet a kezdés előtt!"
+      "error_end_before_start": "A vége nem lehet a kezdés előtt!"
     },
     "theme_settings": {
       "title": "Téma beállítások",
       "theme": "Téma:",
-      "dark": "🌙 Sötét",
-      "dark_contrast": "🌑 Sötét kontrasztos",
-      "light": "☀️ Világos",
-      "custom": "🎨 Egyedi",
+      "dark": "Sötét",
+      "dark_contrast": "Sötét kontrasztos",
+      "light": "Világos",
+      "custom": "Egyedi",
       "custom_colors": "Egyedi színek",
       "primary": "Elsődleges szín:",
       "background": "Háttér:",
@@ -224,12 +227,33 @@
     },
     "save_project": {
       "title": "Projekt mentése"
+    },
+    "batch_timing": {
+      "title": "Csoportos időzítés beállítás",
+      "description": "Időzítés eltolás több cue-ra egyszerre. Az összes kijelölt cue kezdő és záró idejét módosítja a megadott értékkel.",
+      "offset_group": "Eltolás mértéke",
+      "offset": "Eltolás:",
+      "scope_group": "Alkalmazási kör",
+      "all_cues": "Összes cue ({count} db)",
+      "selected_cues": "Kijelölt cue-k ({count} db)",
+      "from_current": "Aktuális cue-tól kezdve (ripple)",
+      "ripple_group": "Ripple szerkesztés",
+      "ripple_edit": "Ripple szerkesztés engedélyezése",
+      "ripple_description": "A ripple szerkesztés az összes követő cue időzítését is eltol. Hasznos, ha egy cue időzítését változtatod és a többit is követnie kell.",
+      "preview_no_change": "Nincs változás",
+      "later": "későbbre:",
+      "earlier": "korábbra:",
+      "preview_all": "Az összes cue",
+      "preview_selected": "A kijelölt {count} cue",
+      "preview_from_current": "Aktuális és követő cue-k",
+      "preview_ripple": " (+ ripple)"
     }
   },
   "settings": {
     "title": "Alkalmazás beállítások",
     "tabs": {
       "general": "Általános",
+      "appearance": "Megjelenés",
       "plugins": "Pluginok",
       "download": "Plugin letöltések",
       "theme": "Téma",
@@ -253,6 +277,30 @@
       "app_language": "Alkalmazás nyelve:",
       "language_restart_hint": "A nyelvváltás az alkalmazás újraindítása után lép érvénybe"
     },
+    "appearance": {
+      "layout": "Elrendezés",
+      "cue_list_position": "Cue lista pozíciója:",
+      "cue_list_left": "Bal",
+      "cue_list_right": "Jobb",
+      "timeline_position": "Idővonal pozíciója:",
+      "timeline_under_cue_list": "Cue lista alatt",
+      "timeline_under_video": "Videó alatt",
+      "timeline_hidden": "Rejtett",
+      "video_player": "Videó lejátszó",
+      "video_player_height": "Alapértelmezett magasság:",
+      "video_player_height_px": " pixel",
+      "cue_editor": "Cue szerkesztő",
+      "start_collapsed": "Összezárva indul",
+      "show_lipsync": "Lip-sync indikátor mutatása",
+      "show_notes": "Megjegyzés mező mutatása",
+      "show_sfx": "Háttérhang/SFX mező mutatása",
+      "fonts": "Betűtípusok",
+      "editor_font": "Szerkesztő betűtípusa:",
+      "system_default": "Rendszer alapértelmezett",
+      "font_size": "Betűméret:",
+      "font_size_pt": " pt",
+      "restart_hint": "Egyes változások újraindítást igényelnek"
+    },
     "plugins": {
       "available": "Elérhető pluginok:",
       "info": "Plugin információk:",
@@ -261,14 +309,14 @@
       "settings_hint": "Válassz plugint a beállításokhoz",
       "enable": "Engedélyezés",
       "disable": "Letiltás",
-      "restart_warning": "⚠️ A változások csak újraindítás után lépnek érvénybe!",
+      "restart_warning": "A változások csak újraindítás után lépnek érvénybe!",
       "panel_settings": "Panel megjelenés",
       "show_on_start": "Indulásnál megjelenjen",
       "show_on_start_tooltip": "Ha bekapcsolod, a plugin panelje automatikusan megjelenik az alkalmazás indításakor",
       "plugin_settings": "Plugin beállítások"
     },
     "download": {
-      "wip_title": "🚧 Fejlesztés alatt 🚧",
+      "wip_title": "Fejlesztés alatt",
       "wip_message": "Ez a funkció hamarosan elérhető lesz!\n\nItt fogsz tudni pluginokat böngészni és telepíteni\negy központi GitHub repository-ból."
     }
   },
@@ -280,7 +328,7 @@
     "video_loaded": "Videó betöltve: {name}",
     "export_success": "Sikeres exportálás: {path}",
     "export_error": "Exportálási hiba: {error}",
-    "delete_mode_on": "🗑️ TÖRLÉS MÓD - Kattints egy sorra a törléshez",
+    "delete_mode_on": "TÖRLÉS MÓD - Kattints egy sorra a törléshez",
     "delete_mode_off": "",
     "no_project": "Nincs nyitott projekt",
     "lipsync_recalculated": "{count} cue lip-sync frissítve",
@@ -303,8 +351,10 @@
     "last_cue": "Utolsó sor",
     "warnings": "Figyelmeztetések",
     "error": "Hiba",
-    "video_not_found": "A projekthez csatolt videó nem található:\n\n{path}\n\nA videó leválasztva. Újra csatolhatod a Fájl → Import → Videó menüből.",
-    "file_not_found": "Fájl nem található:\n{path}"
+    "video_not_found": "A projekthez csatolt videó nem található:\n\n{path}\n\nA videó leválasztva. Újra csatolhatod a Fájl - Import - Videó menüből.",
+    "file_not_found": "Fájl nem található:\n{path}",
+    "no_cues_to_adjust": "Nincsenek cue-k a projektben az időzítés beállításához.",
+    "batch_timing_applied": "{count} cue időzítése módosítva ({offset}ms)"
   },
   "statistics": {
     "format": "{total} sor | {translated} lefordítva ({percent}%)",
@@ -312,6 +362,14 @@
   },
   "filters": {
     "all_statuses": "Minden státusz"
+  },
+  "timeline": {
+    "title": "Idővonal",
+    "zoom": "Nagyítás mértéke",
+    "zoom_in": "Nagyítás",
+    "zoom_out": "Kicsinyítés",
+    "fit_to_view": "Illesztés a nézetbe",
+    "no_cues": "Nincs megjeleníthető cue"
   },
   "buttons": {
     "ok": "OK",

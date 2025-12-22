@@ -1,6 +1,6 @@
 {
   "name": "Alapvető QA",
-  "description": "Alapvető minőségellenőrzési vizsgálatok",
+  "description": "Alapvető minőségellenőrzési vizsgálatok (CPS, átfedés, időtartam)",
   "header": "🔍 QA Ellenőrzés Eredményei",
   "no_check": "Futtass egy ellenőrzést",
   "no_project": "Nincs megnyitott projekt",
@@ -17,6 +17,18 @@
   "summary": "{errors} hiba, {warnings} figyelmeztetés",
   "recheck_btn": "🔄 Újraellenőrzés",
   "fix_all_btn": "✨ Összes javítása",
+  "settings": {
+    "cps_group": "Olvasási sebesség (CPS)",
+    "check_cps": "CPS ellenőrzés bekapcsolva:",
+    "max_cps": "Maximum CPS (karakter/másodperc):",
+    "min_cps": "Minimum CPS:",
+    "duration_group": "Időtartam ellenőrzés",
+    "check_duration": "Időtartam ellenőrzés bekapcsolva:",
+    "min_duration": "Minimum időtartam:",
+    "max_duration": "Maximum időtartam:",
+    "overlap_group": "Átfedés ellenőrzés",
+    "check_overlap": "Átfedés ellenőrzés bekapcsolva:"
+  },
   "issues": {
     "missing_translation": "Hiányzó fordítás",
     "missing_translation_suggestion": "Add hozzá a fordítást",
@@ -27,7 +39,17 @@
     "missing_character": "Hiányzó karakternév",
     "missing_character_suggestion": "Add hozzá a karakternevet",
     "extra_whitespace": "Felesleges szóköz a végén",
-    "extra_whitespace_suggestion": "Távolítsd el a szóközt"
+    "extra_whitespace_suggestion": "Távolítsd el a szóközt",
+    "cps_too_high": "Túl gyors olvasás ({cps} CPS)",
+    "cps_too_high_suggestion": "Rövidítsd a szöveget vagy növeld az időtartamot (max: {max_cps} CPS)",
+    "cps_too_low": "Túl lassú olvasás ({cps} CPS)",
+    "cps_too_low_suggestion": "A szöveg túl rövid az időtartamhoz képest",
+    "overlap": "Átfedés az előző sorral ({overlap_ms}ms, #{prev_id})",
+    "overlap_suggestion": "Állítsd be az időzítést az átfedés megszüntetéséhez",
+    "duration_too_short": "Túl rövid időtartam ({duration_ms}ms)",
+    "duration_too_short_suggestion": "Minimum időtartam: {min_ms}ms",
+    "duration_too_long": "Túl hosszú időtartam ({duration_ms}ms)",
+    "duration_too_long_suggestion": "Fontold meg a felirat felosztását"
   },
   "panel": "🔍 QA Panel",
   "run_qa": "🔍 QA futtatás"

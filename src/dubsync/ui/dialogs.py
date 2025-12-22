@@ -4,12 +4,13 @@ DubSync Dialogs
 Dialog windows.
 """
 
-from typing import Optional
+from typing import Optional, List
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
     QLineEdit, QDoubleSpinBox, QDialogButtonBox,
-    QLabel, QPushButton, QGroupBox, QTextBrowser
+    QLabel, QPushButton, QGroupBox, QTextBrowser,
+    QSpinBox, QCheckBox, QRadioButton, QButtonGroup
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
@@ -325,3 +326,172 @@ class TutorialDialog(QDialog):
         <h3>❓ Segítség</h3>
         <p>További információkért lásd a dokumentációt vagy a <b>Súgó → Névjegy</b> menüpontot.</p>
         """
+
+
+class BatchTimingDialog(QDialog):
+    """
+    Batch timing adjustment dialog.
+    
+    Allows applying time offset to multiple cues at once.
+    Supports ripple edit (moving all subsequent cues).
+    """
+    
+    def __init__(self, cue_count: int, selected_count: int = 0, parent=None):
+        """
+        Initialize batch timing dialog.
+        
+        Args:
+            cue_count: Total number of cues in project
+            selected_count: Number of currently selected cues
+            parent: Parent widget
+        """
+        super().__init__(parent)
+        self.cue_count = cue_count
+        self.selected_count = selected_count
+        
+        self.setWindowTitle(t("dialogs.batch_timing.title"))
+        self.setMinimumWidth(400)
+        
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        """Setup UI elements."""
+        layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+        
+        # Description
+        desc_label = QLabel(t("dialogs.batch_timing.description"))
+        desc_label.setWordWrap(True)
+        desc_label.setStyleSheet("color: #888; font-size: 11px;")
+        layout.addWidget(desc_label)
+        
+        # Offset input
+        offset_group = QGroupBox(t("dialogs.batch_timing.offset_group"))
+        offset_layout = QFormLayout(offset_group)
+        
+        offset_row = QHBoxLayout()
+        self.offset_spin = QSpinBox()
+        self.offset_spin.setRange(-99999, 99999)
+        self.offset_spin.setValue(0)
+        self.offset_spin.setSuffix(" ms")
+        self.offset_spin.setMinimumWidth(120)
+        offset_row.addWidget(self.offset_spin)
+        
+        # Quick offset buttons
+        quick_btns = QHBoxLayout()
+        quick_btns.setSpacing(4)
+        for offset in [-1000, -500, -100, 100, 500, 1000]:
+            btn = QPushButton(f"{'+' if offset > 0 else ''}{offset}")
+            btn.setMaximumWidth(50)
+            btn.clicked.connect(lambda checked, o=offset: self.offset_spin.setValue(
+                self.offset_spin.value() + o
+            ))
+            quick_btns.addWidget(btn)
+        offset_row.addLayout(quick_btns)
+        
+        offset_layout.addRow(t("dialogs.batch_timing.offset"), offset_row)
+        layout.addWidget(offset_group)
+        
+        # Scope selection
+        scope_group = QGroupBox(t("dialogs.batch_timing.scope_group"))
+        scope_layout = QVBoxLayout(scope_group)
+        
+        self.scope_group = QButtonGroup(self)
+        
+        self.all_cues_radio = QRadioButton(
+            t("dialogs.batch_timing.all_cues", count=self.cue_count)
+        )
+        self.all_cues_radio.setChecked(True)
+        self.scope_group.addButton(self.all_cues_radio, 0)
+        scope_layout.addWidget(self.all_cues_radio)
+        
+        self.selected_cues_radio = QRadioButton(
+            t("dialogs.batch_timing.selected_cues", count=self.selected_count)
+        )
+        self.selected_cues_radio.setEnabled(self.selected_count > 0)
+        self.scope_group.addButton(self.selected_cues_radio, 1)
+        scope_layout.addWidget(self.selected_cues_radio)
+        
+        self.from_current_radio = QRadioButton(
+            t("dialogs.batch_timing.from_current")
+        )
+        self.scope_group.addButton(self.from_current_radio, 2)
+        scope_layout.addWidget(self.from_current_radio)
+        
+        layout.addWidget(scope_group)
+        
+        # Ripple edit option
+        ripple_group = QGroupBox(t("dialogs.batch_timing.ripple_group"))
+        ripple_layout = QVBoxLayout(ripple_group)
+        
+        self.ripple_check = QCheckBox(t("dialogs.batch_timing.ripple_edit"))
+        self.ripple_check.setChecked(False)
+        ripple_layout.addWidget(self.ripple_check)
+        
+        ripple_desc = QLabel(t("dialogs.batch_timing.ripple_description"))
+        ripple_desc.setWordWrap(True)
+        ripple_desc.setStyleSheet("color: #888; font-size: 10px; margin-left: 20px;")
+        ripple_layout.addWidget(ripple_desc)
+        
+        layout.addWidget(ripple_group)
+        
+        # Preview label
+        self.preview_label = QLabel()
+        self.preview_label.setStyleSheet(
+            "background: #2a2a2a; padding: 8px; border-radius: 4px; color: #4CAF50;"
+        )
+        self._update_preview()
+        layout.addWidget(self.preview_label)
+        
+        # Connect signals for preview update
+        self.offset_spin.valueChanged.connect(self._update_preview)
+        self.scope_group.buttonClicked.connect(self._update_preview)
+        self.ripple_check.stateChanged.connect(self._update_preview)
+        
+        # Buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | 
+            QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+    
+    def _update_preview(self):
+        """Update preview text."""
+        offset = self.offset_spin.value()
+        scope_id = self.scope_group.checkedId()
+        ripple = self.ripple_check.isChecked()
+        
+        if offset == 0:
+            self.preview_label.setText(t("dialogs.batch_timing.preview_no_change"))
+            return
+        
+        direction = t("dialogs.batch_timing.later") if offset > 0 else t("dialogs.batch_timing.earlier")
+        
+        if scope_id == 0:  # All cues
+            scope_text = t("dialogs.batch_timing.preview_all")
+        elif scope_id == 1:  # Selected
+            scope_text = t("dialogs.batch_timing.preview_selected", count=self.selected_count)
+        else:  # From current
+            scope_text = t("dialogs.batch_timing.preview_from_current")
+        
+        ripple_text = t("dialogs.batch_timing.preview_ripple") if ripple else ""
+        
+        self.preview_label.setText(
+            f"⏱️ {scope_text} {direction} {abs(offset)}ms{ripple_text}"
+        )
+    
+    def get_settings(self) -> dict:
+        """
+        Get dialog settings.
+        
+        Returns:
+            Dictionary with offset, scope, and ripple settings
+        """
+        scope_map = {0: "all", 1: "selected", 2: "from_current"}
+        return {
+            "offset_ms": self.offset_spin.value(),
+            "scope": scope_map.get(self.scope_group.checkedId(), "all"),
+            "ripple": self.ripple_check.isChecked()
+        }

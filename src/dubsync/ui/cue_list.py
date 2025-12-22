@@ -23,6 +23,7 @@ from dubsync.utils.constants import (
 )
 from dubsync.utils.time_utils import ms_to_timecode
 from dubsync.i18n import t
+from dubsync.resources.icon_manager import get_icon_manager
 
 
 class CueListWidget(QWidget):
@@ -364,14 +365,15 @@ class CueListWidget(QWidget):
         if not item:
             return
         
+        icon_mgr = get_icon_manager()
         menu = QMenu(self)
         
-        insert_action = QAction(t("cue_list.context_menu.insert"), self)
+        insert_action = QAction(icon_mgr.get_icon("cue_add"), t("cue_list.context_menu.insert"), self)
         insert_action.triggered.connect(lambda: self._request_insert(item.row()))
         menu.addAction(insert_action)
         
         if self._delete_mode:
-            delete_action = QAction(t("cue_list.context_menu.delete"), self)
+            delete_action = QAction(icon_mgr.get_icon("cue_delete"), t("cue_list.context_menu.delete"), self)
             delete_action.triggered.connect(lambda: self._request_delete(item.row()))
             menu.addAction(delete_action)
         

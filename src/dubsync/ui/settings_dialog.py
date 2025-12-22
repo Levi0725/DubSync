@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox, QMessageBox, QFrame, QSplitter,
     QColorDialog, QStackedWidget
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QColor, QFont
 
 from dubsync.services.settings_manager import SettingsManager
@@ -23,6 +23,7 @@ from dubsync.plugins.base import PluginManager, PluginInterface
 from dubsync.ui.theme import ThemeManager, ThemeType, THEMES, ThemeColors
 from dubsync.utils.constants import APP_NAME, APP_VERSION
 from dubsync.i18n import t
+from dubsync.resources.icon_manager import get_icon_manager
 
 
 class GeneralSettingsTab(QWidget):
@@ -150,6 +151,133 @@ class GeneralSettingsTab(QWidget):
         
         # Nyelv mentése
         self.settings.language = self.language_combo.currentData()
+
+
+class AppearanceSettingsTab(QWidget):
+    """Appearance settings tab - layout and display options."""
+    
+    def __init__(self, settings: SettingsManager, parent=None):
+        super().__init__(parent)
+        self.settings = settings
+        self._setup_ui()
+        self._load_settings()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setSpacing(12)
+        
+        # Layout settings
+        layout_group = QGroupBox(t("settings.appearance.layout"))
+        layout_form = QFormLayout(layout_group)
+        
+        # Cue list position
+        self.cue_list_pos = QComboBox()
+        self.cue_list_pos.addItem(t("settings.appearance.cue_list_left"), "left")
+        self.cue_list_pos.addItem(t("settings.appearance.cue_list_right"), "right")
+        layout_form.addRow(t("settings.appearance.cue_list_position"), self.cue_list_pos)
+        
+        # Timeline position
+        self.timeline_pos = QComboBox()
+        self.timeline_pos.addItem(t("settings.appearance.timeline_under_cue_list"), "under_cue_list")
+        self.timeline_pos.addItem(t("settings.appearance.timeline_under_video"), "under_video")
+        self.timeline_pos.addItem(t("settings.appearance.timeline_hidden"), "hidden")
+        layout_form.addRow(t("settings.appearance.timeline_position"), self.timeline_pos)
+        
+        layout.addWidget(layout_group)
+        
+        # Video player settings
+        video_group = QGroupBox(t("settings.appearance.video_player"))
+        video_form = QFormLayout(video_group)
+        
+        self.video_height = QSpinBox()
+        self.video_height.setRange(150, 800)
+        self.video_height.setSuffix(t("settings.appearance.video_player_height_px"))
+        video_form.addRow(t("settings.appearance.video_player_height"), self.video_height)
+        
+        layout.addWidget(video_group)
+        
+        # Cue editor settings
+        editor_group = QGroupBox(t("settings.appearance.cue_editor"))
+        editor_layout = QVBoxLayout(editor_group)
+        
+        self.start_collapsed = QCheckBox(t("settings.appearance.start_collapsed"))
+        editor_layout.addWidget(self.start_collapsed)
+        
+        self.show_lipsync = QCheckBox(t("settings.appearance.show_lipsync"))
+        editor_layout.addWidget(self.show_lipsync)
+        
+        self.show_notes = QCheckBox(t("settings.appearance.show_notes"))
+        editor_layout.addWidget(self.show_notes)
+        
+        self.show_sfx = QCheckBox(t("settings.appearance.show_sfx"))
+        editor_layout.addWidget(self.show_sfx)
+        
+        layout.addWidget(editor_group)
+        
+        # Font settings
+        font_group = QGroupBox(t("settings.appearance.fonts"))
+        font_form = QFormLayout(font_group)
+        
+        self.font_combo = QComboBox()
+        self.font_combo.addItem(t("settings.appearance.system_default"), "")
+        # Add common monospace fonts
+        for font in ["Consolas", "Monaco", "Courier New", "Source Code Pro", "Fira Code"]:
+            self.font_combo.addItem(font, font)
+        font_form.addRow(t("settings.appearance.editor_font"), self.font_combo)
+        
+        self.font_size = QSpinBox()
+        self.font_size.setRange(8, 24)
+        self.font_size.setSuffix(t("settings.appearance.font_size_pt"))
+        font_form.addRow(t("settings.appearance.font_size"), self.font_size)
+        
+        layout.addWidget(font_group)
+        
+        # Restart hint
+        hint = QLabel(t("settings.appearance.restart_hint"))
+        hint.setStyleSheet("color: #ff9800; font-size: 11px;")
+        layout.addWidget(hint)
+        
+        layout.addStretch()
+    
+    def _load_settings(self):
+        # Cue list position
+        pos = self.settings.cue_list_position
+        for i in range(self.cue_list_pos.count()):
+            if self.cue_list_pos.itemData(i) == pos:
+                self.cue_list_pos.setCurrentIndex(i)
+                break
+        
+        # Timeline position
+        pos = self.settings.timeline_position
+        for i in range(self.timeline_pos.count()):
+            if self.timeline_pos.itemData(i) == pos:
+                self.timeline_pos.setCurrentIndex(i)
+                break
+        
+        self.video_height.setValue(self.settings.video_player_height)
+        self.start_collapsed.setChecked(self.settings.cue_editor_collapsed)
+        self.show_lipsync.setChecked(self.settings.show_lipsync_indicator)
+        self.show_notes.setChecked(self.settings.show_notes_field)
+        self.show_sfx.setChecked(self.settings.show_sfx_field)
+        
+        # Font
+        font = self.settings.editor_font_family
+        for i in range(self.font_combo.count()):
+            if self.font_combo.itemData(i) == font:
+                self.font_combo.setCurrentIndex(i)
+                break
+        self.font_size.setValue(self.settings.editor_font_size)
+    
+    def save_settings(self):
+        self.settings.cue_list_position = self.cue_list_pos.currentData()
+        self.settings.timeline_position = self.timeline_pos.currentData()
+        self.settings.video_player_height = self.video_height.value()
+        self.settings.cue_editor_collapsed = self.start_collapsed.isChecked()
+        self.settings.show_lipsync_indicator = self.show_lipsync.isChecked()
+        self.settings.show_notes_field = self.show_notes.isChecked()
+        self.settings.show_sfx_field = self.show_sfx.isChecked()
+        self.settings.editor_font_family = self.font_combo.currentData()
+        self.settings.editor_font_size = self.font_size.value()
 
 
 class PluginsSettingsTab(QWidget):
@@ -295,31 +423,51 @@ class PluginsSettingsTab(QWidget):
     def _load_plugins(self):
         self.plugin_list.clear()
         
+        icon_mgr = get_icon_manager()
+        
         for plugin in self.plugin_manager.get_all_plugins():
             info = plugin.info
             item = QListWidgetItem()
             
             enabled = self.plugin_manager.is_enabled(info.id)
-            icon = "✅" if enabled else "⬜"
-            type_icon = self._get_type_icon(info.plugin_type)
+            status_mark = "[ON]" if enabled else "[OFF]"
+            type_label = self._get_type_label(info.plugin_type)
             
-            item.setText(f"{icon} {type_icon} {info.name}")
+            item.setText(f"{status_mark} {type_label}: {info.name}")
+            item.setIcon(self._get_type_icon(info.plugin_type))
             item.setData(Qt.ItemDataRole.UserRole, info.id)
             
             self.plugin_list.addItem(item)
     
-    def _get_type_icon(self, plugin_type) -> str:
+    def _get_type_label(self, plugin_type) -> str:
+        """Get plugin type label."""
         from dubsync.plugins.base import PluginType
-        icons = {
-            PluginType.EXPORT: "📤",
-            PluginType.QA: "✓",
-            PluginType.IMPORT: "📥",
-            PluginType.TOOL: "🔧",
-            PluginType.UI: "🖼️",
-            PluginType.SERVICE: "⚙️",
-            PluginType.LANGUAGE: "🌐",
+        labels = {
+            PluginType.EXPORT: "Export",
+            PluginType.QA: "QA",
+            PluginType.IMPORT: "Import",
+            PluginType.TOOL: "Tool",
+            PluginType.UI: "UI",
+            PluginType.SERVICE: "Service",
+            PluginType.LANGUAGE: "Language",
         }
-        return icons.get(plugin_type, "📦")
+        return labels.get(plugin_type, "Plugin")
+    
+    def _get_type_icon(self, plugin_type):
+        """Get plugin type icon."""
+        from dubsync.plugins.base import PluginType
+        icon_mgr = get_icon_manager()
+        icons = {
+            PluginType.EXPORT: "file_export",
+            PluginType.QA: "qa_check",
+            PluginType.IMPORT: "file_import",
+            PluginType.TOOL: "settings",
+            PluginType.UI: "view_fullscreen",
+            PluginType.SERVICE: "sync",
+            PluginType.LANGUAGE: "translate",
+        }
+        icon_name = icons.get(plugin_type, "plugin")
+        return icon_mgr.get_icon(icon_name)
     
     def _on_plugin_selected(self, item: QListWidgetItem):
         plugin_id = item.data(Qt.ItemDataRole.UserRole)
@@ -613,7 +761,7 @@ class AboutTab(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Logo/Név
-        name_label = QLabel(f"🎬 {APP_NAME}")
+        name_label = QLabel(APP_NAME)
         self._add_styled_centered_widget(
             name_label, "font-size: 32px; font-weight: bold;", layout
         )
@@ -663,10 +811,11 @@ class SettingsDialog(QDialog):
     
     # Tab indexek
     TAB_GENERAL = 0
-    TAB_PLUGINS = 1
-    TAB_DOWNLOAD = 2
-    TAB_THEME = 3
-    TAB_ABOUT = 4
+    TAB_APPEARANCE = 1
+    TAB_PLUGINS = 2
+    TAB_DOWNLOAD = 3
+    TAB_THEME = 4
+    TAB_ABOUT = 5
     
     def __init__(self, parent=None, plugin_manager: Optional[PluginManager] = None, initial_tab: Optional[str] = None):
         super().__init__(parent)
@@ -684,29 +833,35 @@ class SettingsDialog(QDialog):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         
+        icon_mgr = get_icon_manager()
+        
         # Tab widget
         self.tab_widget = QTabWidget()
         
-        # General settings
+        # General settings (scrollable)
         self.general_tab = GeneralSettingsTab(self.settings)
-        self.tab_widget.addTab(self.general_tab, t("settings.tabs.general"))
+        self.tab_widget.addTab(self._make_scrollable(self.general_tab), icon_mgr.get_icon("settings"), t("settings.tabs.general"))
+        
+        # Appearance settings (scrollable)
+        self.appearance_tab = AppearanceSettingsTab(self.settings)
+        self.tab_widget.addTab(self._make_scrollable(self.appearance_tab), icon_mgr.get_icon("view_fullscreen"), t("settings.tabs.appearance"))
         
         # Plugin settings
         self.plugins_tab = PluginsSettingsTab(self.settings, self.plugin_manager)
-        self.tab_widget.addTab(self.plugins_tab, t("settings.tabs.plugins"))
+        self.tab_widget.addTab(self.plugins_tab, icon_mgr.get_icon("plugin"), t("settings.tabs.plugins"))
         
         # Plugin download
         self.download_tab = PluginDownloadTab()
-        self.tab_widget.addTab(self.download_tab, t("settings.tabs.download"))
+        self.tab_widget.addTab(self.download_tab, icon_mgr.get_icon("plugin_download"), t("settings.tabs.download"))
         
-        # Theme settings
+        # Theme settings (scrollable)
         self.theme_tab = ThemeSettingsTab(self.theme_manager)
         self.theme_tab.theme_changed.connect(self._on_theme_preview)
-        self.tab_widget.addTab(self.theme_tab, t("dialogs.theme_settings.title"))
+        self.tab_widget.addTab(self._make_scrollable(self.theme_tab), icon_mgr.get_icon("settings_theme"), t("dialogs.theme_settings.title"))
         
-        # About
+        # About (scrollable)
         self.about_tab = AboutTab()
-        self.tab_widget.addTab(self.about_tab, t("menu.help.about"))
+        self.tab_widget.addTab(self._make_scrollable(self.about_tab), icon_mgr.get_icon("about"), t("menu.help.about"))
         
         layout.addWidget(self.tab_widget)
         
@@ -731,6 +886,7 @@ class SettingsDialog(QDialog):
         if self._initial_tab:
             tab_map = {
                 "general": self.TAB_GENERAL,
+                "appearance": self.TAB_APPEARANCE,
                 "plugins": self.TAB_PLUGINS,
                 "download": self.TAB_DOWNLOAD,
                 "theme": self.TAB_THEME,
@@ -738,6 +894,24 @@ class SettingsDialog(QDialog):
             }
             index = tab_map.get(self._initial_tab.lower(), 0)
             self.tab_widget.setCurrentIndex(index)
+    
+    def _make_scrollable(self, widget: QWidget) -> QScrollArea:
+        """
+        Wrap a widget in a scrollable area.
+        
+        Args:
+            widget: Widget to make scrollable
+            
+        Returns:
+            QScrollArea containing the widget
+        """
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        return scroll_area
     
     def _on_theme_preview(self):
         """Téma előnézet."""
@@ -762,6 +936,7 @@ class SettingsDialog(QDialog):
     def _save_all_settings(self):
         """Összes beállítás mentése."""
         self.general_tab.save_settings()
+        self.appearance_tab.save_settings()
         self.plugins_tab.save_settings()
         self.theme_tab.save_settings()
         self.settings.save_settings()

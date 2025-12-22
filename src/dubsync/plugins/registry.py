@@ -11,7 +11,16 @@ from pathlib import Path
 from typing import Optional, List, Type
 
 from dubsync.plugins.base import PluginInterface, PluginManager
+from dubsync.plugins.context import (
+    PluginContext,
+    PluginContextManager,
+    PluginCapabilities,
+    PLUGIN_API_VERSION,
+)
 from dubsync.services.settings_manager import SettingsManager
+from dubsync.services.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class PluginRegistry:
@@ -31,6 +40,7 @@ class PluginRegistry:
         self.manager = manager
         self.settings = SettingsManager()
         self._plugin_paths: List[Path] = []
+        self._context_manager = PluginContextManager.get_instance()
     
     def add_plugin_path(self, path: Path) -> None:
         """
@@ -112,11 +122,64 @@ class PluginRegistry:
             # This ensures translations are available when info property is accessed
             plugin._load_plugin_locales()
             
+            # Check API version compatibility
+            min_api = plugin.info.min_api_version
+            if min_api > PLUGIN_API_VERSION:
+                logger.warning(
+                    f"Plugin {plugin.info.id} requires API v{min_api}, "
+                    f"but current version is v{PLUGIN_API_VERSION}. Skipping."
+                )
+                return None
+            
+            # Create and assign context for the plugin
+            capabilities = self._determine_capabilities(plugin)
+            context = self._context_manager.create_context(
+                plugin_id=plugin.info.id,
+                plugin_name=plugin.info.name,
+                capabilities=capabilities
+            )
+            plugin.set_context(context)
+            logger.debug(f"Created context for plugin: {plugin.info.id}")
+            
             return plugin
             
         except Exception as e:
-            print(f"Plugin betöltési hiba ({file_path}): {e}")
+            logger.error(f"Plugin loading error ({file_path}): {e}")
             return None
+    
+    def _determine_capabilities(self, plugin: PluginInterface) -> PluginCapabilities:
+        """
+        Determine plugin capabilities based on its type.
+        
+        Args:
+            plugin: Plugin instance
+            
+        Returns:
+            PluginCapabilities based on plugin type
+        """
+        from dubsync.plugins.base import (
+            ExportPlugin, QAPlugin, UIPlugin, ServicePlugin, TranslationPlugin
+        )
+        
+        # Default capabilities
+        caps = PluginCapabilities()
+        
+        # Adjust based on plugin type
+        if isinstance(plugin, UIPlugin):
+            caps.can_show_ui = True
+            caps.can_access_project = True
+        elif isinstance(plugin, QAPlugin):
+            caps.can_access_project = True
+            caps.can_modify_cues = False  # QA is read-only
+        elif isinstance(plugin, ExportPlugin):
+            caps.can_access_project = True
+            caps.can_access_filesystem = True
+        elif isinstance(plugin, TranslationPlugin):
+            caps.can_access_network = True
+        elif isinstance(plugin, ServicePlugin):
+            caps.can_access_network = True
+        
+        return caps
     
     def _find_plugin_class(self, module) -> Optional[Type[PluginInterface]]:
         """
@@ -178,7 +241,7 @@ class PluginRegistry:
                 if self.manager.register(plugin, enabled=is_enabled):
                     loaded += 1
                     status = "✓" if is_enabled else "○"
-                    print(f"Plugin betöltve [{status}]: {plugin.info}")
+                    logger.info(f"Plugin loaded [{status}]: {plugin.info}")
         
         return loaded
 
